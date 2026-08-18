@@ -9,9 +9,11 @@ import time
 from typing import Optional
 
 import redis.asyncio as aioredis
+from datadog import statsd
 from fastapi import Depends, HTTPException, status
 from model_engine_server.api.dependencies import get_or_create_aioredis_pool, verify_authentication
 from model_engine_server.common.config import hmi_config
+from model_engine_server.common.env_vars import DD_ENV
 from model_engine_server.core.auth.authentication_repository import User
 from model_engine_server.core.loggers import logger_name, make_logger
 
@@ -42,6 +44,22 @@ _client_pool: Optional[aioredis.ConnectionPool] = None
 _last_log_times: dict = {}
 _consecutive_failures: int = 0
 _breaker_open_until: float = 0.0
+
+
+def _emit_decision(outcome: str, route_class: str, user_id: str) -> None:
+    # Fire-and-forget UDP to the local Datadog agent. This doubles as the per-tenant
+    # volume signal on the rate-limited routes (outcome:allowed) and as enforcement
+    # telemetry (throttled/would_throttle/fail_open/breaker_open), replacing the
+    # postmortem's proposed raw request-volume monitor.
+    statsd.increment(
+        "model_engine.user_rate_limit.decision",
+        tags=[
+            f"env:{DD_ENV}",
+            f"route_class:{route_class}",
+            f"outcome:{outcome}",
+            f"user_id:{user_id}",
+        ],
+    )
 
 
 def _should_log(log_key: str) -> bool:
@@ -84,6 +102,7 @@ async def enforce_user_rate_limit(route_class: str, user: User) -> None:
     limit = int(limit)
     global _consecutive_failures, _breaker_open_until
     if time.monotonic() < _breaker_open_until:
+        _emit_decision("breaker_open", route_class, user.user_id)
         return
     key = f"user-rate-limit:{route_class}:{user.user_id}:{int(time.time())}"
     try:
@@ -98,8 +117,10 @@ async def enforce_user_rate_limit(route_class: str, user: User) -> None:
             logger.warning(
                 f"Rate limiter failing open for route_class={route_class}", exc_info=True
             )
+        _emit_decision("fail_open", route_class, user.user_id)
         return
     if count <= limit:
+        _emit_decision("allowed", route_class, user.user_id)
         return
     if not config.get("enforce"):
         if _should_log(f"over-limit:{user.user_id}:{route_class}"):
@@ -107,7 +128,9 @@ async def enforce_user_rate_limit(route_class: str, user: User) -> None:
                 f"Rate limit exceeded (log-only): user_id={user.user_id} "
                 f"route_class={route_class} count={count} limit={limit}"
             )
+        _emit_decision("would_throttle", route_class, user.user_id)
         return
+    _emit_decision("throttled", route_class, user.user_id)
     raise HTTPException(
         status_code=status.HTTP_429_TOO_MANY_REQUESTS,
         detail=(

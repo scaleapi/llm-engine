@@ -284,3 +284,47 @@ def test_service_config_round_trips_user_rate_limits(user_rate_limits):
         raw["user_rate_limits"] = user_rate_limits
     config = HostedModelInferenceServiceConfig.from_json(raw)
     assert config.user_rate_limits == user_rate_limits
+
+
+@pytest.mark.parametrize(
+    "config,count,error,expected_outcome",
+    [
+        pytest.param(LIMITS, 3, None, "allowed", id="allowed"),
+        pytest.param(LIMITS, 6, None, "throttled", id="throttled"),
+        pytest.param(LIMITS_LOG_ONLY, 6, None, "would_throttle", id="would-throttle"),
+        pytest.param(LIMITS, 1, ConnectionError("down"), "fail_open", id="fail-open"),
+    ],
+)
+@pytest.mark.asyncio
+async def test_decision_metric_emitted(monkeypatch, config, count, error, expected_outcome):
+    monkeypatch.setattr(rate_limits.hmi_config, "user_rate_limits", config, raising=False)
+    monkeypatch.setattr(
+        rate_limits, "_get_client", lambda: FakeRateLimitRedis(count=count, error=error)
+    )
+    emitted = []
+    monkeypatch.setattr(
+        rate_limits.statsd, "increment", lambda name, tags: emitted.append((name, tags))
+    )
+    try:
+        await rate_limits.enforce_user_rate_limit("get_async_task", USER)
+    except HTTPException:
+        pass
+    assert len(emitted) == 1
+    name, tags = emitted[0]
+    assert name == "model_engine.user_rate_limit.decision"
+    assert f"outcome:{expected_outcome}" in tags
+    assert "user_id:test-user" in tags
+    assert "route_class:get_async_task" in tags
+
+
+@pytest.mark.asyncio
+async def test_decision_metric_breaker_open(monkeypatch):
+    monkeypatch.setattr(rate_limits.hmi_config, "user_rate_limits", LIMITS, raising=False)
+    monkeypatch.setattr(
+        rate_limits, "_get_client", lambda: FakeRateLimitRedis(error=ConnectionError("down"))
+    )
+    emitted = []
+    monkeypatch.setattr(rate_limits.statsd, "increment", lambda name, tags: emitted.append(tags))
+    for _ in range(rate_limits._BREAKER_FAILURE_THRESHOLD + 1):
+        await rate_limits.enforce_user_rate_limit("get_async_task", USER)
+    assert any("outcome:breaker_open" in tags for tags in emitted[-1:])
