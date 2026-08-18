@@ -119,9 +119,11 @@ spec:
             {{- $tenant := . }}
             {{- /* Callers authenticate with HTTP Basic (base64 of "userId:password")
                  or Bearer (raw userId). A 24-char user id encodes to exactly 32
-                 base64 chars, so that prefix matches any password. The :path match
-                 scopes the clamp to the async-task routes only. */}}
-            {{- range list (printf "Basic %s" (b64enc $tenant.userId)) (printf "Bearer %s" $tenant.userId) }}
+                 base64 chars, so that prefix matches any password. The scheme is
+                 matched case-insensitively (FastAPI accepts "bearer"/"basic" too, so
+                 an exact-case match is trivially bypassed), the credential exactly.
+                 The :path match scopes the clamp to the async-task routes only. */}}
+            {{- range list (printf "(?i:Basic) %s.*" (b64enc $tenant.userId)) (printf "(?i:Bearer) %s" $tenant.userId) }}
             - actions:
                 - header_value_match:
                     descriptor_key: tenant
@@ -129,7 +131,9 @@ spec:
                     headers:
                       - name: authorization
                         string_match:
-                          prefix: {{ . | quote }}
+                          safe_regex:
+                            google_re2: {}
+                            regex: {{ . | quote }}
                       - name: ":path"
                         string_match:
                           prefix: /v1/async-tasks
