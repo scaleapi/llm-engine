@@ -58,20 +58,21 @@ rateLimits:
   # (not exact paths) are required. The trailing slash on the poll route keeps
   # POST /v1/async-tasks out of the GET bucket.
   routes:
-    # Task-status polls. Sized between the healthy band and the degradation point
-    # measured per pod, so the fleet sheds before latency collapse.
+    # Task-status polls. A runaway-storm ceiling, not fine-grained fairness (that is
+    # the per-user app limiter): the hardened gateway measured ~577 rps/pod healthy,
+    # so this sheds only genuine storms (~2x the 2026-08 incident peak at a 30-pod fleet).
     - name: get_async_task
       method: GET
       pathPrefix: /v1/async-tasks/
-      requestsPerSecondPerPod: 15
-      burst: 30
-    # Task submissions. Also bounds the Postgres reader connection churn the
-    # submission path generates.
+      requestsPerSecondPerPod: 100
+      burst: 200
+    # Task submissions. Proportionally tighter: producing above endpoint drain is pure
+    # harm, and each submit costs a Postgres reader lookup + SQS send.
     - name: post_async_tasks
       method: POST
       pathPrefix: /v1/async-tasks
-      requestsPerSecondPerPod: 5
-      burst: 10
+      requestsPerSecondPerPod: 20
+      burst: 40
   # throttledTenants clamps named callers on the async-task routes without Helm
   # drift. userId is the caller's user id as logged by the gateway; both accepted
   # Authorization forms (Basic and Bearer) are matched.
