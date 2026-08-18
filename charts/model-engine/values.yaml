@@ -58,14 +58,17 @@ rateLimits:
   # (not exact paths) are required. The trailing slash on the poll route keeps
   # POST /v1/async-tasks out of the GET bucket.
   routes:
-    # Task-status polls. A runaway-storm ceiling, not fine-grained fairness (that is
-    # the per-user app limiter): the hardened gateway measured ~577 rps/pod healthy,
-    # so this sheds only genuine storms (~2x the 2026-08 incident peak at a 30-pod fleet).
+    # Task-status polls. A runaway-storm ceiling AND the aggregate byte bound: polls
+    # return task results inline (up to multi-MB), and the 2026-08 incident's binding
+    # resource was node NIC egress (~500MB/s per pod). 50 rps/pod caps worst-case
+    # egress at ~265MB/s/pod while still admitting ~15x baseline traffic (1,500 rps
+    # at a 30-pod fleet, ~= the incident's peak). Revisit upward once inline results
+    # are replaced by presigned URLs (MLI-8311).
     - name: get_async_task
       method: GET
       pathPrefix: /v1/async-tasks/
-      requestsPerSecondPerPod: 100
-      burst: 200
+      requestsPerSecondPerPod: 50
+      burst: 100
     # Task submissions. Proportionally tighter: producing above endpoint drain is pure
     # harm, and each submit costs a Postgres reader lookup + SQS send.
     - name: post_async_tasks
