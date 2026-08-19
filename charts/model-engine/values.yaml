@@ -76,13 +76,6 @@ rateLimits:
       pathPrefix: /v1/async-tasks
       requestsPerSecondPerPod: 20
       burst: 40
-  # throttledTenants clamps named callers on the async-task routes without Helm
-  # drift. userId is the caller's user id as logged by the gateway; both accepted
-  # Authorization forms (Basic and Bearer) are matched.
-  throttledTenants: []
-  # - userId: "000000000000000000000000"
-  #   requestsPerSecondPerPod: 1
-
 redis:
   auth:
   authSecretName: ""
