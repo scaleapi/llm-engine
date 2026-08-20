@@ -59,8 +59,11 @@ class _InfraConfig:
 
 @dataclass
 class DBEngineConfig:
-    db_engine_pool_size: int = 10
-    db_engine_max_overflow: int = 10
+    # Fleet-wide Postgres demand is pods x gunicorn workers x 4 pooled engines
+    # x (pool_size + max_overflow); the product must stay under the DB's
+    # max_connections with the gateway HPA at maxReplicas.
+    db_engine_pool_size: int = 2
+    db_engine_max_overflow: int = 2
     db_engine_echo: bool = False
     db_engine_echo_pool: bool = False
     db_engine_disconnect_strategy: str = "pessimistic"
