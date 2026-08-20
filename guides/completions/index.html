@@ -1055,14 +1055,14 @@ that can be used for producing completions to prompts.</p>
 <div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #008000; font-weight: bold">from</span><span style="color: #BBB"> </span><span style="color: #00F; font-weight: bold">llmengine</span><span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">import</span> Completion
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>response <span style="color: #666">=</span> Completion<span style="color: #666">.</span>create(
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    model<span style="color: #666">=</span><span style="color: #BA2121">&quot;llama-2-7b&quot;</span>,
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    prompt<span style="color: #666">=</span><span style="color: #BA2121">&quot;Hello, my name is&quot;</span>,
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    model<span style="color: #666">=</span><span style="color: #BA2121">"llama-2-7b"</span>,
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    prompt<span style="color: #666">=</span><span style="color: #BA2121">"Hello, my name is"</span>,
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    max_new_tokens<span style="color: #666">=10</span>,
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    temperature<span style="color: #666">=0.2</span>,
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>)
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span style="color: #008000">print</span>(response<span style="color: #666">.</span>json())
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span style="color: #3D7B7B; font-style: italic"># &#39;{&quot;request_id&quot;: &quot;c4bf0732-08e0-48a8-8b44-dfe8d4702fb0&quot;, &quot;output&quot;: {&quot;text&quot;: &quot;________ and I am a ________&quot;, &quot;num_completion_tokens&quot;: 10}}&#39;</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span style="color: #3D7B7B; font-style: italic"># '{"request_id": "c4bf0732-08e0-48a8-8b44-dfe8d4702fb0", "output": {"text": "________ and I am a ________", "num_completion_tokens": 10}}'</span>
 <a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>
 <a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span style="color: #008000">print</span>(response<span style="color: #666">.</span>output<span style="color: #666">.</span>text)
 <a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span style="color: #3D7B7B; font-style: italic"># ________ and I am a ________</span>
@@ -1083,10 +1083,10 @@ that can be used for producing completions to prompts.</p>
 <div class="tabbed-block">
 <div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>    <span style="color: #666">&gt;&gt;&gt;</span> <span style="color: #008000">print</span>(response<span style="color: #666">.</span>json())
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    {
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>      <span style="color: #BA2121">&quot;request_id&quot;</span>: <span style="color: #BA2121">&quot;c4bf0732-08e0-48a8-8b44-dfe8d4702fb0&quot;</span>,
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>      <span style="color: #BA2121">&quot;output&quot;</span>: {
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>        <span style="color: #BA2121">&quot;text&quot;</span>: <span style="color: #BA2121">&quot;_______ and I am a _______&quot;</span>,
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>        <span style="color: #BA2121">&quot;num_completion_tokens&quot;</span>: <span style="color: #666">10</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>      <span style="color: #BA2121">"request_id"</span>: <span style="color: #BA2121">"c4bf0732-08e0-48a8-8b44-dfe8d4702fb0"</span>,
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>      <span style="color: #BA2121">"output"</span>: {
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>        <span style="color: #BA2121">"text"</span>: <span style="color: #BA2121">"_______ and I am a _______"</span>,
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>        <span style="color: #BA2121">"num_completion_tokens"</span>: <span style="color: #666">10</span>
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>      }
 <a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    }
 </code></pre></div>
@@ -1119,8 +1119,8 @@ applications. When streaming, tokens will be sent as data-only
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
 <a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span style="color: #3D7B7B; font-style: italic"># errors occurring before streaming begins will be thrown here</span>
 <a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>stream <span style="color: #666">=</span> Completion<span style="color: #666">.</span>create(
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    model<span style="color: #666">=</span><span style="color: #BA2121">&quot;llama-2-7b&quot;</span>,
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>    prompt<span style="color: #666">=</span><span style="color: #BA2121">&quot;Give me a 200 word summary on the current economic events in the US.&quot;</span>,
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    model<span style="color: #666">=</span><span style="color: #BA2121">"llama-2-7b"</span>,
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>    prompt<span style="color: #666">=</span><span style="color: #BA2121">"Give me a 200 word summary on the current economic events in the US."</span>,
 <a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    max_new_tokens<span style="color: #666">=1000</span>,
 <a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>    temperature<span style="color: #666">=0.2</span>,
 <a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>    stream<span style="color: #666">=</span><span style="color: #008000; font-weight: bold">True</span>,
@@ -1128,7 +1128,7 @@ applications. When streaming, tokens will be sent as data-only
 <a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>
 <a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span style="color: #008000; font-weight: bold">for</span> response <span style="color: #A2F; font-weight: bold">in</span> stream:
 <a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>    <span style="color: #008000; font-weight: bold">if</span> response<span style="color: #666">.</span>output:
-<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>        <span style="color: #008000">print</span>(response<span style="color: #666">.</span>output<span style="color: #666">.</span>text, end<span style="color: #666">=</span><span style="color: #BA2121">&quot;&quot;</span>)
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>        <span style="color: #008000">print</span>(response<span style="color: #666">.</span>output<span style="color: #666">.</span>text, end<span style="color: #666">=</span><span style="color: #BA2121">""</span>)
 <a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>        sys<span style="color: #666">.</span>stdout<span style="color: #666">.</span>flush()
 <a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>    <span style="color: #008000; font-weight: bold">else</span>: <span style="color: #3D7B7B; font-style: italic"># an error occurred after streaming began</span>
 <a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a>        <span style="color: #008000">print</span>(response<span style="color: #666">.</span>error) <span style="color: #3D7B7B; font-style: italic"># print the error message out </span>
@@ -1148,8 +1148,8 @@ to utilize async processing. The function signatures are otherwise identical.</p
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span style="color: #008000; font-weight: bold">async</span> <span style="color: #008000; font-weight: bold">def</span><span style="color: #BBB"> </span><span style="color: #00F">main</span>():
 <a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    response <span style="color: #666">=</span> <span style="color: #008000; font-weight: bold">await</span> Completion<span style="color: #666">.</span>acreate(
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>        model<span style="color: #666">=</span><span style="color: #BA2121">&quot;llama-2-7b&quot;</span>,
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>        prompt<span style="color: #666">=</span><span style="color: #BA2121">&quot;Hello, my name is&quot;</span>,
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>        model<span style="color: #666">=</span><span style="color: #BA2121">"llama-2-7b"</span>,
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>        prompt<span style="color: #666">=</span><span style="color: #BA2121">"Hello, my name is"</span>,
 <a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>        max_new_tokens<span style="color: #666">=10</span>,
 <a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>        temperature<span style="color: #666">=0.2</span>,
 <a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>    )
@@ -1169,17 +1169,17 @@ to utilize async processing. The function signatures are otherwise identical.</p
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span style="color: #008000; font-weight: bold">from</span><span style="color: #BBB"> </span><span style="color: #00F; font-weight: bold">llmengine.data_types</span><span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">import</span> CreateBatchCompletionsModelConfig, CreateBatchCompletionsRequestContent
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>content <span style="color: #666">=</span> CreateBatchCompletionsRequestContent(
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    prompts<span style="color: #666">=</span>[<span style="color: #BA2121">&quot;What is deep learning&quot;</span>, <span style="color: #BA2121">&quot;What is a neural network&quot;</span>],
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    prompts<span style="color: #666">=</span>[<span style="color: #BA2121">"What is deep learning"</span>, <span style="color: #BA2121">"What is a neural network"</span>],
 <a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>    max_new_tokens<span style="color: #666">=10</span>,
 <a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>    temperature<span style="color: #666">=0.0</span>
 <a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>)
 <a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>
 <a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>response <span style="color: #666">=</span> Completion<span style="color: #666">.</span>batch_create(
-<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>    output_data_path<span style="color: #666">=</span><span style="color: #BA2121">&quot;s3://my-path&quot;</span>,
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>    output_data_path<span style="color: #666">=</span><span style="color: #BA2121">"s3://my-path"</span>,
 <a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>    model_config<span style="color: #666">=</span>CreateBatchCompletionsModelConfig(
-<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>        model<span style="color: #666">=</span><span style="color: #BA2121">&quot;llama-2-7b&quot;</span>,
-<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>        checkpoint_path<span style="color: #666">=</span><span style="color: #BA2121">&quot;s3://checkpoint-path&quot;</span>,
-<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>        labels<span style="color: #666">=</span>{<span style="color: #BA2121">&quot;team&quot;</span>:<span style="color: #BA2121">&quot;my-team&quot;</span>, <span style="color: #BA2121">&quot;product&quot;</span>:<span style="color: #BA2121">&quot;my-product&quot;</span>}
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>        model<span style="color: #666">=</span><span style="color: #BA2121">"llama-2-7b"</span>,
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>        checkpoint_path<span style="color: #666">=</span><span style="color: #BA2121">"s3://checkpoint-path"</span>,
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>        labels<span style="color: #666">=</span>{<span style="color: #BA2121">"team"</span>:<span style="color: #BA2121">"my-team"</span>, <span style="color: #BA2121">"product"</span>:<span style="color: #BA2121">"my-product"</span>}
 <a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>    ),
 <a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a>    content<span style="color: #666">=</span>content
 <a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a>)
@@ -1193,15 +1193,15 @@ to utilize async processing. The function signatures are otherwise identical.</p
 <div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span style="color: #008000; font-weight: bold">from</span><span style="color: #BBB"> </span><span style="color: #00F; font-weight: bold">llmengine</span><span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">import</span> Completion
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span style="color: #008000; font-weight: bold">from</span><span style="color: #BBB"> </span><span style="color: #00F; font-weight: bold">llmengine.data_types</span><span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">import</span> CreateBatchCompletionsModelConfig, CreateBatchCompletionsRequestContent
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span style="color: #3D7B7B; font-style: italic"># Store CreateBatchCompletionsRequestContent data into input file &quot;s3://my-input-path&quot;</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span style="color: #3D7B7B; font-style: italic"># Store CreateBatchCompletionsRequestContent data into input file "s3://my-input-path"</span>
 <a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>
 <a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>response <span style="color: #666">=</span> Completion<span style="color: #666">.</span>batch_create(
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>    input_data_path<span style="color: #666">=</span><span style="color: #BA2121">&quot;s3://my-input-path&quot;</span>,
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>    output_data_path<span style="color: #666">=</span><span style="color: #BA2121">&quot;s3://my-output-path&quot;</span>,
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>    input_data_path<span style="color: #666">=</span><span style="color: #BA2121">"s3://my-input-path"</span>,
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>    output_data_path<span style="color: #666">=</span><span style="color: #BA2121">"s3://my-output-path"</span>,
 <a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>    model_config<span style="color: #666">=</span>CreateBatchCompletionsModelConfig(
-<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>        model<span style="color: #666">=</span><span style="color: #BA2121">&quot;llama-2-7b&quot;</span>,
-<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>        checkpoint_path<span style="color: #666">=</span><span style="color: #BA2121">&quot;s3://checkpoint-path&quot;</span>,
-<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>        labels<span style="color: #666">=</span>{<span style="color: #BA2121">&quot;team&quot;</span>:<span style="color: #BA2121">&quot;my-team&quot;</span>, <span style="color: #BA2121">&quot;product&quot;</span>:<span style="color: #BA2121">&quot;my-product&quot;</span>}
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>        model<span style="color: #666">=</span><span style="color: #BA2121">"llama-2-7b"</span>,
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>        checkpoint_path<span style="color: #666">=</span><span style="color: #BA2121">"s3://checkpoint-path"</span>,
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>        labels<span style="color: #666">=</span>{<span style="color: #BA2121">"team"</span>:<span style="color: #BA2121">"my-team"</span>, <span style="color: #BA2121">"product"</span>:<span style="color: #BA2121">"my-product"</span>}
 <a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>    ),
 <a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>    data_parallelism<span style="color: #666">=2</span>
 <a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a>)
@@ -1216,19 +1216,19 @@ to utilize async processing. The function signatures are otherwise identical.</p
 <div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span style="color: #008000; font-weight: bold">from</span><span style="color: #BBB"> </span><span style="color: #00F; font-weight: bold">llmengine</span><span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">import</span> Completion
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span style="color: #008000; font-weight: bold">from</span><span style="color: #BBB"> </span><span style="color: #00F; font-weight: bold">llmengine.data_types</span><span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">import</span> CreateBatchCompletionsModelConfig, CreateBatchCompletionsRequestContent, ToolConfig
 <a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span style="color: #3D7B7B; font-style: italic"># Store CreateBatchCompletionsRequestContent data into input file &quot;s3://my-input-path&quot;</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span style="color: #3D7B7B; font-style: italic"># Store CreateBatchCompletionsRequestContent data into input file "s3://my-input-path"</span>
 <a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>
 <a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>response <span style="color: #666">=</span> Completion<span style="color: #666">.</span>batch_create(
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>    input_data_path<span style="color: #666">=</span><span style="color: #BA2121">&quot;s3://my-input-path&quot;</span>,
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>    output_data_path<span style="color: #666">=</span><span style="color: #BA2121">&quot;s3://my-output-path&quot;</span>,
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>    input_data_path<span style="color: #666">=</span><span style="color: #BA2121">"s3://my-input-path"</span>,
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>    output_data_path<span style="color: #666">=</span><span style="color: #BA2121">"s3://my-output-path"</span>,
 <a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>    model_config<span style="color: #666">=</span>CreateBatchCompletionsModelConfig(
-<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>        model<span style="color: #666">=</span><span style="color: #BA2121">&quot;llama-2-7b&quot;</span>,
-<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>        checkpoint_path<span style="color: #666">=</span><span style="color: #BA2121">&quot;s3://checkpoint-path&quot;</span>,
-<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>        labels<span style="color: #666">=</span>{<span style="color: #BA2121">&quot;team&quot;</span>:<span style="color: #BA2121">&quot;my-team&quot;</span>, <span style="color: #BA2121">&quot;product&quot;</span>:<span style="color: #BA2121">&quot;my-product&quot;</span>}
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>        model<span style="color: #666">=</span><span style="color: #BA2121">"llama-2-7b"</span>,
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>        checkpoint_path<span style="color: #666">=</span><span style="color: #BA2121">"s3://checkpoint-path"</span>,
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>        labels<span style="color: #666">=</span>{<span style="color: #BA2121">"team"</span>:<span style="color: #BA2121">"my-team"</span>, <span style="color: #BA2121">"product"</span>:<span style="color: #BA2121">"my-product"</span>}
 <a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>    ),
 <a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>    data_parallelism<span style="color: #666">=2</span>,
 <a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>    tool_config<span style="color: #666">=</span>ToolConfig(
-<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a>        name<span style="color: #666">=</span><span style="color: #BA2121">&quot;code_evaluator&quot;</span>,
+<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a>        name<span style="color: #666">=</span><span style="color: #BA2121">"code_evaluator"</span>,
 <a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a>    )
 <a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a>)
 <a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a><span style="color: #008000">print</span>(response<span style="color: #666">.</span>json())
@@ -1244,15 +1244,15 @@ It enforces certain token generation patterns by tinkering with the sampling log
 <div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span style="color: #008000; font-weight: bold">from</span><span style="color: #BBB"> </span><span style="color: #00F; font-weight: bold">llmengine</span><span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">import</span> Completion
 <a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
 <a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>response <span style="color: #666">=</span> Completion<span style="color: #666">.</span>create(
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>    model<span style="color: #666">=</span><span style="color: #BA2121">&quot;llama-2-7b&quot;</span>,
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>    prompt<span style="color: #666">=</span><span style="color: #BA2121">&quot;Hello, my name is&quot;</span>,
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>    model<span style="color: #666">=</span><span style="color: #BA2121">"llama-2-7b"</span>,
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>    prompt<span style="color: #666">=</span><span style="color: #BA2121">"Hello, my name is"</span>,
 <a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>    max_new_tokens<span style="color: #666">=10</span>,
 <a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>    temperature<span style="color: #666">=0.2</span>,
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>    guided_regex<span style="color: #666">=</span><span style="color: #BA2121">&quot;Sean.*&quot;</span>,
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>    guided_regex<span style="color: #666">=</span><span style="color: #BA2121">"Sean.*"</span>,
 <a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>)
 <a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>
 <a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span style="color: #008000">print</span>(response<span style="color: #666">.</span>json())
-<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span style="color: #3D7B7B; font-style: italic"># {&quot;request_id&quot;:&quot;c19f0fae-317e-4f69-8e06-c04189299b9c&quot;,&quot;output&quot;:{&quot;text&quot;:&quot;Sean. I&#39;m a 2&quot;,&quot;num_prompt_tokens&quot;:6,&quot;num_completion_tokens&quot;:10,&quot;tokens&quot;:null}}</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span style="color: #3D7B7B; font-style: italic"># {"request_id":"c19f0fae-317e-4f69-8e06-c04189299b9c","output":{"text":"Sean. I'm a 2","num_prompt_tokens":6,"num_completion_tokens":10,"tokens":null}}</span>
 </code></pre></div>
 <div class="tabbed-set tabbed-alternate" data-tabs="9:1"><input checked="checked" id="__tabbed_9_1" name="__tabbed_9" type="radio" /><div class="tabbed-labels"><label for="__tabbed_9_1">Guided decoding with choice</label></div>
 <div class="tabbed-content">
@@ -1262,15 +1262,15 @@ It enforces certain token generation patterns by tinkering with the sampling log
 <div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span style="color: #008000; font-weight: bold">from</span><span style="color: #BBB"> </span><span style="color: #00F; font-weight: bold">llmengine</span><span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">import</span> Completion
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>response <span style="color: #666">=</span> Completion<span style="color: #666">.</span>create(
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>    model<span style="color: #666">=</span><span style="color: #BA2121">&quot;llama-2-7b&quot;</span>,
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>    prompt<span style="color: #666">=</span><span style="color: #BA2121">&quot;Hello, my name is&quot;</span>,
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>    model<span style="color: #666">=</span><span style="color: #BA2121">"llama-2-7b"</span>,
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>    prompt<span style="color: #666">=</span><span style="color: #BA2121">"Hello, my name is"</span>,
 <a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>    max_new_tokens<span style="color: #666">=10</span>,
 <a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>    temperature<span style="color: #666">=0.2</span>,
-<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>    guided_choice<span style="color: #666">=</span>[<span style="color: #BA2121">&quot;Sean&quot;</span>, <span style="color: #BA2121">&quot;Brian&quot;</span>, <span style="color: #BA2121">&quot;Tim&quot;</span>],
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>    guided_choice<span style="color: #666">=</span>[<span style="color: #BA2121">"Sean"</span>, <span style="color: #BA2121">"Brian"</span>, <span style="color: #BA2121">"Tim"</span>],
 <a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>)
 <a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>
 <a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span style="color: #008000">print</span>(response<span style="color: #666">.</span>json())
-<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span style="color: #3D7B7B; font-style: italic"># {&quot;request_id&quot;:&quot;641e2af3-a3e3-4493-98b9-d38115ba0d22&quot;,&quot;output&quot;:{&quot;text&quot;:&quot;Sean&quot;,&quot;num_prompt_tokens&quot;:6,&quot;num_completion_tokens&quot;:4,&quot;tokens&quot;:null}}</span>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span style="color: #3D7B7B; font-style: italic"># {"request_id":"641e2af3-a3e3-4493-98b9-d38115ba0d22","output":{"text":"Sean","num_prompt_tokens":6,"num_completion_tokens":4,"tokens":null}}</span>
 </code></pre></div>
 <div class="tabbed-set tabbed-alternate" data-tabs="10:1"><input checked="checked" id="__tabbed_10_1" name="__tabbed_10" type="radio" /><div class="tabbed-labels"><label for="__tabbed_10_1">Guided decoding with JSON schema</label></div>
 <div class="tabbed-content">
@@ -1280,15 +1280,15 @@ It enforces certain token generation patterns by tinkering with the sampling log
 <div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span style="color: #008000; font-weight: bold">from</span><span style="color: #BBB"> </span><span style="color: #00F; font-weight: bold">llmengine</span><span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">import</span> Completion
 <a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>
 <a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>response <span style="color: #666">=</span> Completion<span style="color: #666">.</span>create(
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>    model<span style="color: #666">=</span><span style="color: #BA2121">&quot;llama-2-7b&quot;</span>,
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>    prompt<span style="color: #666">=</span><span style="color: #BA2121">&quot;Hello, my name is&quot;</span>,
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>    model<span style="color: #666">=</span><span style="color: #BA2121">"llama-2-7b"</span>,
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>    prompt<span style="color: #666">=</span><span style="color: #BA2121">"Hello, my name is"</span>,
 <a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>    max_new_tokens<span style="color: #666">=10</span>,
 <a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>    temperature<span style="color: #666">=0.2</span>,
-<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>    guided_json<span style="color: #666">=</span>{<span style="color: #BA2121">&quot;properties&quot;</span>:{<span style="color: #BA2121">&quot;myString&quot;</span>:{<span style="color: #BA2121">&quot;type&quot;</span>:<span style="color: #BA2121">&quot;string&quot;</span>}},<span style="color: #BA2121">&quot;required&quot;</span>:[<span style="color: #BA2121">&quot;myString&quot;</span>]},
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>    guided_json<span style="color: #666">=</span>{<span style="color: #BA2121">"properties"</span>:{<span style="color: #BA2121">"myString"</span>:{<span style="color: #BA2121">"type"</span>:<span style="color: #BA2121">"string"</span>}},<span style="color: #BA2121">"required"</span>:[<span style="color: #BA2121">"myString"</span>]},
 <a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>)
 <a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>
 <a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span style="color: #008000">print</span>(response<span style="color: #666">.</span>json())
-<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a><span style="color: #3D7B7B; font-style: italic"># {&quot;request_id&quot;:&quot;5b184654-96b6-4932-9eb6-382a51fdb3d5&quot;,&quot;output&quot;:{&quot;text&quot;:&quot;{\&quot;myString\&quot; : \&quot;John Doe&quot;,&quot;num_prompt_tokens&quot;:6,&quot;num_completion_tokens&quot;:10,&quot;tokens&quot;:null}}</span>
+<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a><span style="color: #3D7B7B; font-style: italic"># {"request_id":"5b184654-96b6-4932-9eb6-382a51fdb3d5","output":{"text":"{\"myString\" : \"John Doe","num_prompt_tokens":6,"num_completion_tokens":10,"tokens":null}}</span>
 </code></pre></div>
 <div class="tabbed-set tabbed-alternate" data-tabs="11:1"><input checked="checked" id="__tabbed_11_1" name="__tabbed_11" type="radio" /><div class="tabbed-labels"><label for="__tabbed_11_1">Guided decoding with Context-Free Grammar</label></div>
 <div class="tabbed-content">
@@ -1298,15 +1298,15 @@ It enforces certain token generation patterns by tinkering with the sampling log
 <div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span style="color: #008000; font-weight: bold">from</span><span style="color: #BBB"> </span><span style="color: #00F; font-weight: bold">llmengine</span><span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">import</span> Completion
 <a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>
 <a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>response <span style="color: #666">=</span> Completion<span style="color: #666">.</span>create(
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>    model<span style="color: #666">=</span><span style="color: #BA2121">&quot;llama-2-7b&quot;</span>,
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>    prompt<span style="color: #666">=</span><span style="color: #BA2121">&quot;Hello, my name is&quot;</span>,
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>    model<span style="color: #666">=</span><span style="color: #BA2121">"llama-2-7b"</span>,
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>    prompt<span style="color: #666">=</span><span style="color: #BA2121">"Hello, my name is"</span>,
 <a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>    max_new_tokens<span style="color: #666">=10</span>,
 <a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>    temperature<span style="color: #666">=0.2</span>,
-<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>    guided_grammar<span style="color: #666">=</span><span style="color: #BA2121">&quot;start: </span><span style="color: #AA5D1F; font-weight: bold">\&quot;</span><span style="color: #BA2121">John</span><span style="color: #AA5D1F; font-weight: bold">\&quot;</span><span style="color: #BA2121">&quot;</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>    guided_grammar<span style="color: #666">=</span><span style="color: #BA2121">"start: </span><span style="color: #AA5D1F; font-weight: bold">\"</span><span style="color: #BA2121">John</span><span style="color: #AA5D1F; font-weight: bold">\"</span><span style="color: #BA2121">"</span>
 <a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>)
 <a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>
 <a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a><span style="color: #008000">print</span>(response<span style="color: #666">.</span>json())
-<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a><span style="color: #3D7B7B; font-style: italic"># {&quot;request_id&quot;: &quot;34621b44-c655-402c-a459-f108b3e49b12&quot;, &quot;output&quot;: {&quot;text&quot;: &quot;John&quot;, &quot;num_prompt_tokens&quot;: 6, &quot;num_completion_tokens&quot;: 4, &quot;tokens&quot;: None}}</span>
+<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a><span style="color: #3D7B7B; font-style: italic"># {"request_id": "34621b44-c655-402c-a459-f108b3e49b12", "output": {"text": "John", "num_prompt_tokens": 6, "num_completion_tokens": 4, "tokens": None}}</span>
 </code></pre></div>
 <h2 id="which-model-should-i-use">Which model should I use?<a class="headerlink" href="#which-model-should-i-use" title="Permanent link">&para;</a></h2>
 <p>See the <a href="../../model_zoo">Model Zoo</a> for more information on best practices for which model to use for Completions.</p>

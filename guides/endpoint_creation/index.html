@@ -831,10 +831,10 @@
 track the status of your model endpoint. In general, you'll need to wait after the 
 model creation step for the model endpoint to be ready and available for use.
 An example is provided below: </p>
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>model_name = &quot;test_deploy&quot;
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>model = Model.create(name=model_name, model=&quot;llama-2-7b&quot;, inference_frame_image_tag=&quot;0.9.4&quot;)
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>model_name = "test_deploy"
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>model = Model.create(name=model_name, model="llama-2-7b", inference_frame_image_tag="0.9.4")
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>response = Model.get(model_name)
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>while response.status.name != &quot;READY&quot;:
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>while response.status.name != "READY":
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    print(response.status.name)
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    time.sleep(60)
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    response = Model.get(model_name)

@@ -949,6 +949,33 @@
 <p>The LLM Engine API is currently in a preview mode, and therefore we currently do not have any advertised rate limits.
 As the API moves towards a production release, we will update this section with specific rate limits. For now, the API
 will return HTTP 429 on an as-needed basis.</p>
+<h1 id="polling-async-tasks">Polling async tasks<a class="headerlink" href="#polling-async-tasks" title="Permanent link">&para;</a></h1>
+<p>When you submit async inference tasks, poll each task's status with a delay that grows
+between attempts instead of a fixed tight interval. With a fixed interval, total poll
+traffic scales with the number of outstanding tasks: a large batch that outpaces the
+endpoint's drain rate generates an ever-growing poll load on the API while the tasks it
+is asking about cannot complete any faster.</p>
+<p>The <code>tenacity</code> library (used in the backoff examples below) expresses this directly;
+<code>wait_random_exponential</code> adds the jitter that keeps polls from many tasks from
+synchronizing:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:1"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Polling with exponential backoff in python</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block"></div>
+</div>
+</div>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #008000; font-weight: bold">from</span><span style="color: #BBB"> </span><span style="color: #00F; font-weight: bold">tenacity</span><span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">import</span> retry, retry_if_result, stop_after_delay, wait_random_exponential
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span style="color: #A2F">@retry</span>(
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    retry<span style="color: #666">=</span>retry_if_result(<span style="color: #008000; font-weight: bold">lambda</span> response: response<span style="color: #666">.</span>status <span style="color: #A2F; font-weight: bold">not</span> <span style="color: #A2F; font-weight: bold">in</span> (<span style="color: #BA2121">"SUCCESS"</span>, <span style="color: #BA2121">"FAILURE"</span>)),
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    wait<span style="color: #666">=</span>wait_random_exponential(<span style="color: #008000">min</span><span style="color: #666">=1</span>, <span style="color: #008000">max</span><span style="color: #666">=60</span>),
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    stop<span style="color: #666">=</span>stop_after_delay(<span style="color: #666">3600</span>),
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>)
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span style="color: #008000; font-weight: bold">def</span><span style="color: #BBB"> </span><span style="color: #00F">wait_for_task</span>(client, task_id):
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span style="color: #008000; font-weight: bold">return</span> client<span style="color: #666">.</span>get_async_task(task_id)
+</code></pre></div>
+<p>For large batches, also bound how many tasks you have outstanding (submit in windows
+sized to the endpoint's throughput) rather than submitting everything up front and
+polling the whole set.</p>
 <h1 id="error-mitigation">Error mitigation<a class="headerlink" href="#error-mitigation" title="Permanent link">&para;</a></h1>
 <h2 id="retrying-with-exponential-backoff">Retrying with exponential backoff<a class="headerlink" href="#retrying-with-exponential-backoff" title="Permanent link">&para;</a></h2>
 <p>One easy way to avoid rate limit errors is to automatically retry requests with a random exponential backoff.
@@ -966,39 +993,39 @@ This continues until the request is successful or until a maximum number of retr
 retry behavior to just about anything. To add exponential backoff to your requests, you can use the tenacity.retry
 decorator. The below example uses the tenacity.wait_random_exponential function to add random exponential backoff to a
 request.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:1"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Exponential backoff in python</label></div>
-<div class="tabbed-content">
-<div class="tabbed-block"></div>
-</div>
-</div>
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span style="color: #008000; font-weight: bold">import</span><span style="color: #BBB"> </span><span style="color: #00F; font-weight: bold">llmengine</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span style="color: #008000; font-weight: bold">from</span><span style="color: #BBB"> </span><span style="color: #00F; font-weight: bold">tenacity</span><span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">import</span> (
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    retry,
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    stop_after_attempt,
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    wait_random_exponential,
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>)  <span style="color: #3D7B7B; font-style: italic"># for exponential backoff</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span style="color: #A2F">@retry</span>(wait<span style="color: #666">=</span>wait_random_exponential(<span style="color: #008000">min</span><span style="color: #666">=1</span>, <span style="color: #008000">max</span><span style="color: #666">=60</span>), stop<span style="color: #666">=</span>stop_after_attempt(<span style="color: #666">6</span>))
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span style="color: #008000; font-weight: bold">def</span><span style="color: #BBB"> </span><span style="color: #00F">completion_with_backoff</span>(<span style="color: #666">**</span>kwargs):
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span style="color: #008000; font-weight: bold">return</span> llmengine<span style="color: #666">.</span>Completion<span style="color: #666">.</span>create(<span style="color: #666">**</span>kwargs)
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>completion_with_backoff(model<span style="color: #666">=</span><span style="color: #BA2121">&quot;llama-2-7b&quot;</span>, prompt<span style="color: #666">=</span><span style="color: #BA2121">&quot;Why is the sky blue?&quot;</span>)
-</code></pre></div>
-<h3 id="example-2-using-the-backoff-library">Example #2: Using the <code>backoff</code> library<a class="headerlink" href="#example-2-using-the-backoff-library" title="Permanent link">&para;</a></h3>
-<p><a href="https://github.com/litl/backoff">Backoff</a> is another python library that provides function decorators which can be used to wrap a function such that it will be retried until some condition is met.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="2:1"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Decorators for backoff and retry in python</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:1"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Exponential backoff in python</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block"></div>
 </div>
 </div>
 <div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span style="color: #008000; font-weight: bold">import</span><span style="color: #BBB"> </span><span style="color: #00F; font-weight: bold">llmengine</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span style="color: #008000; font-weight: bold">import</span><span style="color: #BBB"> </span><span style="color: #00F; font-weight: bold">backoff</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span style="color: #A2F">@backoff</span><span style="color: #666">.</span>on_exception(backoff<span style="color: #666">.</span>expo, llmengine<span style="color: #666">.</span>errors<span style="color: #666">.</span>RateLimitExceededError)
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span style="color: #008000; font-weight: bold">def</span><span style="color: #BBB"> </span><span style="color: #00F">completion_with_backoff</span>(<span style="color: #666">**</span>kwargs):
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span style="color: #008000; font-weight: bold">return</span> llmengine<span style="color: #666">.</span>Completion<span style="color: #666">.</span>create(<span style="color: #666">**</span>kwargs)
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span style="color: #008000; font-weight: bold">from</span><span style="color: #BBB"> </span><span style="color: #00F; font-weight: bold">tenacity</span><span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">import</span> (
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    retry,
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    stop_after_attempt,
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    wait_random_exponential,
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>)  <span style="color: #3D7B7B; font-style: italic"># for exponential backoff</span>
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>completions_with_backoff(model<span style="color: #666">=</span><span style="color: #BA2121">&quot;llama-2-7b&quot;</span>, prompt<span style="color: #666">=</span><span style="color: #BA2121">&quot;Why is the sky blue?&quot;</span>)
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span style="color: #A2F">@retry</span>(wait<span style="color: #666">=</span>wait_random_exponential(<span style="color: #008000">min</span><span style="color: #666">=1</span>, <span style="color: #008000">max</span><span style="color: #666">=60</span>), stop<span style="color: #666">=</span>stop_after_attempt(<span style="color: #666">6</span>))
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span style="color: #008000; font-weight: bold">def</span><span style="color: #BBB"> </span><span style="color: #00F">completion_with_backoff</span>(<span style="color: #666">**</span>kwargs):
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>    <span style="color: #008000; font-weight: bold">return</span> llmengine<span style="color: #666">.</span>Completion<span style="color: #666">.</span>create(<span style="color: #666">**</span>kwargs)
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>completion_with_backoff(model<span style="color: #666">=</span><span style="color: #BA2121">"llama-2-7b"</span>, prompt<span style="color: #666">=</span><span style="color: #BA2121">"Why is the sky blue?"</span>)
+</code></pre></div>
+<h3 id="example-2-using-the-backoff-library">Example #2: Using the <code>backoff</code> library<a class="headerlink" href="#example-2-using-the-backoff-library" title="Permanent link">&para;</a></h3>
+<p><a href="https://github.com/litl/backoff">Backoff</a> is another python library that provides function decorators which can be used to wrap a function such that it will be retried until some condition is met.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="3:1"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Decorators for backoff and retry in python</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block"></div>
+</div>
+</div>
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span style="color: #008000; font-weight: bold">import</span><span style="color: #BBB"> </span><span style="color: #00F; font-weight: bold">llmengine</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span style="color: #008000; font-weight: bold">import</span><span style="color: #BBB"> </span><span style="color: #00F; font-weight: bold">backoff</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span style="color: #A2F">@backoff</span><span style="color: #666">.</span>on_exception(backoff<span style="color: #666">.</span>expo, llmengine<span style="color: #666">.</span>errors<span style="color: #666">.</span>RateLimitExceededError)
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span style="color: #008000; font-weight: bold">def</span><span style="color: #BBB"> </span><span style="color: #00F">completion_with_backoff</span>(<span style="color: #666">**</span>kwargs):
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span style="color: #008000; font-weight: bold">return</span> llmengine<span style="color: #666">.</span>Completion<span style="color: #666">.</span>create(<span style="color: #666">**</span>kwargs)
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>completions_with_backoff(model<span style="color: #666">=</span><span style="color: #BA2121">"llama-2-7b"</span>, prompt<span style="color: #666">=</span><span style="color: #BA2121">"Why is the sky blue?"</span>)
 </code></pre></div>
 
 

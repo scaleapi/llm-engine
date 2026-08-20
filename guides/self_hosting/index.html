@@ -1160,7 +1160,7 @@ Create a PostgreSQL database (e.g. AWS RDS PostgreSQL) if you do not have an exi
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>metadata:
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>  name: llm-engine-database-credentials  # this name will be an input to our Helm Chart
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>data:
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    database_url = &quot;postgresql://[user[:password]@][netloc][:port][/dbname][?param1=value1&amp;...]&quot;
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    database_url = "postgresql://[user[:password]@][netloc][:port][/dbname][?param1=value1&amp;...]"
 </code></pre></div></p>
 <h3 id="redis">Redis<a class="headerlink" href="#redis" title="Permanent link">&para;</a></h3>
 <p>The LLM Engine server requires Redis for various caching/queue functionality. LLM Engine currently supports Redis version 6.
@@ -1405,37 +1405,37 @@ Note the pod names you see may be different.</p>
 <div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>$ kubectl port-forward pod/llm-engine-&lt;REST_OF_POD_NAME&gt; 5000:5000 -n &lt;NAMESPACE_WHERE_LLM_ENGINE_IS_INSTALLED&gt;
 </code></pre></div></p>
 <p>Then, try sending a request to get LLM model endpoints for <code>test-user-id</code>:
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>$ curl -X GET -H &quot;Content-Type: application/json&quot; -u &quot;test-user-id:&quot; &quot;http://localhost:5000/v1/llm/model-endpoints&quot;
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>$ curl -X GET -H "Content-Type: application/json" -u "test-user-id:" "http://localhost:5000/v1/llm/model-endpoints"
 </code></pre></div></p>
 <p>You should get the following response:
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>{&quot;model_endpoints&quot;:[]}
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>{"model_endpoints":[]}
 </code></pre></div></p>
 <p>Next, let's create a LLM endpoint using llama-7b:
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>$ curl -X POST &#39;http://localhost:5000/v1/llm/model-endpoints&#39; \
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    -H &#39;Content-Type: application/json&#39; \
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    -d &#39;{
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>        &quot;name&quot;: &quot;llama-7b&quot;,
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>        &quot;model_name&quot;: &quot;llama-7b&quot;,
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>        &quot;source&quot;: &quot;hugging_face&quot;,
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>        &quot;inference_framework&quot;: &quot;text_generation_inference&quot;,
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>        &quot;inference_framework_image_tag&quot;: &quot;0.9.3&quot;,
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>        &quot;num_shards&quot;: 4,
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>        &quot;endpoint_type&quot;: &quot;streaming&quot;,
-<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>        &quot;cpus&quot;: 32,
-<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>        &quot;gpus&quot;: 4,
-<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>        &quot;memory&quot;: &quot;40Gi&quot;,
-<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>        &quot;storage&quot;: &quot;40Gi&quot;,
-<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>        &quot;gpu_type&quot;: &quot;nvidia-ampere-a10&quot;,
-<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>        &quot;min_workers&quot;: 1,
-<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a>        &quot;max_workers&quot;: 12,
-<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a>        &quot;per_worker&quot;: 1,
-<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a>        &quot;labels&quot;: {},
-<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a>        &quot;metadata&quot;: {}
-<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a>    }&#39; \
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>$ curl -X POST 'http://localhost:5000/v1/llm/model-endpoints' \
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    -H 'Content-Type: application/json' \
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    -d '{
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>        "name": "llama-7b",
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>        "model_name": "llama-7b",
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>        "source": "hugging_face",
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>        "inference_framework": "text_generation_inference",
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>        "inference_framework_image_tag": "0.9.3",
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>        "num_shards": 4,
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>        "endpoint_type": "streaming",
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>        "cpus": 32,
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>        "gpus": 4,
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>        "memory": "40Gi",
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>        "storage": "40Gi",
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>        "gpu_type": "nvidia-ampere-a10",
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>        "min_workers": 1,
+<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a>        "max_workers": 12,
+<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a>        "per_worker": 1,
+<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a>        "labels": {},
+<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a>        "metadata": {}
+<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a>    }' \
 <a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a>    -u test_user_id:
 </code></pre></div></p>
 <p>It should output something like:
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>{&quot;endpoint_creation_task_id&quot;:&quot;8d323344-b1b5-497d-a851-6d6284d2f8e4&quot;}
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>{"endpoint_creation_task_id":"8d323344-b1b5-497d-a851-6d6284d2f8e4"}
 </code></pre></div></p>
 <p>Wait a few minutes for the endpoint to be ready. You can tell that it's ready by listing pods and checking that all containers in the llm endpoint pod are ready:
 <div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>$ kubectl get pods -n &lt;endpoint_namespace specified in values_sample.yaml&gt;
@@ -1444,17 +1444,17 @@ Note the pod names you see may be different.</p>
 </code></pre></div>
 Note the endpoint name could be different.</p>
 <p>Then, you can send an inference request to the endppoint:
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>$ curl -X POST &#39;http://localhost:5000/v1/llm/completions-sync?model_endpoint_name=llama-7b&#39; \
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>    -H &#39;Content-Type: application/json&#39; \
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>    -d &#39;{
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>        &quot;prompts&quot;: [&quot;Tell me a joke about AI&quot;],
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>        &quot;max_new_tokens&quot;: 30,
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>        &quot;temperature&quot;: 0.1
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>    }&#39; \
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>$ curl -X POST 'http://localhost:5000/v1/llm/completions-sync?model_endpoint_name=llama-7b' \
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>    -H 'Content-Type: application/json' \
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>    -d '{
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>        "prompts": ["Tell me a joke about AI"],
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>        "max_new_tokens": 30,
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>        "temperature": 0.1
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>    }' \
 <a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>    -u test-user-id:
 </code></pre></div></p>
 <p>You should get a response similar to:
-<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>{&quot;status&quot;:&quot;SUCCESS&quot;,&quot;outputs&quot;:[{&quot;text&quot;:&quot;. Tell me a joke about AI. Tell me a joke about AI. Tell me a joke about AI. Tell me&quot;,&quot;num_completion_tokens&quot;:30}],&quot;traceback&quot;:null}
+<div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>{"status":"SUCCESS","outputs":[{"text":". Tell me a joke about AI. Tell me a joke about AI. Tell me a joke about AI. Tell me","num_completion_tokens":30}],"traceback":null}
 </code></pre></div></p>
 <h3 id="pointing-llm-engine-client-to-use-self-hosted-infrastructure">Pointing LLM Engine client to use self-hosted infrastructure<a class="headerlink" href="#pointing-llm-engine-client-to-use-self-hosted-infrastructure" title="Permanent link">&para;</a></h3>
 <p>The <code>llmengine</code> client makes requests to Scale AI's hosted infrastructure by default. You can have <code>llmengine</code> client make requests to your own self-hosted infrastructure by setting the <code>LLM_ENGINE_BASE_PATH</code> environment variable to the URL of the <code>llm-engine</code> service. </p>
