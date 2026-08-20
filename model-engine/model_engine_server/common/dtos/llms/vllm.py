@@ -68,6 +68,11 @@ class VLLMModelConfig(BaseModel):
         description="Tool call parser",
     )
 
+    reasoning_parser: Optional[str] = Field(
+        None,
+        description="Reasoning parser (e.g. 'qwen3', 'deepseek_r1'); splits model reasoning into reasoning_content in chat completions",
+    )
+
     enable_auto_tool_choice: Optional[bool] = Field(
         None,
         description="Enable auto tool choice",
