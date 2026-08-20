@@ -28,6 +28,10 @@ spec:
           }]
         sidecar.istio.io/proxyMemoryLimit: "5Gi"
         sidecar.istio.io/proxyMemory: "1Gi"
+        {{- /* Without a CPU request the sidecar is starved on nodes packed to their CPU
+             request capacity, its postStart hook hangs, and new gateway pods never
+             become Ready. No CPU limit: throttling the proxy adds tail latency. */}}
+        sidecar.istio.io/proxyCPU: {{ .Values.gateway.sidecarCPURequest | quote }}
       labels:
         {{- include "modelEngine.selectorLabels.gateway" . | nindent 8 }}
         {{- include "modelEngine.labels" . | nindent 8 }}
@@ -60,6 +64,7 @@ spec:
               path: /readyz
               port: 5000
             periodSeconds: 2
+            timeoutSeconds: {{ .Values.gateway.readinessProbeTimeoutSeconds }}
             failureThreshold: 30
           command: 
             - dumb-init

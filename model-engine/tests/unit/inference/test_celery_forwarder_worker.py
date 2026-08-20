@@ -6,9 +6,36 @@ retention). It is off by default so prefork behaviour is unchanged, and ignored 
 (which has no per-child recycling). app.Worker is mocked so .start() does not run a real worker.
 """
 
+from types import SimpleNamespace
 from unittest.mock import MagicMock
 
+import pytest
+from celery import Celery
+from model_engine_server.common.constants import DEFAULT_CELERY_TASK_NAME, LIRA_CELERY_TASK_NAME
 from model_engine_server.inference.forwarding import celery_forwarder
+
+
+@pytest.mark.parametrize("task_name", [LIRA_CELERY_TASK_NAME, DEFAULT_CELERY_TASK_NAME])
+def test_forwarder_tasks_use_configured_wall_clock_limit(monkeypatch, task_name):
+    app = Celery("test-forwarder", broker="memory://", backend="cache+memory://")
+    monkeypatch.setattr(celery_forwarder, "celery_app", lambda **_kwargs: app)
+    monkeypatch.setattr(
+        celery_forwarder,
+        "infra_config",
+        lambda: SimpleNamespace(s3_bucket="test", profile_ml_inference_worker=None),
+    )
+    monkeypatch.setattr(celery_forwarder, "DatadogInferenceMonitoringMetricsGateway", MagicMock)
+    forwarder = MagicMock(timeout_seconds=123.5, post_inference_hooks_handler=None)
+
+    celery_forwarder.create_celery_service(
+        forwarder=forwarder,
+        task_visibility=celery_forwarder.TaskVisibility.VISIBILITY_24H,
+        broker_type="redis",
+        backend_protocol="redis",
+        queue_name="test-queue",
+    )
+
+    assert app.tasks[task_name].time_limit == 123.5
 
 
 def _worker_kwargs(monkeypatch, pool, env_value):

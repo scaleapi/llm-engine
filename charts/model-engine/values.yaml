@@ -33,6 +33,49 @@ celery_broker_type_redis: null
 #     drop:
 #       - ALL
 
+# gateway [optional] tuning for the gateway deployment.
+gateway:
+  # readinessProbeTimeoutSeconds sets the /readyz probe timeout. The k8s default of 1s
+  # ejects saturated-but-healthy pods and concentrates load on the survivors.
+  readinessProbeTimeoutSeconds: 5
+  # sidecarCPURequest sets the istio-proxy CPU request (no limit). Without it the
+  # sidecar is starved on nodes at full CPU request capacity and pods never go Ready.
+  sidecarCPURequest: 250m
+  # retries is the Envoy retry policy on the gateway VirtualService. perTryTimeout
+  # stays unset by default: the route carries streaming and long-lived requests,
+  # which a per-try timeout would abort mid-flight.
+  retries:
+    attempts: 3
+    retryOn: connect-failure,unavailable,502,504
+    perTryTimeout: null
+
+# rateLimits [optional] per-pod Envoy local_ratelimit token buckets on the gateway
+# sidecars (inbound). Overflow returns 429 at the proxy without reaching a gateway
+# worker. Buckets are per pod: the fleet ceiling is limit x Ready pods.
+rateLimits:
+  enabled: false
+  # Route matching is on Envoy :path, which includes the query string, so prefixes
+  # (not exact paths) are required. The trailing slash on the poll route keeps
+  # POST /v1/async-tasks out of the GET bucket.
+  routes:
+    # Task-status polls. A runaway-storm ceiling AND the aggregate byte bound: polls
+    # return task results inline (up to multi-MB), and the 2026-08 incident's binding
+    # resource was node NIC egress (~500MB/s per pod). 50 rps/pod caps worst-case
+    # egress at ~265MB/s/pod while still admitting ~15x baseline traffic (1,500 rps
+    # at a 30-pod fleet, ~= the incident's peak). Revisit upward once inline results
+    # are replaced by presigned URLs (MLI-8311).
+    - name: get_async_task
+      method: GET
+      pathPrefix: /v1/async-tasks/
+      requestsPerSecondPerPod: 50
+      burst: 100
+    # Task submissions. Proportionally tighter: producing above endpoint drain is pure
+    # harm, and each submit costs a Postgres reader lookup + SQS send.
+    - name: post_async_tasks
+      method: POST
+      pathPrefix: /v1/async-tasks
+      requestsPerSecondPerPod: 20
+      burst: 40
 redis:
   auth:
   authSecretName: ""

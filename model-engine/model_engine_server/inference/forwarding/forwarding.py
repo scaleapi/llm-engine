@@ -1,5 +1,6 @@
 import ast
 import json
+import math
 import os
 import time
 from dataclasses import dataclass
@@ -41,6 +42,8 @@ KEY_SERIALIZE_RESULTS_AS_STRING: str = "serialize_results_as_string"
 ENV_SERIALIZE_RESULTS_AS_STRING: str = "SERIALIZE_RESULTS_AS_STRING"
 
 DEFAULT_PORT: int = 5005
+
+DEFAULT_SYNC_TIMEOUT_SECONDS: float = 3600
 
 
 class ModelEngineSerializationMixin:
@@ -169,6 +172,10 @@ class Forwarder(ModelEngineSerializationMixin):
     # We do this to avoid having to put this data in any sync response and only do it for async responses
     forward_http_status_in_body: bool
     post_inference_hooks_handler: Optional[PostInferenceHooksHandler] = None
+    # Cap on the full round-trip to the user-defined service. Must be explicit: without
+    # one, aiohttp applies its default total=300s and long-running non-streaming
+    # generations get cut off with a 500 while the model server keeps computing.
+    timeout_seconds: float = DEFAULT_SYNC_TIMEOUT_SECONDS
 
     async def forward(self, json_payload: Any, trace_config: Optional[str] = None) -> Any:
         json_payload, using_serialize_results_as_string = self.unwrap_json_payload(json_payload)
@@ -185,6 +192,7 @@ class Forwarder(ModelEngineSerializationMixin):
                     self.predict_endpoint,
                     json=json_payload,
                     headers=headers,
+                    timeout=aiohttp.ClientTimeout(total=self.timeout_seconds),
                 )
                 response = await response_raw.json(
                     content_type=None
@@ -239,6 +247,7 @@ class Forwarder(ModelEngineSerializationMixin):
                 self.predict_endpoint,
                 json=json_payload,
                 headers=headers,
+                timeout=self.timeout_seconds,
             )
             response = response_raw.json()
         except Exception:
@@ -297,8 +306,17 @@ class LoadForwarder:
     wrap_response: bool = True
     forward_http_status: bool = False
     forward_http_status_in_body: bool = False
+    timeout_seconds: float = DEFAULT_SYNC_TIMEOUT_SECONDS
 
     def load(self, resources: Optional[Path], cache: Any) -> Forwarder:
+        if (
+            not isinstance(self.timeout_seconds, (int, float))
+            or isinstance(self.timeout_seconds, bool)
+            or not math.isfinite(self.timeout_seconds)
+            or self.timeout_seconds <= 0
+        ):
+            raise ValueError(f"timeout_seconds must be a positive number: {self.timeout_seconds=}")
+
         if self.use_grpc:
             raise NotImplementedError(
                 "User-defined service **MUST** use HTTP at the moment. "
@@ -405,6 +423,7 @@ class LoadForwarder:
             wrap_response=self.wrap_response,
             forward_http_status=self.forward_http_status,
             forward_http_status_in_body=self.forward_http_status_in_body,
+            timeout_seconds=self.timeout_seconds,
         )
 
 

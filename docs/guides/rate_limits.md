@@ -14,6 +14,36 @@ The LLM Engine API is currently in a preview mode, and therefore we currently do
 As the API moves towards a production release, we will update this section with specific rate limits. For now, the API
 will return HTTP 429 on an as-needed basis.
 
+# Polling async tasks
+
+When you submit async inference tasks, poll each task's status with a delay that grows
+between attempts instead of a fixed tight interval. With a fixed interval, total poll
+traffic scales with the number of outstanding tasks: a large batch that outpaces the
+endpoint's drain rate generates an ever-growing poll load on the API while the tasks it
+is asking about cannot complete any faster.
+
+The `tenacity` library (used in the backoff examples below) expresses this directly;
+`wait_random_exponential` adds the jitter that keeps polls from many tasks from
+synchronizing:
+
+=== "Polling with exponential backoff in python"
+
+```python
+from tenacity import retry, retry_if_result, stop_after_delay, wait_random_exponential
+
+@retry(
+    retry=retry_if_result(lambda response: response.status not in ("SUCCESS", "FAILURE")),
+    wait=wait_random_exponential(min=1, max=60),
+    stop=stop_after_delay(3600),
+)
+def wait_for_task(client, task_id):
+    return client.get_async_task(task_id)
+```
+
+For large batches, also bound how many tasks you have outstanding (submit in windows
+sized to the endpoint's throughput) rather than submitting everything up front and
+polling the whole set.
+
 # Error mitigation
 
 ## Retrying with exponential backoff

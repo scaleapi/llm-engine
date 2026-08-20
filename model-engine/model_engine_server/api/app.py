@@ -313,8 +313,13 @@ def load_redis():
     get_or_create_aioredis_pool()
 
 
-def healthcheck() -> Response:
-    """Returns 200 if the app is healthy."""
+async def healthcheck() -> Response:
+    """Returns 200 if the app is healthy.
+
+    Must be async: a sync handler runs in the shared threadpool, so under load the
+    probe queues behind blocked requests and misses its timeout, ejecting pods that
+    are saturated but healthy.
+    """
     return Response(status_code=200)
 
 

@@ -4,12 +4,14 @@ from typing import Mapping
 from unittest import mock
 from unittest.mock import AsyncMock, MagicMock
 
+import aiohttp
 import pytest
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
 from model_engine_server.core.utils.env import environment
 from model_engine_server.domain.entities import ModelEndpointConfig
 from model_engine_server.inference.forwarding.forwarding import (
+    DEFAULT_SYNC_TIMEOUT_SECONDS,
     ENV_SERIALIZE_RESULTS_AS_STRING,
     KEY_SERIALIZE_RESULTS_AS_STRING,
     Forwarder,
@@ -261,6 +263,74 @@ def test_forwarders(post_inference_hooks_handler):
     _check(json_response)
 
 
+@mock.patch("requests.post")
+def test_sync_forwarder_uses_configured_timeout(mock_post, post_inference_hooks_handler):
+    mock_post.return_value.status_code = 200
+    mock_post.return_value.json.return_value = PAYLOAD
+    fwd = Forwarder(
+        "http://user-service/predict",
+        model_engine_unwrap=True,
+        serialize_results_as_string=False,
+        post_inference_hooks_handler=post_inference_hooks_handler,
+        wrap_response=False,
+        forward_http_status=False,
+        forward_http_status_in_body=False,
+        timeout_seconds=123,
+    )
+
+    fwd({"ignore": "me"})
+
+    mock_post.assert_called_once_with(
+        "http://user-service/predict",
+        json={"ignore": "me"},
+        headers={"Content-Type": "application/json"},
+        timeout=123,
+    )
+
+
+@pytest.mark.asyncio
+async def test_async_forwarder_uses_configured_timeout(post_inference_hooks_handler):
+    post_calls = []
+
+    class FakeAiohttpResponse:
+        status = 200
+
+        async def json(self, content_type=None):
+            return PAYLOAD
+
+    class FakeAiohttpSession:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *exc):
+            return False
+
+        async def post(self, url, **kwargs):
+            post_calls.append((url, kwargs))
+            return FakeAiohttpResponse()
+
+    fwd = Forwarder(
+        "http://user-service/predict",
+        model_engine_unwrap=True,
+        serialize_results_as_string=False,
+        post_inference_hooks_handler=post_inference_hooks_handler,
+        wrap_response=False,
+        forward_http_status=False,
+        forward_http_status_in_body=False,
+        timeout_seconds=123,
+    )
+    with mock.patch("aiohttp.ClientSession", FakeAiohttpSession):
+        response = await fwd.forward({"ignore": "me"})
+
+    assert response == PAYLOAD
+    ((url, kwargs),) = post_calls
+    assert url == "http://user-service/predict"
+    assert kwargs["timeout"] == aiohttp.ClientTimeout(total=123)
+
+
 def _check(json_response) -> None:
     json_response = (
         json.loads(json_response.body.decode("utf-8"))
@@ -478,6 +548,40 @@ def test_forwarder_loader():
     fwd = LoadForwarder(wrap_response=False).load(None, None)  # type: ignore
     json_response = fwd({"ignore": "me"})
     _check_responses_not_wrapped(json_response)
+
+
+@mock.patch("requests.post", mocked_post)
+@mock.patch("requests.get", mocked_get)
+@mock.patch(
+    "model_engine_server.inference.forwarding.forwarding.get_endpoint_config",
+    mocked_get_endpoint_config,
+)
+@pytest.mark.parametrize(
+    "loader_kwargs, expected_timeout",
+    [
+        pytest.param({}, DEFAULT_SYNC_TIMEOUT_SECONDS, id="default"),
+        pytest.param({"timeout_seconds": 123.0}, 123.0, id="override"),
+    ],
+)
+def test_forwarder_loader_timeout(loader_kwargs, expected_timeout):
+    fwd = LoadForwarder(**loader_kwargs).load(None, None)  # type: ignore
+    assert fwd.timeout_seconds == expected_timeout
+
+
+@pytest.mark.parametrize(
+    "invalid_timeout",
+    [
+        pytest.param(0, id="zero"),
+        pytest.param(-1, id="negative"),
+        pytest.param(None, id="null"),
+        pytest.param(float("inf"), id="non-finite"),
+        pytest.param("60", id="string"),
+        pytest.param(True, id="bool"),
+    ],
+)
+def test_forwarder_loader_invalid_timeout(invalid_timeout):
+    with pytest.raises(ValueError, match="timeout_seconds"):
+        LoadForwarder(timeout_seconds=invalid_timeout).load(None, None)  # type: ignore
 
 
 @mock.patch("requests.post", mocked_post)

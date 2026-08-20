@@ -1,0 +1,100 @@
+{{- if (.Values.rateLimits).enabled -}}
+{{- $fullName := include "modelEngine.fullname" . -}}
+{{- $routes := .Values.rateLimits.routes -}}
+# Envoy local_ratelimit on the gateway sidecars (inbound), giving per-pod token
+# buckets. Buckets are per Envoy process, so the fleet-wide ceiling is
+# (limit x Ready pods) and scales with the HPA. Overflow is rejected at the proxy
+# as 429 and never consumes a gateway worker.
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: {{ $fullName }}-ratelimit
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "modelEngine.labels" . | nindent 4 }}
+spec:
+  workloadSelector:
+    labels:
+      {{- include "modelEngine.selectorLabels.gateway" . | nindent 6 }}
+  configPatches:
+    - applyTo: HTTP_FILTER
+      match:
+        context: SIDECAR_INBOUND
+        listener:
+          filterChain:
+            filter:
+              name: envoy.filters.network.http_connection_manager
+              subFilter:
+                name: envoy.filters.http.router
+      patch:
+        operation: INSERT_BEFORE
+        value:
+          name: envoy.filters.http.local_ratelimit
+          typed_config:
+            "@type": type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
+            stat_prefix: model_engine_ratelimit
+            status:
+              code: TooManyRequests
+            # Envoy 1.23 applies stage-0 virtual-host rate limits automatically. It has
+            # neither vh_rate_limits nor always_consume_default_token_bucket, and an
+            # unknown field makes istiod skip the whole patch silently. The default
+            # bucket is therefore effectively unlimited because every request consumes it.
+            token_bucket:
+              max_tokens: 100000
+              tokens_per_fill: 100000
+              fill_interval: 1s
+            filter_enabled:
+              default_value:
+                numerator: 100
+                denominator: HUNDRED
+            filter_enforced:
+              default_value:
+                numerator: 100
+                denominator: HUNDRED
+            response_headers_to_add:
+              - append_action: OVERWRITE_IF_EXISTS_OR_ADD
+                header:
+                  key: x-local-rate-limited
+                  value: "true"
+            descriptors:
+              {{- range $routes }}
+              - entries:
+                  - key: route
+                    value: {{ .name }}
+                token_bucket:
+                  max_tokens: {{ .burst }}
+                  tokens_per_fill: {{ .requestsPerSecondPerPod }}
+                  fill_interval: 1s
+              {{- end }}
+    - applyTo: HTTP_ROUTE
+      match:
+        context: SIDECAR_INBOUND
+        routeConfiguration:
+          vhost:
+            # Istio names inbound virtual hosts from the Service port. Verified empirically
+            # on both Istio 1.15 (Envoy config_dump on ml-training-new: inbound|http|80
+            # exists, inbound|http|5000 does not) and Istio 1.30; a wrong name here makes
+            # the patch skip silently and disables all route buckets.
+            name: {{ printf "inbound|http|%v" .Values.service.port | quote }}
+      patch:
+        operation: MERGE
+        # Rate-limit actions must live on the ROUTE, not the virtual host: Envoy 1.23's
+        # local_ratelimit only reads route-level policies (vh_rate_limits arrived in
+        # 1.24+), so a VIRTUAL_HOST patch is silently inert on prod sidecars.
+        value:
+          route:
+            rate_limits:
+            {{- range $routes }}
+            - actions:
+                - header_value_match:
+                    descriptor_key: route
+                    descriptor_value: {{ .name }}
+                    headers:
+                      - name: ":method"
+                        string_match:
+                          exact: {{ .method }}
+                      - name: ":path"
+                        string_match:
+                          prefix: {{ .pathPrefix }}
+            {{- end }}
+{{- end }}
