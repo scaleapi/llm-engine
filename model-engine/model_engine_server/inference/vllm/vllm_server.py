@@ -10,9 +10,15 @@ ENABLE_STARTUP_METRICS = os.environ.get("ENABLE_STARTUP_METRICS", "").lower() ==
 
 # Now do heavy imports (noqa: E402 - intentional late import for startup time measurement)
 import asyncio  # noqa: E402
+import sys  # noqa: E402
 import threading  # noqa: E402
 from logging import Logger  # noqa: E402
 
+# vLLM's spawn-mode engine-core workers re-import this module with a sys.path/cwd that
+# no longer resolves the sibling `utils` package (a differently-rooted `utils` wins the
+# lookup and raises ModuleNotFoundError). Anchor resolution to this file's directory so
+# the import behaves identically in the parent and in spawned children.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from utils.resource_debug import check_unknown_startup_memory_usage  # noqa: E402
 from vllm.entrypoints.openai.api_server import run_server  # noqa: E402
 from vllm.entrypoints.openai.cli_args import make_arg_parser  # noqa: E402
