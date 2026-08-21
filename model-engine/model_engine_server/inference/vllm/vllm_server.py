@@ -10,24 +10,8 @@ ENABLE_STARTUP_METRICS = os.environ.get("ENABLE_STARTUP_METRICS", "").lower() ==
 
 # Now do heavy imports (noqa: E402 - intentional late import for startup time measurement)
 import asyncio  # noqa: E402
-import sys  # noqa: E402
 import threading  # noqa: E402
 from logging import Logger  # noqa: E402
-
-# vLLM's spawn-mode engine-core workers (used whenever CUDA is initialized in the API
-# server, e.g. tensor-parallel endpoints) re-import this module and fail to resolve the
-# sibling `utils` package even with an identical sys.path: namespace-package resolution
-# misbehaves inside multiprocessing's prepare(). Workers never call the debug hook (the
-# call site is under `if __name__ == "__main__"`), so fall back to a no-op rather than
-# killing engine-core startup.
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-try:
-    from utils.resource_debug import check_unknown_startup_memory_usage  # noqa: E402
-except ModuleNotFoundError:
-
-    def check_unknown_startup_memory_usage() -> None:
-        pass
-
 
 from vllm.entrypoints.openai.api_server import run_server  # noqa: E402
 from vllm.entrypoints.openai.cli_args import make_arg_parser  # noqa: E402
@@ -125,6 +109,13 @@ async def _run_instrumented_server(args):
 
 
 if __name__ == "__main__":
+    # Imported here, not at module top: vLLM's spawn-mode engine-core workers (used
+    # whenever CUDA is initialized in the API server, e.g. tensor-parallel endpoints)
+    # re-import this module as __mp_main__, where namespace-package resolution of the
+    # sibling `utils` package fails inside multiprocessing's prepare() and kills
+    # engine-core startup. Only the real entrypoint needs the hook.
+    from utils.resource_debug import check_unknown_startup_memory_usage
+
     check_unknown_startup_memory_usage()
 
     parser = FlexibleArgumentParser()
