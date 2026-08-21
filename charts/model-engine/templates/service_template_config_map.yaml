@@ -360,6 +360,9 @@ data:
                   memory: ${MEMORY}
                   ${STORAGE_DICT}
               volumeMounts:
+                {{- with $.Values.extraPodVolumeMounts }}
+                {{- toYaml . | nindent 16 }}
+                {{- end }}
                 {{- if $require_aws_config }}
                 - name: config-volume
                   mountPath: /opt/.aws/config
@@ -385,6 +388,9 @@ data:
           securityContext:
             fsGroup: 65534
           volumes:
+            {{- with $.Values.extraPodVolumes }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
             {{- if $require_aws_config }}
             - name: config-volume
               configMap:
@@ -774,6 +780,9 @@ data:
                     memory: ${MEMORY}
                     ${STORAGE_DICT}
                 volumeMounts:
+                  {{- with $.Values.extraPodVolumeMounts }}
+                  {{- toYaml . | nindent 18 }}
+                  {{- end }}
                   {{- if $require_aws_config }}
                   - name: config-volume
                     mountPath: /opt/.aws/config
@@ -795,6 +804,9 @@ data:
                   - containerPort: ${USER_CONTAINER_PORT}
                     name: http
             volumes:
+              {{- with $.Values.extraPodVolumes }}
+              {{- toYaml . | nindent 14 }}
+              {{- end }}
               {{- if $require_aws_config }}
               - name: config-volume
                 configMap:
@@ -871,6 +883,10 @@ data:
                 imagePullPolicy: IfNotPresent
                 command: ${WORKER_COMMAND}
                 env: ${WORKER_ENV}
+                {{- with $.Values.extraPodEnvFrom }}
+                envFrom:
+                {{- toYaml . | nindent 16 }}
+                {{- end }}
                 resources:
                   requests:
                     {{- if eq $device "gpu" }}
@@ -887,6 +903,9 @@ data:
                     memory: ${MEMORY}
                     ${STORAGE_DICT}
                 volumeMounts:
+                  {{- with $.Values.extraPodVolumeMounts }}
+                  {{- toYaml . | nindent 18 }}
+                  {{- end }}
                   {{- if $require_aws_config }}
                   - name: config-volume
                     mountPath: /opt/.aws/config
@@ -908,6 +927,9 @@ data:
                   - containerPort: ${USER_CONTAINER_PORT}
                     name: http
             volumes:
+              {{- with $.Values.extraPodVolumes }}
+              {{- toYaml . | nindent 14 }}
+              {{- end }}
               {{- if $require_aws_config }}
               - name: config-volume
                 configMap:
@@ -1093,6 +1115,9 @@ data:
           {{- end }}
           serviceAccountName: {{ $launch_name }}
           volumes:
+            {{- with $.Values.extraPodVolumes }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
             {{- if $require_aws_config }}
             - name: config-volume
               configMap:
@@ -1128,6 +1153,10 @@ data:
                 {{- end }}
                 {{- end }}
               imagePullPolicy: IfNotPresent
+              {{- with $.Values.extraPodEnvFrom }}
+              envFrom:
+              {{- toYaml . | nindent 14 }}
+              {{- end }}
               command:
                 - dumb-init
                 - --
@@ -1159,6 +1188,9 @@ data:
                   memory: 32Gi
                   ephemeral-storage: 30Gi
               volumeMounts:
+                {{- with $.Values.extraPodVolumeMounts }}
+                {{- toYaml . | nindent 16 }}
+                {{- end }}
                 {{- if $require_aws_config }}
                 - name: config-volume
                   mountPath: /opt/.aws/config
@@ -1221,6 +1253,9 @@ data:
           serviceAccountName: {{ $launch_name }}
           {{- end }}
           volumes:
+            {{- with $.Values.extraPodVolumes }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
             {{- if $require_aws_config }}
             - name: config-volume
               configMap:
@@ -1273,6 +1308,9 @@ data:
                   memory: ${MEMORY}
                   ${STORAGE_DICT}
               volumeMounts:
+                {{- with $.Values.extraPodVolumeMounts }}
+                {{- toYaml . | nindent 16 }}
+                {{- end }}
                 {{- if $require_aws_config }}
                 - name: config-volume
                   mountPath: /opt/.aws/config
@@ -1292,6 +1330,10 @@ data:
               env:
                 - name: AWS_CONFIG_FILE
                   value: "/opt/.aws/config"
+              {{- with $.Values.extraPodEnvFrom }}
+              envFrom:
+              {{- toYaml . | nindent 14 }}
+              {{- end }}
               command:
                 - python
                 - -m
@@ -1311,6 +1353,9 @@ data:
                   cpu: 1
                   memory: 1Gi
               volumeMounts:
+                {{- with $.Values.extraPodVolumeMounts }}
+                {{- toYaml . | nindent 16 }}
+                {{- end }}
                 {{- if $require_aws_config }}
                 - name: config-volume
                   mountPath: /opt/.aws/config
