@@ -20,6 +20,22 @@ except ImportError:
 __all__ = ("S3Backend",)
 
 
+try:  # The gateway traces result fetches; celery workers may run without ddtrace.
+    from ddtrace import tracer as _tracer
+except ImportError:  # pragma: no cover
+    _tracer = None
+
+
+def _backend_get_span():
+    """Span for the S3 result download + decode, which is otherwise invisible in
+    traces (boto spans cover only the API call, not the body read)."""
+    if _tracer is None:
+        import contextlib
+
+        return contextlib.nullcontext()
+    return _tracer.trace("celery.s3_backend.get", span_type="storage")
+
+
 class S3Backend(KeyValueStoreBackend):
     """An S3 task result store.
 
@@ -71,9 +87,10 @@ class S3Backend(KeyValueStoreBackend):
         key = bytes_to_str(key)
         s3_object = self._get_s3_object(key)
         try:
-            s3_object.load()
-            data = s3_object.get()["Body"].read()
-            return data if self.content_encoding == "binary" else data.decode("utf-8")
+            with _backend_get_span():
+                s3_object.load()
+                data = s3_object.get()["Body"].read()
+                return data if self.content_encoding == "binary" else data.decode("utf-8")
         except botocore.exceptions.ClientError as error:
             # A 403 is returned if the object does not exist and we don't have ListBucket permissions
             # such as in Hosted Model Inference. If we do have ListBucket permissions, we get 404.

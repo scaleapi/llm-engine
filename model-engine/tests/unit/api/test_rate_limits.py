@@ -328,3 +328,74 @@ async def test_decision_metric_breaker_open(monkeypatch):
     for _ in range(rate_limits._BREAKER_FAILURE_THRESHOLD + 1):
         await rate_limits.enforce_user_rate_limit("get_async_task", USER)
     assert any("outcome:breaker_open" in tags for tags in emitted[-1:])
+
+
+@pytest.mark.parametrize(
+    "scope,expected_key_part",
+    [
+        pytest.param("end_abc123", ":test-user:end_abc123:", id="scope-in-key"),
+        pytest.param(None, ":test-user:", id="no-scope-key-unchanged"),
+    ],
+)
+@pytest.mark.asyncio
+async def test_scope_folds_into_bucket_key(monkeypatch, scope, expected_key_part):
+    monkeypatch.setattr(rate_limits.hmi_config, "user_rate_limits", LIMITS, raising=False)
+    redis = FakeRateLimitRedis(count=1)
+    monkeypatch.setattr(rate_limits, "_get_client", lambda: redis)
+    await rate_limits.enforce_user_rate_limit("get_async_task", USER, scope)
+    assert len(redis.keys) == 1
+    assert expected_key_part in redis.keys[0]
+    if scope is None:
+        assert redis.keys[0].count(":") == 3  # route:user:second, no scope segment
+
+
+@pytest.mark.asyncio
+async def test_scopes_use_independent_buckets(monkeypatch):
+    """Two scopes under one user must hit distinct Redis keys in the same second."""
+    monkeypatch.setattr(rate_limits.hmi_config, "user_rate_limits", LIMITS, raising=False)
+    redis = FakeRateLimitRedis(count=1)
+    monkeypatch.setattr(rate_limits, "_get_client", lambda: redis)
+    await rate_limits.enforce_user_rate_limit("get_async_task", USER, "end_a")
+    await rate_limits.enforce_user_rate_limit("get_async_task", USER, "end_b")
+    assert len(set(redis.keys)) == 2
+
+
+@pytest.mark.parametrize(
+    "scope,expect_tag",
+    [
+        pytest.param("end_abc123", True, id="scope-tagged"),
+        pytest.param(None, False, id="no-scope-no-tag"),
+    ],
+)
+@pytest.mark.asyncio
+async def test_decision_metric_scope_tag(monkeypatch, scope, expect_tag):
+    monkeypatch.setattr(rate_limits.hmi_config, "user_rate_limits", LIMITS, raising=False)
+    monkeypatch.setattr(rate_limits, "_get_client", lambda: FakeRateLimitRedis(count=1))
+    emitted = []
+    monkeypatch.setattr(rate_limits.statsd, "increment", lambda name, tags: emitted.append(tags))
+    await rate_limits.enforce_user_rate_limit("get_async_task", USER, scope)
+    assert len(emitted) == 1
+    assert (f"scope:{scope}" in emitted[0]) == expect_tag
+
+
+@pytest.mark.asyncio
+async def test_dependency_extracts_scope_query_param(monkeypatch):
+    """The route dependency reads scope_query_param off the request and keys on it."""
+    monkeypatch.setattr(
+        rate_limits.hmi_config,
+        "user_rate_limits",
+        {"enforce": True, "routes": {"post_async_tasks": 5}},
+        raising=False,
+    )
+    redis = FakeRateLimitRedis(count=1)
+    monkeypatch.setattr(rate_limits, "_get_client", lambda: redis)
+
+    class FakeRequest:
+        query_params = {"model_endpoint_id": "end_xyz789"}
+
+    dependency = rate_limits.user_rate_limit(
+        "post_async_tasks", scope_query_param="model_endpoint_id"
+    )
+    # Call the dependency directly; auth is normally injected by FastAPI.
+    await dependency(FakeRequest(), USER)
+    assert ":test-user:end_xyz789:" in redis.keys[0]

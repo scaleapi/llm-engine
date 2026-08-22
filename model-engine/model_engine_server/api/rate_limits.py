@@ -1,7 +1,11 @@
 """Per-user request rate limiting, enforced after authentication resolves identity.
 
-Limits are fixed 1-second windows in Redis, keyed on (route class, user_id).
-The limiter fails open: if Redis is unavailable or slow, requests are allowed.
+Limits are fixed 1-second windows in Redis, keyed on (route class, user_id) and,
+for routes that declare a scope query parameter, additionally on that parameter's
+value (e.g. post_async_tasks is limited per (user, model_endpoint_id), so one
+noisy pipeline behind a shared credential cannot starve the credential's other
+pipelines). The limiter fails open: if Redis is unavailable or slow, requests
+are allowed.
 """
 
 import asyncio
@@ -10,7 +14,7 @@ from typing import Optional
 
 import redis.asyncio as aioredis
 from datadog import statsd
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from model_engine_server.api.dependencies import get_or_create_aioredis_pool, verify_authentication
 from model_engine_server.common.config import hmi_config
 from model_engine_server.common.env_vars import DD_ENV
@@ -46,20 +50,22 @@ _consecutive_failures: int = 0
 _breaker_open_until: float = 0.0
 
 
-def _emit_decision(outcome: str, route_class: str, user_id: str) -> None:
+def _emit_decision(
+    outcome: str, route_class: str, user_id: str, scope: Optional[str] = None
+) -> None:
     # Fire-and-forget UDP to the local Datadog agent. This doubles as the per-tenant
     # volume signal on the rate-limited routes (outcome:allowed) and as enforcement
     # telemetry (throttled/would_throttle/fail_open/breaker_open), replacing the
     # postmortem's proposed raw request-volume monitor.
-    statsd.increment(
-        "model_engine.user_rate_limit.decision",
-        tags=[
-            f"env:{DD_ENV}",
-            f"route_class:{route_class}",
-            f"outcome:{outcome}",
-            f"user_id:{user_id}",
-        ],
-    )
+    tags = [
+        f"env:{DD_ENV}",
+        f"route_class:{route_class}",
+        f"outcome:{outcome}",
+        f"user_id:{user_id}",
+    ]
+    if scope is not None:
+        tags.append(f"scope:{scope}")
+    statsd.increment("model_engine.user_rate_limit.decision", tags=tags)
 
 
 def _should_log(log_key: str) -> bool:
@@ -89,9 +95,12 @@ async def _count_request(key: str) -> int:
     return int(await _get_client().eval(_INCR_WITH_TTL_LUA, 1, key))
 
 
-async def enforce_user_rate_limit(route_class: str, user: User) -> None:
+async def enforce_user_rate_limit(
+    route_class: str, user: User, scope: Optional[str] = None
+) -> None:
     """Raises 429 with Retry-After if the user is over their per-route limit.
 
+    When `scope` is set, the limit applies per (user, scope) rather than per user.
     No-op unless `user_rate_limits` is configured; counts but does not reject
     unless `user_rate_limits.enforce` is true (log-only rollout mode).
     """
@@ -102,9 +111,10 @@ async def enforce_user_rate_limit(route_class: str, user: User) -> None:
     limit = int(limit)
     global _consecutive_failures, _breaker_open_until
     if time.monotonic() < _breaker_open_until:
-        _emit_decision("breaker_open", route_class, user.user_id)
+        _emit_decision("breaker_open", route_class, user.user_id, scope)
         return
-    key = f"user-rate-limit:{route_class}:{user.user_id}:{int(time.time())}"
+    scope_part = f":{scope}" if scope is not None else ""
+    key = f"user-rate-limit:{route_class}:{user.user_id}{scope_part}:{int(time.time())}"
     try:
         count = await asyncio.wait_for(_count_request(key), timeout=_REDIS_TIMEOUT_SECONDS)
         _consecutive_failures = 0
@@ -117,20 +127,20 @@ async def enforce_user_rate_limit(route_class: str, user: User) -> None:
             logger.warning(
                 f"Rate limiter failing open for route_class={route_class}", exc_info=True
             )
-        _emit_decision("fail_open", route_class, user.user_id)
+        _emit_decision("fail_open", route_class, user.user_id, scope)
         return
     if count <= limit:
-        _emit_decision("allowed", route_class, user.user_id)
+        _emit_decision("allowed", route_class, user.user_id, scope)
         return
     if not config.get("enforce"):
         if _should_log(f"over-limit:{user.user_id}:{route_class}"):
             logger.warning(
                 f"Rate limit exceeded (log-only): user_id={user.user_id} "
-                f"route_class={route_class} count={count} limit={limit}"
+                f"route_class={route_class} scope={scope} count={count} limit={limit}"
             )
-        _emit_decision("would_throttle", route_class, user.user_id)
+        _emit_decision("would_throttle", route_class, user.user_id, scope)
         return
-    _emit_decision("throttled", route_class, user.user_id)
+    _emit_decision("throttled", route_class, user.user_id, scope)
     raise HTTPException(
         status_code=status.HTTP_429_TOO_MANY_REQUESTS,
         detail=(
@@ -141,14 +151,17 @@ async def enforce_user_rate_limit(route_class: str, user: User) -> None:
     )
 
 
-def user_rate_limit(route_class: str):
+def user_rate_limit(route_class: str, scope_query_param: Optional[str] = None):
     """FastAPI dependency limiting the authenticated user on this route.
 
+    When `scope_query_param` names a query parameter, its value is folded into
+    the bucket key so the limit applies per (user, scope) instead of per user.
     Composes with verify_authentication (FastAPI caches it per request, so
     authentication still runs once).
     """
 
-    async def dependency(auth: User = Depends(verify_authentication)) -> None:
-        await enforce_user_rate_limit(route_class, auth)
+    async def dependency(request: Request, auth: User = Depends(verify_authentication)) -> None:
+        scope = request.query_params.get(scope_query_param) if scope_query_param else None
+        await enforce_user_rate_limit(route_class, auth, scope)
 
     return dependency
