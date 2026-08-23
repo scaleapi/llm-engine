@@ -363,20 +363,21 @@ async def test_scopes_use_independent_buckets(monkeypatch):
 
 
 @pytest.mark.parametrize(
-    "scope,count,expect_tag",
+    "scope,counts,expect_429,expect_tag",
     [
-        pytest.param("end_abc123", 100, True, id="scope-tagged-on-throttle"),
-        pytest.param("end_abc123", 1, False, id="scope-untagged-on-allowed"),
-        pytest.param(None, 100, False, id="no-scope-no-tag"),
+        # aggregate fine (1), scoped bucket over (6 > 5): the scope earns the tag
+        pytest.param("end_abc123", [[1, 6]], True, True, id="scope-tagged-on-scoped-throttle"),
+        pytest.param("end_abc123", [[1, 1]], False, False, id="scope-untagged-on-allowed"),
+        pytest.param(None, [[100]], True, False, id="no-scope-no-tag"),
     ],
 )
 @pytest.mark.asyncio
-async def test_decision_metric_scope_tag(monkeypatch, scope, count, expect_tag):
+async def test_decision_metric_scope_tag(monkeypatch, scope, counts, expect_429, expect_tag):
     monkeypatch.setattr(rate_limits.hmi_config, "user_rate_limits", LIMITS, raising=False)
-    monkeypatch.setattr(rate_limits, "_get_client", lambda: FakeRateLimitRedis(count=count))
+    monkeypatch.setattr(rate_limits, "_get_client", lambda: FakeRateLimitRedis(sequence=counts))
     emitted = []
     monkeypatch.setattr(rate_limits.statsd, "increment", lambda name, tags: emitted.append(tags))
-    if count > 5:
+    if expect_429:
         with pytest.raises(HTTPException):
             await rate_limits.enforce_user_rate_limit("get_async_task", USER, scope)
     else:
@@ -434,6 +435,29 @@ async def test_aggregate_ceiling_bounds_rotating_scopes(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_aggregate_rejection_not_tagged_with_scope(monkeypatch):
+    """Aggregate-ceiling rejections must not carry the rotated scope as a tag."""
+    monkeypatch.setattr(
+        rate_limits.hmi_config,
+        "user_rate_limits",
+        {
+            "enforce": True,
+            "routes": {"post_async_tasks": 100},
+            "aggregate_routes": {"post_async_tasks": 5},
+        },
+        raising=False,
+    )
+    emitted = []
+    monkeypatch.setattr(rate_limits.statsd, "increment", lambda name, tags: emitted.append(tags))
+    redis = FakeRateLimitRedis(sequence=[[6, 1]])
+    monkeypatch.setattr(rate_limits, "_get_client", lambda: redis)
+    with pytest.raises(HTTPException):
+        await rate_limits.enforce_user_rate_limit("post_async_tasks", USER, "end_rotated_9")
+    assert len(emitted) == 1
+    assert not any(tag.startswith("scope:") for tag in emitted[0])
+
+
+@pytest.mark.asyncio
 async def test_default_aggregate_ceiling_without_config(monkeypatch):
     """Scoped routes are aggregate-bounded even when aggregate_routes is absent."""
     monkeypatch.setattr(
@@ -458,7 +482,8 @@ async def test_scope_tag_omitted_on_allowed(monkeypatch):
     monkeypatch.setattr(rate_limits.statsd, "increment", lambda name, tags: emitted.append(tags))
     monkeypatch.setattr(rate_limits, "_get_client", lambda: FakeRateLimitRedis(count=1))
     await rate_limits.enforce_user_rate_limit("get_async_task", USER, "end_abc")
-    monkeypatch.setattr(rate_limits, "_get_client", lambda: FakeRateLimitRedis(count=100))
+    # aggregate fine, scoped bucket over: the throttle is attributable to the scope
+    monkeypatch.setattr(rate_limits, "_get_client", lambda: FakeRateLimitRedis(sequence=[[1, 100]]))
     with pytest.raises(HTTPException):
         await rate_limits.enforce_user_rate_limit("get_async_task", USER, "end_abc")
     allowed_tags, throttled_tags = emitted

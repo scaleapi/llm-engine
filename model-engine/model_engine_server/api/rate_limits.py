@@ -170,8 +170,8 @@ async def enforce_user_rate_limit(
         return
     exceeded = next(
         (
-            (count, bucket_limit)
-            for count, bucket_limit in zip(counts, limits)
+            (index, count, bucket_limit)
+            for index, (count, bucket_limit) in enumerate(zip(counts, limits))
             if count > bucket_limit
         ),
         None,
@@ -179,16 +179,20 @@ async def enforce_user_rate_limit(
     if exceeded is None:
         _emit_decision("allowed", route_class, user.user_id, scope)
         return
-    count, limit = exceeded
+    exceeded_index, count, limit = exceeded
+    # The aggregate bucket (index 0 when a scope is present) trips independently
+    # of the scope value, so tagging its rejections with the scope would let a
+    # caller past the ceiling mint one metric series per rotated scope.
+    scope_exceeded = scope if (scope is not None and exceeded_index == 1) else None
     if not config.get("enforce"):
         if _should_log(f"over-limit:{user.user_id}:{route_class}"):
             logger.warning(
                 f"Rate limit exceeded (log-only): user_id={user.user_id} "
                 f"route_class={route_class} scope={scope} count={count} limit={limit}"
             )
-        _emit_decision("would_throttle", route_class, user.user_id, scope)
+        _emit_decision("would_throttle", route_class, user.user_id, scope_exceeded)
         return
-    _emit_decision("throttled", route_class, user.user_id, scope)
+    _emit_decision("throttled", route_class, user.user_id, scope_exceeded)
     raise HTTPException(
         status_code=status.HTTP_429_TOO_MANY_REQUESTS,
         detail=(
