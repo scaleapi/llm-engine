@@ -34,10 +34,10 @@ class FakeRateLimitRedis:
             item = self.sequence.pop(0)
             if isinstance(item, Exception):
                 raise item
-            return item
+            return item if isinstance(item, list) else [item] * numkeys
         if self.error:
             raise self.error
-        return self.count
+        return [self.count] * numkeys
 
 
 class FakeClock:
@@ -331,22 +331,23 @@ async def test_decision_metric_breaker_open(monkeypatch):
 
 
 @pytest.mark.parametrize(
-    "scope,expected_key_part",
+    "scope,expected_keys",
     [
-        pytest.param("end_abc123", ":test-user:end_abc123:", id="scope-in-key"),
-        pytest.param(None, ":test-user:", id="no-scope-key-unchanged"),
+        pytest.param("end_abc123", 2, id="scoped-counts-aggregate-and-scope"),
+        pytest.param(None, 1, id="no-scope-single-key"),
     ],
 )
 @pytest.mark.asyncio
-async def test_scope_folds_into_bucket_key(monkeypatch, scope, expected_key_part):
+async def test_scope_folds_into_bucket_key(monkeypatch, scope, expected_keys):
     monkeypatch.setattr(rate_limits.hmi_config, "user_rate_limits", LIMITS, raising=False)
     redis = FakeRateLimitRedis(count=1)
     monkeypatch.setattr(rate_limits, "_get_client", lambda: redis)
     await rate_limits.enforce_user_rate_limit("get_async_task", USER, scope)
-    assert len(redis.keys) == 1
-    assert expected_key_part in redis.keys[0]
-    if scope is None:
-        assert redis.keys[0].count(":") == 3  # route:user:second, no scope segment
+    assert redis.calls == 1  # one round trip regardless of scope
+    assert len(redis.keys) == expected_keys
+    assert redis.keys[0].count(":") == 3  # aggregate key: route:user:second
+    if scope is not None:
+        assert f":test-user:{scope}:" in redis.keys[1]
 
 
 @pytest.mark.asyncio
@@ -357,7 +358,8 @@ async def test_scopes_use_independent_buckets(monkeypatch):
     monkeypatch.setattr(rate_limits, "_get_client", lambda: redis)
     await rate_limits.enforce_user_rate_limit("get_async_task", USER, "end_a")
     await rate_limits.enforce_user_rate_limit("get_async_task", USER, "end_b")
-    assert len(set(redis.keys)) == 2
+    scoped_keys = {key for key in redis.keys if key.count(":") == 4}
+    assert len(scoped_keys) == 2
 
 
 @pytest.mark.parametrize(
@@ -403,7 +405,7 @@ async def test_dependency_extracts_scope_query_param(monkeypatch):
     )
     # Call the dependency directly; auth is normally injected by FastAPI.
     await dependency(FakeRequest(), USER)
-    assert ":test-user:end_xyz789:" in redis.keys[0]
+    assert any(":test-user:end_xyz789:" in key for key in redis.keys)
 
 
 @pytest.mark.asyncio
@@ -419,14 +421,33 @@ async def test_aggregate_ceiling_bounds_rotating_scopes(monkeypatch):
         },
         raising=False,
     )
-    # Aggregate (unscoped) bucket is over its ceiling; scoped buckets are fresh.
-    redis = FakeRateLimitRedis(sequence=[6, 1])
+    # Aggregate (unscoped) bucket is over its ceiling; the scoped bucket is fresh.
+    redis = FakeRateLimitRedis(sequence=[[6, 1]])
     monkeypatch.setattr(rate_limits, "_get_client", lambda: redis)
     with pytest.raises(HTTPException) as exc_info:
         await rate_limits.enforce_user_rate_limit("post_async_tasks", USER, "end_rotating_1")
     assert exc_info.value.status_code == 429
-    # The aggregate key (no scope segment) was counted first.
+    # One round trip counted both keys: aggregate (no scope segment) first.
+    assert redis.calls == 1
     assert ":test-user:" in redis.keys[0] and "end_rotating_1" not in redis.keys[0]
+    assert "end_rotating_1" in redis.keys[1]
+
+
+@pytest.mark.asyncio
+async def test_default_aggregate_ceiling_without_config(monkeypatch):
+    """Scoped routes are aggregate-bounded even when aggregate_routes is absent."""
+    monkeypatch.setattr(
+        rate_limits.hmi_config,
+        "user_rate_limits",
+        {"enforce": True, "routes": {"post_async_tasks": 5}},
+        raising=False,
+    )
+    over_default_aggregate = 5 * rate_limits._DEFAULT_AGGREGATE_MULTIPLIER + 1
+    redis = FakeRateLimitRedis(sequence=[[over_default_aggregate, 1]])
+    monkeypatch.setattr(rate_limits, "_get_client", lambda: redis)
+    with pytest.raises(HTTPException) as exc_info:
+        await rate_limits.enforce_user_rate_limit("post_async_tasks", USER, "end_fresh_scope")
+    assert exc_info.value.status_code == 429
 
 
 @pytest.mark.asyncio

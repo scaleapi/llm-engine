@@ -544,6 +544,20 @@ def test_get_async_task_response_body_and_size_metric(
     assert len(emitted) == 1
     name, value, tags = emitted[0]
     assert name == "model_engine.async_task.result_bytes"
-    assert value == len(response.text)
+    assert value == len(response.content)
     assert any(tag.startswith("user_id:") for tag in tags)
     assert any(tag.startswith("status:") for tag in tags)
+
+
+def test_emit_result_size_counts_bytes_not_characters(monkeypatch):
+    from model_engine_server.api import tasks_v1
+    from model_engine_server.common.dtos.tasks import GetAsyncTaskV1Response, TaskStatus
+
+    emitted = []
+    monkeypatch.setattr(
+        tasks_v1.statsd, "distribution", lambda name, value, tags: emitted.append(value)
+    )
+    task = GetAsyncTaskV1Response(task_id="t", status=TaskStatus.SUCCESS)
+    body = "ü" * 10  # 10 characters, 20 UTF-8 bytes
+    tasks_v1._emit_result_size(task, body.encode("utf-8"), "user")
+    assert emitted == [20]

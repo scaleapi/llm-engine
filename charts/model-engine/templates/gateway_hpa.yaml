@@ -25,9 +25,9 @@ spec:
     {{- /* Rejected-over-limit traffic is shed cheaply at the sidecar and never
          registers on request concurrency, so the HPA cannot raise the Envoy
          fleet ceiling (pods x bucket) during storms on concurrency alone. This
-         metric scales on the shedding itself; it reads zero whenever the
-         ceiling exceeds offered load, so the loop converges on the smallest
-         fleet that stops the shedding. Requires the matching prometheus-adapter
+         metric scales on the shedding itself, holding equilibrium where
+         shed/pod ~= the configured target (the residual shedding tolerated
+         during a sustained storm). Requires the matching prometheus-adapter
          rule: without it the metric is unreadable and the HPA blocks
          scale-down. */}}
     - type: Pods
