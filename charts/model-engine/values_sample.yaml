@@ -141,7 +141,7 @@ autoscaling:
     shedScaling:
       enabled: false
       metricName: envoy-ratelimited-per-second
-      targetPerPod: 10
+      targetPerPod: 2
   vertical:
     enabled: false
   prewarming:

@@ -86,17 +86,19 @@ class S3Backend(KeyValueStoreBackend):
     def get(self, key):
         key = bytes_to_str(key)
         s3_object = self._get_s3_object(key)
-        try:
-            with _backend_get_span():
+        # The expected not-found miss (a poll for a still-pending task) is handled
+        # inside the span so it exits cleanly instead of marking the span errored.
+        with _backend_get_span():
+            try:
                 s3_object.load()
                 data = s3_object.get()["Body"].read()
                 return data if self.content_encoding == "binary" else data.decode("utf-8")
-        except botocore.exceptions.ClientError as error:
-            # A 403 is returned if the object does not exist and we don't have ListBucket permissions
-            # such as in Hosted Model Inference. If we do have ListBucket permissions, we get 404.
-            if error.response["Error"]["Code"] in ["403", "404"]:
-                return None
-            raise error
+            except botocore.exceptions.ClientError as error:
+                # A 403 is returned if the object does not exist and we don't have ListBucket permissions
+                # such as in Hosted Model Inference. If we do have ListBucket permissions, we get 404.
+                if error.response["Error"]["Code"] in ["403", "404"]:
+                    return None
+                raise error
 
     def set(self, key, value):
         key = bytes_to_str(key)

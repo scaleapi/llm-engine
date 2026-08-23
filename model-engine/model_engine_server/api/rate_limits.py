@@ -63,7 +63,10 @@ def _emit_decision(
         f"outcome:{outcome}",
         f"user_id:{user_id}",
     ]
-    if scope is not None:
+    # The scope is a caller-supplied value; tagging it on every allowed request
+    # would let a client mint unbounded metric cardinality. Non-allowed outcomes
+    # are low-volume and are where the per-scope attribution matters.
+    if scope is not None and outcome != "allowed":
         tags.append(f"scope:{scope}")
     statsd.increment("model_engine.user_rate_limit.decision", tags=tags)
 
@@ -96,16 +99,19 @@ async def _count_request(key: str) -> int:
 
 
 async def enforce_user_rate_limit(
-    route_class: str, user: User, scope: Optional[str] = None
+    route_class: str, user: User, scope: Optional[str] = None, limit: Optional[int] = None
 ) -> None:
     """Raises 429 with Retry-After if the user is over their per-route limit.
 
-    When `scope` is set, the limit applies per (user, scope) rather than per user.
-    No-op unless `user_rate_limits` is configured; counts but does not reject
-    unless `user_rate_limits.enforce` is true (log-only rollout mode).
+    When `scope` is set, the limit applies per (user, scope) rather than per user,
+    and `user_rate_limits.aggregate_routes` may additionally bound the user's
+    total across all scopes. No-op unless `user_rate_limits` is configured;
+    counts but does not reject unless `user_rate_limits.enforce` is true
+    (log-only rollout mode).
     """
     config = hmi_config.user_rate_limits or {}
-    limit = (config.get("routes") or {}).get(route_class)
+    if limit is None:
+        limit = (config.get("routes") or {}).get(route_class)
     if not limit:
         return
     limit = int(limit)
@@ -113,6 +119,13 @@ async def enforce_user_rate_limit(
     if time.monotonic() < _breaker_open_until:
         _emit_decision("breaker_open", route_class, user.user_id, scope)
         return
+    if scope is not None:
+        # The scope value is caller-supplied, so scoped buckets alone are
+        # bypassable by rotating bogus values; the aggregate per-user ceiling
+        # bounds the user's total rate across all scopes.
+        aggregate_limit = (config.get("aggregate_routes") or {}).get(route_class)
+        if aggregate_limit:
+            await enforce_user_rate_limit(route_class, user, scope=None, limit=int(aggregate_limit))
     scope_part = f":{scope}" if scope is not None else ""
     key = f"user-rate-limit:{route_class}:{user.user_id}{scope_part}:{int(time.time())}"
     try:

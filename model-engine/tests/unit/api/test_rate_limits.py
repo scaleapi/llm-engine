@@ -361,19 +361,24 @@ async def test_scopes_use_independent_buckets(monkeypatch):
 
 
 @pytest.mark.parametrize(
-    "scope,expect_tag",
+    "scope,count,expect_tag",
     [
-        pytest.param("end_abc123", True, id="scope-tagged"),
-        pytest.param(None, False, id="no-scope-no-tag"),
+        pytest.param("end_abc123", 100, True, id="scope-tagged-on-throttle"),
+        pytest.param("end_abc123", 1, False, id="scope-untagged-on-allowed"),
+        pytest.param(None, 100, False, id="no-scope-no-tag"),
     ],
 )
 @pytest.mark.asyncio
-async def test_decision_metric_scope_tag(monkeypatch, scope, expect_tag):
+async def test_decision_metric_scope_tag(monkeypatch, scope, count, expect_tag):
     monkeypatch.setattr(rate_limits.hmi_config, "user_rate_limits", LIMITS, raising=False)
-    monkeypatch.setattr(rate_limits, "_get_client", lambda: FakeRateLimitRedis(count=1))
+    monkeypatch.setattr(rate_limits, "_get_client", lambda: FakeRateLimitRedis(count=count))
     emitted = []
     monkeypatch.setattr(rate_limits.statsd, "increment", lambda name, tags: emitted.append(tags))
-    await rate_limits.enforce_user_rate_limit("get_async_task", USER, scope)
+    if count > 5:
+        with pytest.raises(HTTPException):
+            await rate_limits.enforce_user_rate_limit("get_async_task", USER, scope)
+    else:
+        await rate_limits.enforce_user_rate_limit("get_async_task", USER, scope)
     assert len(emitted) == 1
     assert (f"scope:{scope}" in emitted[0]) == expect_tag
 
@@ -399,3 +404,42 @@ async def test_dependency_extracts_scope_query_param(monkeypatch):
     # Call the dependency directly; auth is normally injected by FastAPI.
     await dependency(FakeRequest(), USER)
     assert ":test-user:end_xyz789:" in redis.keys[0]
+
+
+@pytest.mark.asyncio
+async def test_aggregate_ceiling_bounds_rotating_scopes(monkeypatch):
+    """Rotating scope values must not bypass the per-user aggregate ceiling."""
+    monkeypatch.setattr(
+        rate_limits.hmi_config,
+        "user_rate_limits",
+        {
+            "enforce": True,
+            "routes": {"post_async_tasks": 100},
+            "aggregate_routes": {"post_async_tasks": 5},
+        },
+        raising=False,
+    )
+    # Aggregate (unscoped) bucket is over its ceiling; scoped buckets are fresh.
+    redis = FakeRateLimitRedis(sequence=[6, 1])
+    monkeypatch.setattr(rate_limits, "_get_client", lambda: redis)
+    with pytest.raises(HTTPException) as exc_info:
+        await rate_limits.enforce_user_rate_limit("post_async_tasks", USER, "end_rotating_1")
+    assert exc_info.value.status_code == 429
+    # The aggregate key (no scope segment) was counted first.
+    assert ":test-user:" in redis.keys[0] and "end_rotating_1" not in redis.keys[0]
+
+
+@pytest.mark.asyncio
+async def test_scope_tag_omitted_on_allowed(monkeypatch):
+    """Caller-supplied scope must not mint metric cardinality on allowed traffic."""
+    monkeypatch.setattr(rate_limits.hmi_config, "user_rate_limits", LIMITS, raising=False)
+    emitted = []
+    monkeypatch.setattr(rate_limits.statsd, "increment", lambda name, tags: emitted.append(tags))
+    monkeypatch.setattr(rate_limits, "_get_client", lambda: FakeRateLimitRedis(count=1))
+    await rate_limits.enforce_user_rate_limit("get_async_task", USER, "end_abc")
+    monkeypatch.setattr(rate_limits, "_get_client", lambda: FakeRateLimitRedis(count=100))
+    with pytest.raises(HTTPException):
+        await rate_limits.enforce_user_rate_limit("get_async_task", USER, "end_abc")
+    allowed_tags, throttled_tags = emitted
+    assert not any(t.startswith("scope:") for t in allowed_tags)
+    assert "scope:end_abc" in throttled_tags

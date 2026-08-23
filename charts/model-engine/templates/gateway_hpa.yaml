@@ -36,7 +36,10 @@ spec:
           name: {{ .metricName | default "envoy-ratelimited-per-second" }}
         target:
           type: AverageValue
-          averageValue: {{ .targetPerPod | default 10 }}
+          {{- /* The HPA holds equilibrium where shed/pod ~= this target, so it is
+               the residual shedding tolerated during a sustained storm, not just
+               a trigger threshold: keep it near the burst-noise floor. */}}
+          averageValue: {{ .targetPerPod | default 2 }}
     {{- end }}
     {{- end }}
   {{- with .Values.autoscaling.horizontal.shedScaling }}

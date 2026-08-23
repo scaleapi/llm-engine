@@ -97,7 +97,7 @@ async def create_async_inference_task(
         ) from exc
 
 
-def _emit_result_size(task: GetAsyncTaskV1Response, body: str, user_id: str) -> None:
+def _emit_result_size(task: GetAsyncTaskV1Response, body: bytes, user_id: str) -> None:
     # Inline result bytes set the cost of the poll route, and neither traces nor
     # access logs capture them; this is the per-tenant payload-size signal.
     statsd.distribution(
@@ -132,7 +132,7 @@ async def get_async_inference_task(
             # SUCCESS results are unbounded tenant payloads (multi-MB); encoding
             # them on the event loop stalls every request sharing this worker, so
             # the response is serialized here, off the loop, alongside the fetch.
-            body = task.model_dump_json()
+            body = task.model_dump_json().encode("utf-8")
             _emit_result_size(task, body, auth.user_id)
             return Response(content=body, media_type="application/json")
 
