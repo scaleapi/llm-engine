@@ -20,4 +20,36 @@ spec:
         target:
           type: Value
           averageValue: {{ .Values.autoscaling.horizontal.targetConcurrency }}
+    {{- with .Values.autoscaling.horizontal.shedScaling }}
+    {{- if .enabled }}
+    {{- /* Rejected-over-limit traffic is shed cheaply at the sidecar and never
+         registers on request concurrency, so the HPA cannot raise the Envoy
+         fleet ceiling (pods x bucket) during storms on concurrency alone. This
+         metric scales on the shedding itself; it reads zero whenever the
+         ceiling exceeds offered load, so the loop converges on the smallest
+         fleet that stops the shedding. Requires the matching prometheus-adapter
+         rule: without it the metric is unreadable and the HPA blocks
+         scale-down. */}}
+    - type: Pods
+      pods:
+        metric:
+          name: {{ .metricName | default "envoy-ratelimited-per-second" }}
+        target:
+          type: AverageValue
+          averageValue: {{ .targetPerPod | default 10 }}
+    {{- end }}
+    {{- end }}
+  {{- with .Values.autoscaling.horizontal.shedScaling }}
+  {{- if .enabled }}
+  behavior:
+    scaleUp:
+      {{- /* Damp the doubling default: stale shed samples (adapter scrape lag)
+           otherwise trigger one overshoot step past the convergence point. */}}
+      stabilizationWindowSeconds: 30
+      policies:
+        - type: Percent
+          value: 50
+          periodSeconds: 30
+  {{- end }}
+  {{- end }}
 {{- end }}

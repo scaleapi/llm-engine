@@ -134,6 +134,14 @@ autoscaling:
     minReplicas: 2
     maxReplicas: 10
     targetConcurrency: 50
+    # Second HPA metric: scale on Envoy local_ratelimit shedding, which never
+    # registers on request concurrency. Requires a prometheus-adapter rule
+    # exposing the metric named below; enabling it without that rule makes the
+    # metric unreadable and blocks HPA scale-down.
+    shedScaling:
+      enabled: false
+      metricName: envoy-ratelimited-per-second
+      targetPerPod: 10
   vertical:
     enabled: false
   prewarming:
