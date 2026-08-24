@@ -1,11 +1,7 @@
 """Per-user request rate limiting, enforced after authentication resolves identity.
 
-Limits are fixed 1-second windows in Redis, keyed on (route class, user_id) and,
-for routes that declare a scope query parameter, additionally on that parameter's
-value (e.g. post_async_tasks is limited per (user, model_endpoint_id), so one
-noisy pipeline behind a shared credential cannot starve the credential's other
-pipelines). The limiter fails open: if Redis is unavailable or slow, requests
-are allowed.
+Limits are fixed 1-second windows in Redis, keyed on (route class, user_id).
+The limiter fails open: if Redis is unavailable or slow, requests are allowed.
 """
 
 import asyncio
@@ -14,7 +10,7 @@ from typing import Optional
 
 import redis.asyncio as aioredis
 from datadog import statsd
-from fastapi import Depends, HTTPException, Request, status
+from fastapi import Depends, HTTPException, status
 from model_engine_server.api.dependencies import get_or_create_aioredis_pool, verify_authentication
 from model_engine_server.common.config import hmi_config
 from model_engine_server.common.env_vars import DD_ENV
@@ -34,24 +30,14 @@ _LOG_INTERVAL_SECONDS = 60.0
 _BREAKER_FAILURE_THRESHOLD = 5
 _BREAKER_COOLDOWN_SECONDS = 10.0
 
-# Atomic so a partial failure cannot leave a counter key without a TTL. Counts
-# every provided key in one round trip (scoped routes check the per-user
-# aggregate and the per-scope bucket together) and returns the counts in order.
+# Atomic so a partial failure cannot leave a counter key without a TTL.
 _INCR_WITH_TTL_LUA = """
-local counts = {}
-for i, key in ipairs(KEYS) do
-  local count = redis.call('INCR', key)
-  if count == 1 then
-    redis.call('EXPIRE', key, 2)
-  end
-  counts[i] = count
+local count = redis.call('INCR', KEYS[1])
+if count == 1 then
+  redis.call('EXPIRE', KEYS[1], 2)
 end
-return counts
+return count
 """
-# Rotating caller-supplied scope values must not bypass the per-user limit, so
-# scoped routes always carry an aggregate ceiling; when aggregate_routes does
-# not configure one it defaults to this multiple of the per-scope limit.
-_DEFAULT_AGGREGATE_MULTIPLIER = 4
 
 _client: Optional[aioredis.Redis] = None
 _client_pool: Optional[aioredis.ConnectionPool] = None
@@ -60,27 +46,20 @@ _consecutive_failures: int = 0
 _breaker_open_until: float = 0.0
 
 
-def _emit_decision(
-    outcome: str, route_class: str, user_id: str, scope: Optional[str] = None
-) -> None:
+def _emit_decision(outcome: str, route_class: str, user_id: str) -> None:
     # Fire-and-forget UDP to the local Datadog agent. This doubles as the per-tenant
     # volume signal on the rate-limited routes (outcome:allowed) and as enforcement
     # telemetry (throttled/would_throttle/fail_open/breaker_open), replacing the
     # postmortem's proposed raw request-volume monitor.
-    tags = [
-        f"env:{DD_ENV}",
-        f"route_class:{route_class}",
-        f"outcome:{outcome}",
-        f"user_id:{user_id}",
-    ]
-    # The scope is caller-supplied: tagging it on allowed traffic (or on the
-    # fail-open/breaker outcomes, which fire for every request during a Redis
-    # outage) would let a client mint unbounded metric cardinality. Over-limit
-    # outcomes require sustained volume on a single scope value, which bounds
-    # the cardinality an abuser can create.
-    if scope is not None and outcome in ("throttled", "would_throttle"):
-        tags.append(f"scope:{scope}")
-    statsd.increment("model_engine.user_rate_limit.decision", tags=tags)
+    statsd.increment(
+        "model_engine.user_rate_limit.decision",
+        tags=[
+            f"env:{DD_ENV}",
+            f"route_class:{route_class}",
+            f"outcome:{outcome}",
+            f"user_id:{user_id}",
+        ],
+    )
 
 
 def _should_log(log_key: str) -> bool:
@@ -106,56 +85,28 @@ def _get_client() -> aioredis.Redis:
     return _client
 
 
-async def _count_requests(keys: list) -> list:
-    counts = await _get_client().eval(_INCR_WITH_TTL_LUA, len(keys), *keys)
-    return [int(count) for count in counts]
+async def _count_request(key: str) -> int:
+    return int(await _get_client().eval(_INCR_WITH_TTL_LUA, 1, key))
 
 
-async def enforce_user_rate_limit(
-    route_class: str, user: User, scope: Optional[str] = None, limit: Optional[int] = None
-) -> None:
+async def enforce_user_rate_limit(route_class: str, user: User) -> None:
     """Raises 429 with Retry-After if the user is over their per-route limit.
 
-    When `scope` is set, the limit applies per (user, scope) rather than per user,
-    and `user_rate_limits.aggregate_routes` may additionally bound the user's
-    total across all scopes. No-op unless `user_rate_limits` is configured;
-    counts but does not reject unless `user_rate_limits.enforce` is true
-    (log-only rollout mode).
+    No-op unless `user_rate_limits` is configured; counts but does not reject
+    unless `user_rate_limits.enforce` is true (log-only rollout mode).
     """
     config = hmi_config.user_rate_limits or {}
-    if limit is None:
-        limit = (config.get("routes") or {}).get(route_class)
+    limit = (config.get("routes") or {}).get(route_class)
     if not limit:
         return
     limit = int(limit)
     global _consecutive_failures, _breaker_open_until
     if time.monotonic() < _breaker_open_until:
-        _emit_decision("breaker_open", route_class, user.user_id, scope)
+        _emit_decision("breaker_open", route_class, user.user_id)
         return
-    second = int(time.time())
-    base_key = f"user-rate-limit:{route_class}:{user.user_id}"
-    keys = []
-    limits = []
-    if scope is not None:
-        # The scope value is caller-supplied, so scoped buckets alone are
-        # bypassable by rotating bogus values; the aggregate per-user ceiling
-        # (configured, or a default multiple of the per-scope limit) bounds the
-        # user's total rate across all scopes. Both buckets are counted in one
-        # Redis round trip under the shared timeout and emit one decision.
-        aggregate_limit = (config.get("aggregate_routes") or {}).get(route_class)
-        if aggregate_limit:
-            aggregate_limit = int(aggregate_limit)
-        else:
-            aggregate_limit = limit * _DEFAULT_AGGREGATE_MULTIPLIER
-        keys.append(f"{base_key}:{second}")
-        limits.append(aggregate_limit)
-        keys.append(f"{base_key}:{scope}:{second}")
-        limits.append(limit)
-    else:
-        keys.append(f"{base_key}:{second}")
-        limits.append(limit)
+    key = f"user-rate-limit:{route_class}:{user.user_id}:{int(time.time())}"
     try:
-        counts = await asyncio.wait_for(_count_requests(keys), timeout=_REDIS_TIMEOUT_SECONDS)
+        count = await asyncio.wait_for(_count_request(key), timeout=_REDIS_TIMEOUT_SECONDS)
         _consecutive_failures = 0
     except Exception:
         _consecutive_failures += 1
@@ -166,33 +117,20 @@ async def enforce_user_rate_limit(
             logger.warning(
                 f"Rate limiter failing open for route_class={route_class}", exc_info=True
             )
-        _emit_decision("fail_open", route_class, user.user_id, scope)
+        _emit_decision("fail_open", route_class, user.user_id)
         return
-    exceeded = next(
-        (
-            (index, count, bucket_limit)
-            for index, (count, bucket_limit) in enumerate(zip(counts, limits))
-            if count > bucket_limit
-        ),
-        None,
-    )
-    if exceeded is None:
-        _emit_decision("allowed", route_class, user.user_id, scope)
+    if count <= limit:
+        _emit_decision("allowed", route_class, user.user_id)
         return
-    exceeded_index, count, limit = exceeded
-    # The aggregate bucket (index 0 when a scope is present) trips independently
-    # of the scope value, so tagging its rejections with the scope would let a
-    # caller past the ceiling mint one metric series per rotated scope.
-    scope_exceeded = scope if (scope is not None and exceeded_index == 1) else None
     if not config.get("enforce"):
         if _should_log(f"over-limit:{user.user_id}:{route_class}"):
             logger.warning(
                 f"Rate limit exceeded (log-only): user_id={user.user_id} "
-                f"route_class={route_class} scope={scope} count={count} limit={limit}"
+                f"route_class={route_class} count={count} limit={limit}"
             )
-        _emit_decision("would_throttle", route_class, user.user_id, scope_exceeded)
+        _emit_decision("would_throttle", route_class, user.user_id)
         return
-    _emit_decision("throttled", route_class, user.user_id, scope_exceeded)
+    _emit_decision("throttled", route_class, user.user_id)
     raise HTTPException(
         status_code=status.HTTP_429_TOO_MANY_REQUESTS,
         detail=(
@@ -203,17 +141,14 @@ async def enforce_user_rate_limit(
     )
 
 
-def user_rate_limit(route_class: str, scope_query_param: Optional[str] = None):
+def user_rate_limit(route_class: str):
     """FastAPI dependency limiting the authenticated user on this route.
 
-    When `scope_query_param` names a query parameter, its value is folded into
-    the bucket key so the limit applies per (user, scope) instead of per user.
     Composes with verify_authentication (FastAPI caches it per request, so
     authentication still runs once).
     """
 
-    async def dependency(request: Request, auth: User = Depends(verify_authentication)) -> None:
-        scope = request.query_params.get(scope_query_param) if scope_query_param else None
-        await enforce_user_rate_limit(route_class, auth, scope)
+    async def dependency(auth: User = Depends(verify_authentication)) -> None:
+        await enforce_user_rate_limit(route_class, auth)
 
     return dependency

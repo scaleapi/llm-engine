@@ -60,9 +60,7 @@ async def create_async_inference_task(
     request: EndpointPredictV1Request,
     auth: User = Depends(verify_authentication),
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces_read_only),
-    _rate_limit: None = Depends(
-        user_rate_limit("post_async_tasks", scope_query_param="model_endpoint_id")
-    ),
+    _rate_limit: None = Depends(user_rate_limit("post_async_tasks")),
 ) -> CreateAsyncTaskV1Response:
     """
     Runs an async inference prediction.
