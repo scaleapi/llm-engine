@@ -230,7 +230,10 @@ class VLLMEngineAdditionalArgs(BaseModel):
 
 
 class VLLMEndpointAdditionalArgs(VLLMModelConfig, VLLMEngineAdditionalArgs, BaseModel):
-    pass
+    speculative_config: Optional[Dict[str, Any]] = Field(
+        None,
+        description="Speculative decoding configuration passed to the vLLM server.",
+    )
 
 
 class VLLMSamplingParams(BaseModel):

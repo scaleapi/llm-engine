@@ -497,6 +497,16 @@ async def test_create_model_endpoint_w_vllm_args(
     fake_llm_artifact_gateway,
     create_llm_model_endpoint_request_llama_3_70b_chat_vllm_args: CreateLLMModelEndpointV1Request,
 ):
+    create_llm_model_endpoint_request_llama_3_70b_chat_vllm_args = (
+        create_llm_model_endpoint_request_llama_3_70b_chat_vllm_args.model_copy(
+            update={
+                "speculative_config": {
+                    "method": "mtp",
+                    "num_speculative_tokens": 3,
+                }
+            }
+        )
+    )
     fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
     bundle_use_case = CreateModelBundleV2UseCase(
         model_bundle_repository=fake_model_bundle_repository,
@@ -531,9 +541,21 @@ async def test_create_model_endpoint_w_vllm_args(
     )[0]
 
     bundle_command = endpoint.record.current_model_bundle.flavor.command[2]
-    expected_vllm_args = ["max-model-len", "max-num-seqs", "chat-template"]
+    expected_vllm_args = [
+        "max-model-len",
+        "max-num-seqs",
+        "chat-template",
+        "speculative-config",
+    ]
     for arg in expected_vllm_args:
         assert arg in bundle_command
+    expected_speculative_config_arg = "--speculative-config " + shlex.quote(
+        json.dumps(
+            {"method": "mtp", "num_speculative_tokens": 3},
+            separators=(",", ":"),
+        )
+    )
+    assert expected_speculative_config_arg in bundle_command
     assert endpoint.record.endpoint_type == ModelEndpointType.STREAMING
     assert endpoint.record.metadata == {
         "_llm": {
@@ -549,6 +571,7 @@ async def test_create_model_endpoint_w_vllm_args(
             "vllm_additional_args": {
                 "max_model_len": create_llm_model_endpoint_request_llama_3_70b_chat_vllm_args.max_model_len,
                 "max_num_seqs": create_llm_model_endpoint_request_llama_3_70b_chat_vllm_args.max_num_seqs,
+                "speculative_config": create_llm_model_endpoint_request_llama_3_70b_chat_vllm_args.speculative_config,
             },
         }
     }
