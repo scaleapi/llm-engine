@@ -48,13 +48,21 @@ gateway:
     attempts: 3
     retryOn: connect-failure,unavailable,502,504
     perTryTimeout: null
-  # resources overrides the top-level `resources` for the gateway container only.
+  # resources deep-merges over the top-level `resources` for the gateway container only.
   # That top-level block is shared with the cacher and endpoint-builder, which run a
   # handful of pods each and sit near 1GiB; the gateway runs the whole fleet and holds
   # task results in memory while it proxies them. Sizing all three off one block means
   # either under-declaring the gateway or over-reserving for the other two.
-  # Leave empty to inherit `resources` unchanged.
+  # Keys set here win; keys absent here fall through to `resources`, so a memory-only
+  # override keeps the shared cpu and ephemeral-storage requests. Leave empty to inherit
+  # `resources` unchanged.
   resources: {}
+  # vpaControlledResources sets the gateway VPA's controlledResources. The VPA runs in
+  # updateMode: Initial, so it rewrites requests at pod creation and clamps them to
+  # autoscaling.vertical.maxAllowed — which would silently override any memory request
+  # pinned in `gateway.resources` above. Set to ["cpu"] when pinning memory statically,
+  # so the VPA keeps managing CPU and stops managing memory.
+  vpaControlledResources: ["cpu", "memory"]
 
 # rateLimits [optional] per-pod Envoy local_ratelimit token buckets on the gateway
 # sidecars (inbound). Overflow returns 429 at the proxy without reaching a gateway
