@@ -498,3 +498,66 @@ async def test_create_streaming_task_success(
                 )
                 count += 1
             assert count == 1
+
+
+def test_get_async_task_response_body_and_size_metric(
+    model_bundle_1_v1: Tuple[ModelBundle, Any],
+    model_endpoint_1: Tuple[ModelEndpoint, Any],
+    test_api_key: str,
+    get_test_client_wrapper,
+    monkeypatch,
+):
+    """The off-loop serialized Response must stay contract-identical JSON and emit
+    the per-tenant result-size distribution."""
+    from model_engine_server.api import tasks_v1
+
+    emitted = []
+    monkeypatch.setattr(
+        tasks_v1.statsd,
+        "distribution",
+        lambda name, value, tags: emitted.append((name, value, tags)),
+    )
+    assert model_endpoint_1[0].infra_state is not None
+    client = get_test_client_wrapper(
+        fake_docker_repository_image_always_exists=True,
+        fake_model_bundle_repository_contents={
+            model_bundle_1_v1[0].id: model_bundle_1_v1[0],
+        },
+        fake_model_endpoint_record_repository_contents={
+            model_endpoint_1[0].record.id: model_endpoint_1[0].record,
+        },
+        fake_model_endpoint_infra_gateway_contents={
+            model_endpoint_1[0].infra_state.deployment_name: model_endpoint_1[0].infra_state,
+        },
+        fake_batch_job_record_repository_contents={},
+        fake_batch_job_progress_gateway_contents={},
+        fake_docker_image_batch_job_bundle_repository_contents={},
+    )
+    response = client.get(
+        "/v1/async-tasks/test_task_id",
+        auth=(test_api_key, ""),
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["task_id"] == "test_task_id"
+    assert set(body) == {"task_id", "status", "result", "traceback", "status_code"}
+    assert len(emitted) == 1
+    name, value, tags = emitted[0]
+    assert name == "model_engine.async_task.result_bytes"
+    assert value == len(response.content)
+    assert any(tag.startswith("user_id:") for tag in tags)
+    assert any(tag.startswith("status:") for tag in tags)
+
+
+def test_emit_result_size_counts_bytes_not_characters(monkeypatch):
+    from model_engine_server.api import tasks_v1
+    from model_engine_server.common.dtos.tasks import GetAsyncTaskV1Response, TaskStatus
+
+    emitted = []
+    monkeypatch.setattr(
+        tasks_v1.statsd, "distribution", lambda name, value, tags: emitted.append(value)
+    )
+    task = GetAsyncTaskV1Response(task_id="t", status=TaskStatus.SUCCESS)
+    body = "ü" * 10  # 10 characters, 20 UTF-8 bytes
+    tasks_v1._emit_result_size(task, body.encode("utf-8"), "user")
+    assert emitted == [20]
