@@ -2,7 +2,8 @@ import asyncio
 import functools
 
 import anyio
-from fastapi import APIRouter, Depends, HTTPException
+from datadog import statsd
+from fastapi import APIRouter, Depends, HTTPException, Response
 from model_engine_server.api.dependencies import (
     ExternalInterfaces,
     get_external_interfaces_read_only,
@@ -17,6 +18,7 @@ from model_engine_server.common.dtos.tasks import (
     SyncEndpointPredictV1Response,
     TaskStatus,
 )
+from model_engine_server.common.env_vars import DD_ENV
 from model_engine_server.core.auth.authentication_repository import User
 from model_engine_server.core.loggers import logger_name, make_logger
 from model_engine_server.domain.exceptions import (
@@ -93,13 +95,27 @@ async def create_async_inference_task(
         ) from exc
 
 
+def _emit_result_size(task: GetAsyncTaskV1Response, body: bytes, user_id: str) -> None:
+    # Inline result bytes set the cost of the poll route, and neither traces nor
+    # access logs capture them; this is the per-tenant payload-size signal.
+    statsd.distribution(
+        "model_engine.async_task.result_bytes",
+        len(body),
+        tags=[
+            f"env:{DD_ENV}",
+            f"user_id:{user_id}",
+            f"status:{task.status.value}",
+        ],
+    )
+
+
 @inference_task_router_v1.get("/async-tasks/{task_id}", response_model=GetAsyncTaskV1Response)
 async def get_async_inference_task(
     task_id: str,
     auth: User = Depends(verify_authentication),
     external_interfaces: ExternalInterfaces = Depends(get_external_interfaces_read_only),
     _rate_limit: None = Depends(user_rate_limit("get_async_task")),
-) -> GetAsyncTaskV1Response:
+) -> Response:
     """
     Gets the status of an async inference task.
     """
@@ -108,8 +124,18 @@ async def get_async_inference_task(
         use_case = GetAsyncInferenceTaskV1UseCase(
             model_endpoint_service=external_interfaces.model_endpoint_service,
         )
+
+        def execute_and_serialize() -> Response:
+            task = use_case.execute(user=auth, task_id=task_id)
+            # SUCCESS results are unbounded tenant payloads (multi-MB); encoding
+            # them on the event loop stalls every request sharing this worker, so
+            # the response is serialized here, off the loop, alongside the fetch.
+            body = task.model_dump_json().encode("utf-8")
+            _emit_result_size(task, body, auth.user_id)
+            return Response(content=body, media_type="application/json")
+
         return await anyio.to_thread.run_sync(
-            functools.partial(use_case.execute, user=auth, task_id=task_id),
+            execute_and_serialize,
             limiter=_get_task_limiter(),
         )
     except (ObjectNotFoundException, ObjectNotAuthorizedException) as exc:

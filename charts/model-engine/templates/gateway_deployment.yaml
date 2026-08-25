@@ -32,6 +32,11 @@ spec:
              request capacity, its postStart hook hangs, and new gateway pods never
              become Ready. No CPU limit: throttling the proxy adds tail latency. */}}
         sidecar.istio.io/proxyCPU: {{ .Values.gateway.sidecarCPURequest | quote }}
+        {{- if .Values.rateLimits.enabled }}
+        {{- /* Exposes the local_ratelimit shed counter to Prometheus (Istio prunes
+             envoy stats by default); the shed-based HPA metric reads it. */}}
+        sidecar.istio.io/statsInclusionPrefixes: "model_engine_ratelimit"
+        {{- end }}
       labels:
         {{- include "modelEngine.selectorLabels.gateway" . | nindent 8 }}
         {{- include "modelEngine.labels" . | nindent 8 }}
