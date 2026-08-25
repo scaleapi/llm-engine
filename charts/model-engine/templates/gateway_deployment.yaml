@@ -77,7 +77,14 @@ spec:
             - -m
             - model_engine_server.entrypoints.start_fastapi_server
           resources:
+            {{- /* The gateway proxies async-task results inline, so its memory profile is
+                 unrelated to the cacher and endpoint-builder that share .Values.resources.
+                 Falls back to the shared block when gateway.resources is unset. */}}
+            {{- if .Values.gateway.resources }}
+            {{- toYaml .Values.gateway.resources | nindent 12 }}
+            {{- else }}
             {{- toYaml .Values.resources | nindent 12 }}
+            {{- end }}
           {{- include "modelEngine.gatewayEnv" . | indent 10 }}
           {{- include "modelEngine.volumeMounts" . | indent 10 }}
       automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
