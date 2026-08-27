@@ -1,5 +1,5 @@
 import json
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Any
 from unittest.mock import patch
 
@@ -293,3 +293,35 @@ def test_prediction_response_json_encoding():
         id="refid",
         status_code=200,
     )
+
+
+def test_poll_tasks_treats_timeout_as_terminal(
+    live_batch_job_orchestration_service: LiveBatchJobOrchestrationService,
+):
+    """A deadline is terminal for the poller, not a reason to keep polling.
+
+    The poll loop has no sleep, so a status it does not consider terminal becomes a hot loop of
+    result-backend reads until the batch job's own timeout expires.
+    """
+    calls = []
+
+    def fake_get_task(task_id):
+        calls.append(task_id)
+        # Fail instead of hanging CI if TIMEOUT stops being terminal.
+        assert len(calls) <= 5, "poller did not terminate on TaskStatus.TIMEOUT"
+        return GetAsyncTaskV1Response(task_id=task_id, status=TaskStatus.TIMEOUT)
+
+    live_batch_job_orchestration_service.async_model_endpoint_inference_gateway.get_task = (
+        fake_get_task
+    )
+
+    responses = live_batch_job_orchestration_service._poll_tasks(
+        owner="owner",
+        job_id="job-id",
+        task_ids=[BatchEndpointInProgressTask("task-1", "ref-1")],
+        # Far future, so only genuine terminality can end the loop, not the timeout backstop.
+        timeout_timestamp=datetime.utcnow() + timedelta(days=1),
+    )
+
+    assert len(calls) == 1
+    assert [r.response.status for r in responses] == [TaskStatus.TIMEOUT]
