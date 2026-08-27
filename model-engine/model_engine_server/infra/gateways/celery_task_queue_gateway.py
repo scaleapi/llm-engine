@@ -26,6 +26,18 @@ except ImportError:
     ServiceBusError = None  # type: ignore[assignment,misc]
 
 logger = make_logger(logger_name())
+
+# Matched by name, not isinstance: the result backend rebuilds the exception from the stored
+# exc_type/exc_module, and synthesizes a stand-in class when that module is not importable here.
+TIMEOUT_EXCEPTION_NAMES = frozenset(
+    {
+        "TimeLimitExceeded",  # celery/billiard hard limit; the worker child was killed
+        "SoftTimeLimitExceeded",
+        "Timeout",  # requests, and the base of the two below
+        "ConnectTimeout",
+        "ReadTimeout",
+    }
+)
 _cloud_provider = infra_config().cloud_provider
 backend_protocol = (
     "abs" if _cloud_provider == "azure" else ("redis" if _cloud_provider == "gcp" else "s3")
@@ -399,9 +411,12 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
             )
 
         elif response_state == "FAILURE":
+            # A deadline hit leaves the user container still running, so it is reported apart from
+            # a crash: the work may yet land and the caller can keep polling rather than discard it.
+            timed_out = type(res.result).__name__ in TIMEOUT_EXCEPTION_NAMES
             return GetAsyncTaskV1Response(
                 task_id=task_id,
-                status=TaskStatus.FAILURE,
+                status=TaskStatus.TIMEOUT if timed_out else TaskStatus.FAILURE,
                 result=str(res.result) if res.result is not None else None,
                 traceback=res.traceback,
                 status_code=None,  # probably

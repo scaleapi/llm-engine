@@ -331,7 +331,7 @@ class LiveBatchJobOrchestrationService(BatchJobOrchestrationService):
             )
             has_new_ready_tasks = False
             curr_timestamp = datetime.utcnow()
-            terminal_task_states = {TaskStatus.SUCCESS, TaskStatus.FAILURE}
+            terminal_task_states = {TaskStatus.SUCCESS, TaskStatus.FAILURE, TaskStatus.TIMEOUT}
             for r in new_results:
                 if r.status in terminal_task_states or curr_timestamp > timeout_timestamp:
                     has_new_ready_tasks = True
