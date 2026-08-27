@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
+from billiard.exceptions import TimeLimitExceeded
 from model_engine_server.common.dtos.model_endpoints import BrokerType
 from model_engine_server.common.dtos.tasks import TaskStatus
 from model_engine_server.domain.exceptions import BrokerUnavailableException
@@ -8,6 +9,7 @@ from model_engine_server.infra.gateways.celery_task_queue_gateway import (
     CeleryTaskQueueGateway,
     _is_broker_connection_error,
 )
+from requests.exceptions import ConnectTimeout, ReadTimeout
 
 
 # Stand-in for azure.servicebus.exceptions.ServiceBusError so tests run
@@ -87,6 +89,43 @@ def test_get_task_failure_with_none_result(gateway):
     assert response.status == TaskStatus.FAILURE
     assert response.result is None
     assert response.traceback is None
+
+
+@pytest.mark.parametrize(
+    "exc",
+    [
+        TimeLimitExceeded(3600),
+        ReadTimeout("HTTPConnectionPool(host='localhost', port=5005): Read timed out."),
+        ConnectTimeout("connect timed out"),
+    ],
+    ids=["celery_hard_limit", "requests_read_timeout", "requests_connect_timeout"],
+)
+def test_get_task_deadline_reported_as_timeout(gateway, exc):
+    """A forwarder deadline is reported as TIMEOUT so callers can keep polling for late work."""
+    async_result = _make_async_result(state="FAILURE", result=exc, traceback=None)
+
+    with patch.object(gateway, "_get_celery_dest") as mock_dest:
+        mock_dest.return_value.AsyncResult.return_value = async_result
+        response = gateway.get_task("task-timeout")
+
+    assert response.status == TaskStatus.TIMEOUT
+    assert response.traceback is None
+
+
+@pytest.mark.parametrize(
+    "exc",
+    [RuntimeError("boom"), ValueError("bad payload"), MemoryError()],
+    ids=["runtime", "value", "memory"],
+)
+def test_get_task_non_deadline_failures_stay_failure(gateway, exc):
+    """Only deadline exceptions are remapped; every other crash remains terminal FAILURE."""
+    async_result = _make_async_result(state="FAILURE", result=exc, traceback=None)
+
+    with patch.object(gateway, "_get_celery_dest") as mock_dest:
+        mock_dest.return_value.AsyncResult.return_value = async_result
+        response = gateway.get_task("task-crash")
+
+    assert response.status == TaskStatus.FAILURE
 
 
 # ---------------------------------------------------------------------------

@@ -22,6 +22,7 @@ class TaskStatus(str, Enum):
     STARTED = "STARTED"
     SUCCESS = "SUCCESS"
     FAILURE = "FAILURE"
+    TIMEOUT = "TIMEOUT"
     UNDEFINED = "UNDEFINED"
 
 

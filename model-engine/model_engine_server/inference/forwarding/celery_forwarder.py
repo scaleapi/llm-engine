@@ -48,6 +48,17 @@ logger = make_logger(logger_name())
 
 tracing_gateway = get_tracing_gateway()
 
+# The Celery hard limit SIGKILLs the worker child, which discards the traceback. Held above the
+# forwarder's own HTTP timeout so that timeout raises first and a deadline hit stays diagnosable.
+CELERY_TIME_LIMIT_GRACE_SECONDS: float = 300
+
+# An async task is bounded by how long its queue will wait for an ack, not by the sync request
+# deadline. The grace is subtracted so the hard limit lands on the visibility boundary rather than
+# past it, where the message has already been redelivered to another worker.
+DEFAULT_ASYNC_TIMEOUT_SECONDS: float = (
+    DEFAULT_TASK_VISIBILITY_SECONDS - CELERY_TIME_LIMIT_GRACE_SECONDS
+)
+
 
 class ErrorResponse(TypedDict):
     """The response payload for any inference request that encountered an error."""
@@ -103,7 +114,7 @@ def create_celery_service(
     monitoring_metrics_gateway = DatadogInferenceMonitoringMetricsGateway()
     # requests treats its timeout as socket inactivity. The Celery limit supplies
     # the wall-clock bound when an upstream response keeps trickling bytes.
-    task_time_limit = forwarder.timeout_seconds
+    task_time_limit = forwarder.timeout_seconds + CELERY_TIME_LIMIT_GRACE_SECONDS
 
     class ErrorHandlingTask(Task):
         """Sets a 'custom' field with error in the Task response for FAILURE.
@@ -260,7 +271,13 @@ def entrypoint():
         args.broker_type = str(BrokerType.SQS.value if args.sqs_url else BrokerType.REDIS.value)
 
     forwarder_config = load_named_config(args.config, args.set)
-    forwarder_loader = LoadForwarder(**forwarder_config["async"])
+    # LoadForwarder's own default is the sync deadline; async tasks are bounded by the queue's
+    # task visibility instead, so the config file and --set stay authoritative over both.
+    async_config = {
+        "timeout_seconds": DEFAULT_ASYNC_TIMEOUT_SECONDS,
+        **forwarder_config["async"],
+    }
+    forwarder_loader = LoadForwarder(**async_config)
     forwader = forwarder_loader.load(None, None)
 
     app = create_celery_service(
