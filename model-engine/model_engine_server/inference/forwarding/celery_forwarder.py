@@ -53,11 +53,11 @@ tracing_gateway = get_tracing_gateway()
 CELERY_TIME_LIMIT_GRACE_SECONDS: float = 300
 
 # An async task is bounded by how long its queue will wait for an ack, not by the sync request
-# deadline. The grace is subtracted so the hard limit lands on the visibility boundary rather than
-# past it, where the message has already been redelivered to another worker.
-DEFAULT_ASYNC_TIMEOUT_SECONDS: float = (
-    DEFAULT_TASK_VISIBILITY_SECONDS - CELERY_TIME_LIMIT_GRACE_SECONDS
-)
+# deadline: past the visibility timeout the broker redelivers a task that is still running, because
+# task_acks_late is on. The grace is subtracted so the hard limit lands on that boundary rather than
+# past it. This is both the default and the ceiling -- a longer configured deadline cannot be
+# honoured, so it is capped rather than accepted.
+MAX_ASYNC_TIMEOUT_SECONDS: float = DEFAULT_TASK_VISIBILITY_SECONDS - CELERY_TIME_LIMIT_GRACE_SECONDS
 
 
 class ErrorResponse(TypedDict):
@@ -72,6 +72,14 @@ def raw_celery_response(backend, task_id: str) -> Dict[str, Any]:
     info_as_str: str = backend.get(key_info)
     info: dict = json.loads(info_as_str)
     return info
+
+
+def async_task_time_limit(timeout_seconds: float, task_visibility: TaskVisibility) -> float:
+    """Wall-clock bound for an async task: above the forwarder's HTTP timeout, never past the
+    window the queue waits for an ack.
+    """
+    visibility_timeout = TaskVisibility.get_visibility_timeout_in_seconds(task_visibility)
+    return min(timeout_seconds + CELERY_TIME_LIMIT_GRACE_SECONDS, visibility_timeout)
 
 
 def error_response(msg: str, e_unhandled: Exception) -> ErrorResponse:
@@ -113,8 +121,10 @@ def create_celery_service(
 
     monitoring_metrics_gateway = DatadogInferenceMonitoringMetricsGateway()
     # requests treats its timeout as socket inactivity. The Celery limit supplies
-    # the wall-clock bound when an upstream response keeps trickling bytes.
-    task_time_limit = forwarder.timeout_seconds + CELERY_TIME_LIMIT_GRACE_SECONDS
+    # the wall-clock bound when an upstream response keeps trickling bytes. celery_app asserts the
+    # visibility ceiling for its app-level task_time_limit, but a per-task time_limit never reaches
+    # that assertion, so it is held here too.
+    task_time_limit = async_task_time_limit(forwarder.timeout_seconds, task_visibility)
 
     class ErrorHandlingTask(Task):
         """Sets a 'custom' field with error in the Task response for FAILURE.
@@ -271,12 +281,20 @@ def entrypoint():
         args.broker_type = str(BrokerType.SQS.value if args.sqs_url else BrokerType.REDIS.value)
 
     forwarder_config = load_named_config(args.config, args.set)
-    # LoadForwarder's own default is the sync deadline; async tasks are bounded by the queue's
-    # task visibility instead, so the config file and --set stay authoritative over both.
+    # LoadForwarder's own default is the sync deadline; async tasks get the queue's visibility
+    # window instead, and the config file and --set stay authoritative below that ceiling.
     async_config = {
-        "timeout_seconds": DEFAULT_ASYNC_TIMEOUT_SECONDS,
+        "timeout_seconds": MAX_ASYNC_TIMEOUT_SECONDS,
         **forwarder_config["async"],
     }
+    if async_config["timeout_seconds"] > MAX_ASYNC_TIMEOUT_SECONDS:
+        logger.warning(
+            "Capping forwarder.async.timeout_seconds %s at %s: a longer deadline outlives the "
+            "queue's visibility timeout, which redelivers the task while it is still running.",
+            async_config["timeout_seconds"],
+            MAX_ASYNC_TIMEOUT_SECONDS,
+        )
+        async_config["timeout_seconds"] = MAX_ASYNC_TIMEOUT_SECONDS
     forwarder_loader = LoadForwarder(**async_config)
     forwader = forwarder_loader.load(None, None)
 
