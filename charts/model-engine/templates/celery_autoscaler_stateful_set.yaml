@@ -66,6 +66,7 @@ spec:
           value: {{ $broker_name }}
         - name: CELERY_ELASTICACHE_ENABLED
           value: {{ (eq $message_broker "elasticache") | squote }}
+        {{- include "modelEngine.redisAuthEnv" . | indent 6 }}
         - name: POD_NAME
           valueFrom:
             fieldRef:

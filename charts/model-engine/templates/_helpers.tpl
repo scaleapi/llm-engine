@@ -290,6 +290,28 @@ env:
   {{- end }}
 {{- end }}
 
+{{- /* Every workload that opens a Redis connection must include this, or it
+       reaches an authenticated broker with no credential and fails NOAUTH. */}}
+{{- define "modelEngine.redisAuthEnv" }}
+  {{- if .Values.redis.authSecretName }}
+  - name: REDIS_AUTH_TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: {{ .Values.redis.authSecretName }}
+        key: {{ .Values.redis.authSecretKey | default "auth_token" }}
+  {{- else if .Values.redis.auth }}
+  - name: REDIS_AUTH_TOKEN
+    value: {{ .Values.redis.auth }}
+  {{- end }}
+  {{- /* Same value drives the KEDA scaler's enableTLS so chart and app cannot
+         drift. Any set value is forwarded, including a stringified bool from a
+         value override; only an unset value leaves the app's inference intact. */}}
+  {{- if not (or (kindIs "invalid" .Values.redis.enableTLS) (eq (toString .Values.redis.enableTLS) "")) }}
+  - name: REDIS_ENABLE_TLS
+    value: {{ .Values.redis.enableTLS | quote }}
+  {{- end }}
+{{- end }}
+
 {{- define "modelEngine.serviceEnvBase" }}
 env:
   - name: DD_TRACE_ENABLED
@@ -379,16 +401,7 @@ env:
   - name: CELERY_RESULT_BACKEND
     value: {{ .Values.celeryResultBackend | quote }}
   {{- end }}
-  {{- if .Values.redis.authSecretName }}
-  - name: REDIS_AUTH_TOKEN
-    valueFrom:
-      secretKeyRef:
-        name: {{ .Values.redis.authSecretName }}
-        key: {{ .Values.redis.authSecretKey | default "auth_token" }}
-  {{- else if .Values.redis.auth }}
-  - name: REDIS_AUTH_TOKEN
-    value: {{ .Values.redis.auth }}
-  {{- end }}
+  {{- include "modelEngine.redisAuthEnv" . }}
   {{- if .Values.azure}}
   - name: AZURE_IDENTITY_NAME
     value: {{ .Values.azure.identity_name }}

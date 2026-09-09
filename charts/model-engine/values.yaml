@@ -80,7 +80,10 @@ redis:
   auth:
   authSecretName: ""
   authSecretKey: ""
-  enableTLS: false
+  # Unset means the app infers TLS from the presence of a Redis credential
+  # (what ElastiCache in-transit encryption needs). Set it explicitly to pin
+  # the scheme; the same value drives the KEDA scaler.
+  enableTLS:
   enableAuth: false
   kedaSecretName: ""
   unsafeSsl: false
