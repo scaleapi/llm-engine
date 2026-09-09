@@ -290,6 +290,20 @@ env:
   {{- end }}
 {{- end }}
 
+{{- /* Resolves the Redis scheme for both the app and the KEDA scaler. An unset
+       value mirrors the app's own fallback -- a configured credential implies
+       TLS, which is what ElastiCache in-transit encryption needs -- so the two
+       cannot disagree about the transport. */}}
+{{- define "modelEngine.redisEnableTLS" -}}
+{{- if not (or (kindIs "invalid" .Values.redis.enableTLS) (eq (toString .Values.redis.enableTLS) "")) -}}
+{{- .Values.redis.enableTLS }}
+{{- else if or .Values.redis.authSecretName .Values.redis.auth -}}
+true
+{{- else -}}
+false
+{{- end -}}
+{{- end }}
+
 {{- /* Every workload that opens a Redis connection must include this, or it
        reaches an authenticated broker with no credential and fails NOAUTH. */}}
 {{- define "modelEngine.redisAuthEnv" }}
@@ -303,13 +317,8 @@ env:
   - name: REDIS_AUTH_TOKEN
     value: {{ .Values.redis.auth }}
   {{- end }}
-  {{- /* Same value drives the KEDA scaler's enableTLS so chart and app cannot
-         drift. Any set value is forwarded, including a stringified bool from a
-         value override; only an unset value leaves the app's inference intact. */}}
-  {{- if not (or (kindIs "invalid" .Values.redis.enableTLS) (eq (toString .Values.redis.enableTLS) "")) }}
   - name: REDIS_ENABLE_TLS
-    value: {{ .Values.redis.enableTLS | quote }}
-  {{- end }}
+    value: {{ include "modelEngine.redisEnableTLS" . | quote }}
 {{- end }}
 
 {{- define "modelEngine.serviceEnvBase" }}
