@@ -294,8 +294,12 @@ env:
        value mirrors the app's own fallback -- a configured credential implies
        TLS, which is what ElastiCache in-transit encryption needs -- so the two
        cannot disagree about the transport. */}}
+{{- define "modelEngine.redisEnableTLSIsSet" -}}
+{{- if not (or (kindIs "invalid" .Values.redis.enableTLS) (eq (toString .Values.redis.enableTLS) "")) -}}true{{- end -}}
+{{- end }}
+
 {{- define "modelEngine.redisEnableTLS" -}}
-{{- if not (or (kindIs "invalid" .Values.redis.enableTLS) (eq (toString .Values.redis.enableTLS) "")) -}}
+{{- if include "modelEngine.redisEnableTLSIsSet" . -}}
 {{- .Values.redis.enableTLS }}
 {{- else if or .Values.redis.authSecretName .Values.redis.auth -}}
 true
@@ -317,8 +321,13 @@ false
   - name: REDIS_AUTH_TOKEN
     value: {{ .Values.redis.auth }}
   {{- end }}
+  {{- /* Withheld when the chart cannot determine it: a token reaching the pod
+         through extraEnvVars is invisible here, and an explicit false would
+         override the app's own inference and force plaintext. */}}
+  {{- if or (include "modelEngine.redisEnableTLSIsSet" .) .Values.redis.authSecretName .Values.redis.auth }}
   - name: REDIS_ENABLE_TLS
     value: {{ include "modelEngine.redisEnableTLS" . | quote }}
+  {{- end }}
 {{- end }}
 
 {{- define "modelEngine.serviceEnvBase" }}
