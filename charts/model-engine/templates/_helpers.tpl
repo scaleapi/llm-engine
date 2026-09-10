@@ -290,22 +290,10 @@ env:
   {{- end }}
 {{- end }}
 
-{{- /* Resolves the Redis scheme for both the app and the KEDA scaler. An unset
-       value mirrors the app's own fallback -- a configured credential implies
-       TLS, which is what ElastiCache in-transit encryption needs -- so the two
-       cannot disagree about the transport. */}}
+{{- /* True only when an operator gave redis.enableTLS a value. A stringified
+       bool from a value override counts; nil and "" do not. */}}
 {{- define "modelEngine.redisEnableTLSIsSet" -}}
 {{- if not (or (kindIs "invalid" .Values.redis.enableTLS) (eq (toString .Values.redis.enableTLS) "")) -}}true{{- end -}}
-{{- end }}
-
-{{- define "modelEngine.redisEnableTLS" -}}
-{{- if include "modelEngine.redisEnableTLSIsSet" . -}}
-{{- .Values.redis.enableTLS }}
-{{- else if or .Values.redis.authSecretName .Values.redis.auth -}}
-true
-{{- else -}}
-false
-{{- end -}}
 {{- end }}
 
 {{- /* Every workload that opens a Redis connection must include this, or it
@@ -321,12 +309,13 @@ false
   - name: REDIS_AUTH_TOKEN
     value: {{ .Values.redis.auth }}
   {{- end }}
-  {{- /* Withheld when the chart cannot determine it: a token reaching the pod
-         through extraEnvVars is invisible here, and an explicit false would
-         override the app's own inference and force plaintext. */}}
-  {{- if or (include "modelEngine.redisEnableTLSIsSet" .) .Values.redis.authSecretName .Values.redis.auth }}
+  {{- /* Governs the Celery broker only -- the cache endpoint declares its own
+         scheme in cache_redis_url. Emitted only when set: a credential can also
+         reach the pod through extraEnvVars, and an inferred value here would
+         override the app's own fallback. */}}
+  {{- if include "modelEngine.redisEnableTLSIsSet" . }}
   - name: REDIS_ENABLE_TLS
-    value: {{ include "modelEngine.redisEnableTLS" . | quote }}
+    value: {{ .Values.redis.enableTLS | quote }}
   {{- end }}
 {{- end }}
 

@@ -80,8 +80,9 @@ redis:
   auth:
   authSecretName: ""
   authSecretKey: ""
-  # Unset infers TLS from the presence of a Redis credential, which is what
-  # ElastiCache in-transit encryption needs. Set explicitly to pin the scheme.
+  # Scheme for the Celery broker. Unset lets the app infer it from the presence
+  # of a credential, which is what ElastiCache in-transit encryption needs. The
+  # cache endpoint is separate and names its own scheme in cache_redis_url.
   enableTLS:
   enableAuth: false
   kedaSecretName: ""
