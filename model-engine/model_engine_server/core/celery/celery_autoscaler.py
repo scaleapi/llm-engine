@@ -88,7 +88,6 @@ async def list_deployments(apps_api) -> Dict[Tuple[str, str], CeleryAutoscalerPa
     namespaces_to_scan = list(dict.fromkeys([endpoint_namespace, "default"]))
     celery_deployments_params = {}
     for namespace_name in namespaces_to_scan:
-        namespace_start_time = time.time()
         try:
             deployments = await apps_api.list_namespaced_deployment(namespace=namespace_name)
         except ApiException as exc:
@@ -96,9 +95,6 @@ async def list_deployments(apps_api) -> Dict[Tuple[str, str], CeleryAutoscalerPa
             # other. Log and move on; the next iteration of the outer loop will retry.
             logger.error(f"Failed to list deployments in namespace {namespace_name}: {exc}")
             continue
-        logger.info(
-            f"list_namespaced_deployment in {namespace_name} took {time.time() - namespace_start_time} seconds"
-        )
         for deployment in deployments.items:
             deployment_name = deployment.metadata.name
             annotations = deployment.metadata.annotations
@@ -647,7 +643,6 @@ async def main():
         try:
             loop_start = time.time()
             deployments = await list_deployments(apps_api=apps_api)
-            logger.info(f"list_deployments took {time.time() - loop_start} seconds")
             celery_queues = set()
             celery_queues_params = []
             for deployment_and_namespace, params in sorted(
@@ -677,9 +672,7 @@ async def main():
 
             # Get queue sizes
             # (queue_name, db_index) -> QueueSizes
-            start_get_metrics = time.time()
             metrics = await get_metrics(broker, inspect=inspect, queues=celery_queues)
-            logger.info(f"get_metrics took {time.time() - start_get_metrics} seconds")
 
             queue_sizes = metrics.broker_metrics.queue_sizes
             for k, v in sorted(queue_sizes.items()):
@@ -700,7 +693,6 @@ async def main():
 
             # Wait before next iteration
             iteration_len = time.time() - loop_start
-            logger.info(f"Iteration length: {iteration_len} seconds.")
             if iteration_len < 3:
                 await aio.sleep(3 - iteration_len)
 
