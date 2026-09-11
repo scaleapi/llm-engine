@@ -2,6 +2,7 @@ import logging
 import os
 from enum import IntEnum, unique
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from urllib.parse import quote
 
 import celery
 import redis.asyncio as aioredis
@@ -209,31 +210,53 @@ def get_redis_endpoint(db_index: int = 0) -> str:
             return f"{scheme}:{auth_token}@{host}:{port}/{db_index}{query_params}"
         return f"{scheme}{host}:{port}/{db_index}{query_params}"
     host, port = get_redis_host_port()
+    return build_redis_url(host, port, db_index)
+
+
+def redis_tls_enabled() -> bool:
+    """Whether to speak TLS to Redis.
+
+    Transport security and authentication are independent: on-prem Redis is
+    reached over plaintext while still requiring a password. REDIS_ENABLE_TLS
+    decides the scheme; when it is unset the presence of a credential implies
+    TLS, which is what ElastiCache with in-transit encryption needs.
+    """
+    explicit = os.getenv("REDIS_ENABLE_TLS")
+    if explicit:
+        return explicit.lower() == "true"
+    return bool(os.getenv("REDIS_AUTH_TOKEN"))
+
+
+def build_redis_url(host: str, port: Union[str, int], db_index: int = 0) -> str:
     auth_token = os.getenv("REDIS_AUTH_TOKEN")
-    if auth_token:
-        return f"rediss://:{auth_token}@{host}:{port}/{db_index}?ssl_cert_reqs=none"
-    return f"redis://{host}:{port}/{db_index}"
+    # kombu and redis-py both unquote the userinfo, so percent-encoding here is
+    # what lets a password containing @, / or # survive URL parsing.
+    credential = f":{quote(auth_token, safe='')}@" if auth_token else ""
+    if redis_tls_enabled():
+        return f"rediss://{credential}{host}:{port}/{db_index}?ssl_cert_reqs=none"
+    return f"redis://{credential}{host}:{port}/{db_index}"
 
 
 def get_redis_instance(db_index: int = 0) -> Union[Redis, StrictRedis]:
     host, port = get_redis_host_port()
     auth_token = os.getenv("REDIS_AUTH_TOKEN")
+    use_tls = redis_tls_enabled()
 
-    if auth_token:
-        return StrictRedis(
-            host=host,
-            port=port,
-            db=db_index,
-            password=auth_token,
-            ssl=True,
-            ssl_cert_reqs="none",
-        )
-    return Redis(host=host, port=port, db=db_index)
+    if not auth_token and not use_tls:
+        return Redis(host=host, port=port, db=db_index)
+    ssl_kwargs: Dict[str, Any] = {"ssl": True, "ssl_cert_reqs": "none"} if use_tls else {}
+    return StrictRedis(
+        host=host,
+        port=port,
+        db=db_index,
+        password=auth_token,
+        **ssl_kwargs,
+    )
 
 
 def get_async_redis_instance(db_index: int = 0) -> aioredis.Redis:
     host, port = get_redis_host_port()
-    return build_aioredis_client(f"redis://{host}:{port}/{db_index}")
+    return build_aioredis_client(build_redis_url(host, port, db_index))
 
 
 def celery_app(

@@ -6,6 +6,7 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Sequence
+from urllib.parse import quote
 
 import yaml
 from azure.identity import DefaultAzureCredential
@@ -45,6 +46,24 @@ def get_model_cache_directory_name(model_name: str):
     """
     name = "models--" + model_name.replace("/", "--")
     return name
+
+
+def _apply_redis_auth_token(url: str) -> str:
+    """Add REDIS_AUTH_TOKEN to a Redis URL that carries no credential of its own.
+
+    Keeps the password out of Helm values: the chart names the host and db
+    index, the app supplies the credential from its secret-backed env var. A
+    URL that already has userinfo is left alone so an explicit override wins.
+    """
+    auth_token = os.getenv("REDIS_AUTH_TOKEN")
+    if not auth_token:
+        return url
+    scheme, sep, remainder = url.partition("://")
+    if not sep or "@" in remainder.split("/")[0]:
+        return url
+    # redis-py unquotes the userinfo, so percent-encoding here is what lets a
+    # password containing @, / or # survive URL parsing.
+    return f"{scheme}://:{quote(auth_token, safe='')}@{remainder}"
 
 
 @dataclass
@@ -104,7 +123,7 @@ class HostedModelInferenceServiceConfig:
     def cache_redis_url(self) -> str:
         # On-prem Redis support (explicit URL, no cloud provider dependency)
         if self.cache_redis_onprem_url:
-            return self.cache_redis_onprem_url
+            return _apply_redis_auth_token(self.cache_redis_onprem_url)
 
         cloud_provider = infra_config().cloud_provider
 
@@ -112,10 +131,10 @@ class HostedModelInferenceServiceConfig:
         if cloud_provider == "onprem":
             if self.cache_redis_aws_url:
                 logger.info("On-prem deployment using cache_redis_aws_url")
-                return self.cache_redis_aws_url
+                return _apply_redis_auth_token(self.cache_redis_aws_url)
             redis_host = os.getenv("REDIS_HOST", "redis")
             redis_port = getattr(infra_config(), "redis_port", 6379)
-            return f"redis://{redis_host}:{redis_port}/0"
+            return _apply_redis_auth_token(f"redis://{redis_host}:{redis_port}/0")
 
         if cloud_provider == "gcp":
             assert self.cache_redis_gcp_url, "cache_redis_gcp_url required for GCP"
@@ -148,11 +167,13 @@ class HostedModelInferenceServiceConfig:
 
     @property
     def cache_redis_host_port(self) -> str:
-        # redis://redis.url:6379/<db_index>
+        # redis://:password@redis.url:6379/<db_index>
         # -> redis.url:6379
-        if "rediss://" in self.cache_redis_url:
-            return self.cache_redis_url.split("rediss://")[1].split("@")[-1].split("/")[0]
-        return self.cache_redis_url.split("redis://")[1].split("/")[0]
+        # Credentials must be stripped for every scheme: this value is rendered
+        # into the KEDA scaler's `address` metadata, so a password left in here
+        # both breaks the address and leaks into the ScaledObject.
+        authority = self.cache_redis_url.split("://", 1)[-1]
+        return authority.split("@")[-1].split("/")[0]
 
     @property
     def cache_redis_db_index(self) -> int:

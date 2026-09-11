@@ -3,6 +3,7 @@ from typing import Sequence
 from .app import (
     DEFAULT_TASK_VISIBILITY_SECONDS,
     TaskVisibility,
+    build_redis_url,
     celery_app,
     get_all_db_indexes,
     get_redis_host_port,
@@ -10,6 +11,7 @@ from .app import (
 )
 
 __all__: Sequence[str] = (
+    "build_redis_url",
     "celery_app",
     "get_all_db_indexes",
     "get_redis_host_port",

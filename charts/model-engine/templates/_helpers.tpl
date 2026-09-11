@@ -290,6 +290,35 @@ env:
   {{- end }}
 {{- end }}
 
+{{- /* True only when an operator gave redis.enableTLS a value. A stringified
+       bool from a value override counts; nil and "" do not. */}}
+{{- define "modelEngine.redisEnableTLSIsSet" -}}
+{{- if not (or (kindIs "invalid" .Values.redis.enableTLS) (eq (toString .Values.redis.enableTLS) "")) -}}true{{- end -}}
+{{- end }}
+
+{{- /* Every workload that opens a Redis connection must include this, or it
+       reaches an authenticated broker with no credential and fails NOAUTH. */}}
+{{- define "modelEngine.redisAuthEnv" }}
+  {{- if .Values.redis.authSecretName }}
+  - name: REDIS_AUTH_TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: {{ .Values.redis.authSecretName }}
+        key: {{ .Values.redis.authSecretKey | default "auth_token" }}
+  {{- else if .Values.redis.auth }}
+  - name: REDIS_AUTH_TOKEN
+    value: {{ .Values.redis.auth }}
+  {{- end }}
+  {{- /* Governs the Celery broker only -- the cache endpoint declares its own
+         scheme in cache_redis_url. Emitted only when set: a credential can also
+         reach the pod through extraEnvVars, and an inferred value here would
+         override the app's own fallback. */}}
+  {{- if include "modelEngine.redisEnableTLSIsSet" . }}
+  - name: REDIS_ENABLE_TLS
+    value: {{ .Values.redis.enableTLS | quote }}
+  {{- end }}
+{{- end }}
+
 {{- define "modelEngine.serviceEnvBase" }}
 env:
   - name: DD_TRACE_ENABLED
@@ -379,16 +408,7 @@ env:
   - name: CELERY_RESULT_BACKEND
     value: {{ .Values.celeryResultBackend | quote }}
   {{- end }}
-  {{- if .Values.redis.authSecretName }}
-  - name: REDIS_AUTH_TOKEN
-    valueFrom:
-      secretKeyRef:
-        name: {{ .Values.redis.authSecretName }}
-        key: {{ .Values.redis.authSecretKey | default "auth_token" }}
-  {{- else if .Values.redis.auth }}
-  - name: REDIS_AUTH_TOKEN
-    value: {{ .Values.redis.auth }}
-  {{- end }}
+  {{- include "modelEngine.redisAuthEnv" . }}
   {{- if .Values.azure}}
   - name: AZURE_IDENTITY_NAME
     value: {{ .Values.azure.identity_name }}
