@@ -1,6 +1,6 @@
 GitPython>=3.1.49,<4.0
 Jinja2>=3.1.5   # CVE-2024-56326; 3.1.0 bug was fixed in 3.1.1+
-aiohttp>=3.13.4,<4.0
+aiohttp>=3.14.1,<4.0 # CVE-2026-34993, CVE-2026-47265, CVE-2026-50269, CVE-2026-54273-54280
 redis>=4.6.0  # replaces aioredis~=2.0; aioredis 2.x broken on Python 3.12 (duplicate base class TimeoutError); asyncio support built-in to redis>=4.2
 alembic==1.8.1
 asyncpg>=0.29.0  # 0.27.0 has no cp312/cp313 wheel; Python 3.12/3.13 support added in 0.29.0
@@ -31,7 +31,7 @@ gevent>=26.5.0  # celery gevent worker pool for the celery-forwarder (MLI-7328);
 click~=8.1
 cloudpickle==2.1.0
 croniter==1.4.1
-cryptography>=46.0.7 # not used directly, but needs to be pinned for Microsoft security scan
+cryptography>=48.0.1 # GHSA-537c-gmf6-5ccf fixed in 48.0.1
 dataclasses-json>=0.5.7
 datadog-api-client==2.11.0
 datadog~=0.47.0
@@ -39,7 +39,7 @@ ddtrace>=4.7.1,<5.0  # 4.7.1 publishes CPython 3.14 wheels; needed for public Ch
 numpy>=2.4.4,<2.5  # 2.4.4 publishes CPython 3.14 wheels
 deprecation~=2.1
 docker~=5.0
-fastapi>=0.115.8  # bumped to allow starlette>=0.49.1 (CVE-2025-62727 fix)
+fastapi>=0.138.0  # compatible with starlette>=1.3.1 security fixes
 gitdb2~=2.0
 gunicorn~=23.0
 httptools>=0.6.0  # 0.5.0 has no cp312/cp313 wheel
@@ -54,7 +54,7 @@ py-xid==0.3.0
 pycurl~=7.44  # For celery[sqs]
 pytz>=2024.1
 pydantic==2.12.5
-python-multipart>=0.0.26
+python-multipart>=0.0.30 # CVE-2026-53539 fixed in 0.0.30
 quart>=0.20.0,<0.21.0
 werkzeug>=3.0.6  # CVE-2024-34069, CVE-2024-49766, CVE-2024-49767
 requests-auth-aws-sigv4~=0.7
@@ -66,7 +66,7 @@ smart-open~=5.2
 sqlalchemy[asyncio]>=2.0.36  # 2.0.36+ required for Python 3.13 (__static_attributes__ / __firstlineno__ compat)
 sse-starlette==1.6.1
 sseclient-py==1.7.2
-starlette[full]>=0.40.0 # not used directly, but needs to be pinned for Microsoft security scan
+starlette[full]>=1.3.1 # CVE-2026-48818 and CVE-2026-54283 fixed by 1.3.1
 stringcase==1.2.0
 tenacity>=6.0.0,<=6.2.0
 testing-postgresql==1.3.0
@@ -78,16 +78,18 @@ uvicorn==0.30.6
 uvloop>=0.19.0  # 0.17.0 has no cp312/cp313 wheel; Python 3.12/3.13 support added in 0.19.0
 yarl~=1.4
 certifi>=2024.7.4  # CVE-2024-39689
-PyJWT>=2.9.0       # CVE-2024-33663
-urllib3>=2.0.7     # CVE-2023-43804, CVE-2023-45803, CVE-2024-37891
+PyJWT>=2.13.0      # CVE-2024-33663 and CVE-2026-48526
+urllib3>=2.7.0     # CVE-2026-44431 and CVE-2026-44432
+idna>=3.15         # CVE-2026-45409
 setuptools>=70.0.0 # CVE-2024-6345
+wheel>=0.46.2      # CVE-2026-24049 (GHSA-8rrh-rw8j-w5fx)
 h11>=0.16.0        # CVE-2025-43859 (CRITICAL)
 greenlet>=3.0.0    # 2.x has no cp312/cp313 wheel; Python 3.12/3.13 support added in 3.0
 frozenlist>=1.4.0  # 1.3.x has no cp312/cp313 wheel
 multidict>=6.1.0   # 6.0.x has no cp312/cp313 wheel
 azure-core>=1.38.0 # CVE-2026-21226 (HIGH, deserialization) fixed in 1.38.0
 pyasn1>=0.6.3      # CVE-2026-30922 (HIGH, DoS) fixed in 0.6.3
-starlette>=0.49.1  # CVE-2025-62727 (HIGH, DoS) fixed in 0.49.1
+starlette>=1.3.1   # CVE-2025-62727, CVE-2026-48818, CVE-2026-54283
 pg8000>=1.31.5     # CVE-2025-61385 (HIGH, SQL injection) fixed in 1.31.5
 flask>=3.1.3,<4.0  # CVE-2026-27205
 mako>=1.3.11       # GHSA-v92g-xgxw-vvmm
