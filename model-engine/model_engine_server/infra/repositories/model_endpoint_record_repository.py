@@ -53,6 +53,7 @@ class ModelEndpointRecordRepository(ABC):
         public_inference: Optional[bool] = False,
         task_expires_seconds: Optional[int] = None,
         queue_message_timeout_seconds: Optional[int] = None,
+        temporal_task_queue: Optional[str] = None,
     ) -> ModelEndpointRecord:
         """
         Creates an entry for endpoint tracking data, but not the actual compute resources.
@@ -63,7 +64,7 @@ class ModelEndpointRecordRepository(ABC):
             model_bundle_id: Bundle the endpoint uses
             metadata: Arbitrary dictionary containing user-defined metadata
             endpoint_type: Type of endpoint i.e. async/sync
-            destination: The queue name (async) or deployment name (sync) of the endpoint, used for routing requests
+            destination: The queue name (async) or deployment name (sync/temporal) of the endpoint, used for routing requests
             creation_task_id: The celery task id corresponding to endpoint creation
             status: A status field on the endpoint, keeps track of endpoint state,
                 used to coordinate edit operations on the endpoint
@@ -73,6 +74,7 @@ class ModelEndpointRecordRepository(ABC):
             public_inference: Whether the endpoint is publicly accessible
             task_expires_seconds: For async endpoints, how long a task can wait in queue before expiring
             queue_message_timeout_seconds: For async endpoints, queue message visibility/lock timeout
+            temporal_task_queue: For temporal endpoints, the Temporal task queue that workers will poll
 
         Returns:
             A Model Endpoint Record domain entity.
@@ -93,6 +95,7 @@ class ModelEndpointRecordRepository(ABC):
         public_inference: Optional[bool] = None,
         task_expires_seconds: Optional[int] = None,
         queue_message_timeout_seconds: Optional[int] = None,
+        temporal_task_queue: Optional[str] = None,
     ) -> Optional[ModelEndpointRecord]:
         """
         Updates the entry for endpoint tracking data with the given new values. Only these values are editable.
@@ -113,6 +116,7 @@ class ModelEndpointRecordRepository(ABC):
             public_inference: Whether the endpoint is publicly accessible
             task_expires_seconds: For async endpoints, how long a task can wait in queue before expiring
             queue_message_timeout_seconds: For async endpoints, queue message visibility/lock timeout
+            temporal_task_queue: For temporal endpoints, the Temporal task queue that workers will poll
 
         Returns:
             A Model Endpoint Record domain entity if found, else None.
