@@ -10,7 +10,7 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials, OAuth2PasswordBear
 from model_engine_server.common.aioredis_pool import build_aioredis_pool
 from model_engine_server.common.config import hmi_config
 from model_engine_server.common.dtos.model_endpoints import BrokerType
-from model_engine_server.common.env_vars import CIRCLECI
+from model_engine_server.common.env_vars import CIRCLECI, LOCAL
 from model_engine_server.core.auth.authentication_repository import AuthenticationRepository, User
 from model_engine_server.core.auth.fake_authentication_repository import (
     FakeAuthenticationRepository,
@@ -241,7 +241,7 @@ def _get_external_interfaces(
     )
 
     queue_delegate: QueueEndpointResourceDelegate
-    if CIRCLECI:
+    if CIRCLECI or (LOCAL and infra_config().cloud_provider != "onprem"):
         queue_delegate = FakeQueueEndpointResourceDelegate()
     elif infra_config().cloud_provider == "onprem":
         queue_delegate = OnPremQueueEndpointResourceDelegate()
@@ -266,8 +266,8 @@ def _get_external_interfaces(
 
     inference_task_queue_gateway: TaskQueueGateway
     infra_task_queue_gateway: TaskQueueGateway
-    if CIRCLECI or infra_config().cloud_provider == "onprem":
-        # On-prem uses Redis-based task queues
+    if CIRCLECI or LOCAL or infra_config().cloud_provider == "onprem":
+        # On-prem and local dev use Redis-based task queues
         inference_task_queue_gateway = redis_24h_task_queue_gateway
         infra_task_queue_gateway = redis_task_queue_gateway
     elif infra_config().cloud_provider == "azure":
@@ -400,7 +400,7 @@ def _get_external_interfaces(
     registry_type = infra_config().docker_registry_type or infer_registry_type(
         infra_config().docker_repo_prefix
     )
-    if CIRCLECI:
+    if CIRCLECI or LOCAL:
         docker_repository = FakeDockerRepository()
     elif registry_type == "ecr":
         docker_repository = ECRDockerRepository()
