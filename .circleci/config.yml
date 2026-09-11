@@ -16,8 +16,34 @@ workflows:
             branches:
               only:
                 - main
+      - publish_helm_chart:
+          requires:
+            - run_unit_tests_python_client
+            - run_unit_tests_server
+            - build_image
+          filters:
+            branches:
+              only:
+                - main
 
 jobs:
+  publish_helm_chart:
+    docker:
+      - image: cimg/aws:2023.09
+    resource_class: small
+    steps:
+      - checkout
+      - aws-cli/setup:
+          role-arn: ${CIRCLECI_ROLE_ARN}
+          aws-region: AWS_REGION
+      - run:
+          name: Install helm
+          command: |
+            curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+      - run:
+          name: Publish model-engine Helm chart to public ECR (idempotent)
+          command: |
+            ./.circleci/scripts/publish-helm-chart.sh
   run_unit_tests_python_client:
     docker:
       - image: python:3.13-bookworm
