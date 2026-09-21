@@ -2,7 +2,7 @@ from typing import Optional
 
 import requests
 from model_engine_server.core.loggers import logger_name, make_logger
-from model_engine_server.infra.services.endpoint_gc_service import DigestGateway
+from model_engine_server.domain.gateways import DigestGateway
 
 logger = make_logger(logger_name())
 

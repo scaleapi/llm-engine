@@ -32,6 +32,10 @@ If release name contains chart name it will be used as a full name.
 {{ .Values.hostDomain.prefix }}{{ include "modelEngine.fullname" . }}.{{ .Release.Namespace }}:{{ .Values.service.port }}
 {{- end }}
 
+{{- define "modelEngine.endpointgcname" -}}
+{{- printf "%s-endpoint-gc" (include "modelEngine.fullname" .) -}}
+{{- end }}
+
 {{- define "modelEngine.celeryautoscalername" -}}
 {{- if .Values.serviceIdentifier }}
 {{- printf "celery-autoscaler-%s-%s" .Values.celeryBrokerType .Values.serviceIdentifier }}
@@ -479,6 +483,21 @@ env:
 {{- include "modelEngine.serviceEnvGitTagFromHelmVar" . }}
   - name: DD_SERVICE
     value: {{- printf " %s" (include "modelEngine.cachername" .) }}
+{{- end }}
+
+{{- define "modelEngine.endpointGcEnv" }}
+{{- include "modelEngine.serviceEnvGitTagFromHelmVar" . }}
+  - name: DD_SERVICE
+    value: {{- printf " %s" (include "modelEngine.endpointgcname" .) }}
+  {{- if .Values.endpointGc.slack.secretName }}
+  - name: ENDPOINT_GC_SLACK_BOT_TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: {{ .Values.endpointGc.slack.secretName }}
+        key: {{ .Values.endpointGc.slack.secretKey }}
+  - name: ENDPOINT_GC_SLACK_CHANNEL
+    value: {{ .Values.endpointGc.slack.channel | quote }}
+  {{- end }}
 {{- end }}
 
 {{- define "modelEngine.volumes" }}

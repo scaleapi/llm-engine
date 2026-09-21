@@ -8,7 +8,10 @@ import re
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
-from model_engine_server.common.constants import SUPPORTED_POST_INFERENCE_HOOKS
+from model_engine_server.common.constants import (
+    ENDPOINT_GC_METADATA_KEYS,
+    SUPPORTED_POST_INFERENCE_HOOKS,
+)
 from model_engine_server.common.dtos.model_endpoints import (
     CreateModelEndpointV1Request,
     CreateModelEndpointV1Response,
@@ -502,10 +505,20 @@ class UpdateModelEndpointByIdV1UseCase:
                 f"{CONVERTED_FROM_ARTIFACT_LIKE_KEY} is a reserved metadata key and cannot be used by user."
             )
 
+        metadata = request.metadata
+        if metadata is not None:
+            # The update replaces the whole metadata; keep GC state the request did not mention.
+            preserved = {
+                key: value
+                for key, value in (endpoint_record.metadata or {}).items()
+                if key in ENDPOINT_GC_METADATA_KEYS and key not in metadata
+            }
+            metadata = {**preserved, **metadata}
+
         updated_endpoint_record = await self.model_endpoint_service.update_model_endpoint(
             model_endpoint_id=model_endpoint_id,
             model_bundle_id=request.model_bundle_id,
-            metadata=request.metadata,
+            metadata=metadata,
             post_inference_hooks=request.post_inference_hooks,
             cpus=request.cpus,
             gpus=request.gpus,

@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, timezone
 from string import Template
 from typing import Any, Dict, Optional, Sequence
 
@@ -23,6 +24,12 @@ __all__: Sequence[str] = ("SQSQueueEndpointResourceDelegate",)
 def _create_async_sqs_client(sqs_profile: Optional[str]) -> AioBaseClient:
     return session(role=sqs_profile, session_type=AioSession).client(
         "sqs", region_name=infra_config().default_region
+    )
+
+
+def _create_async_cloudwatch_client(sqs_profile: Optional[str]) -> AioBaseClient:
+    return session(role=sqs_profile, session_type=AioSession).client(
+        "cloudwatch", region_name=infra_config().default_region
     )
 
 
@@ -144,3 +151,25 @@ class SQSQueueEndpointResourceDelegate(QueueEndpointResourceDelegate):
                 raise EndpointResourceInfraException("Failed to get SQS queue attributes") from e
 
             return attributes_response
+
+    async def messages_sent_since(self, endpoint_id: str, since: datetime) -> Optional[int]:
+        queue_name = QueueEndpointResourceDelegate.endpoint_id_to_queue_name(endpoint_id)
+        try:
+            # CloudWatch returns no datapoints both for an idle queue and for a queue that does
+            # not exist, so confirm the queue exists before reading an empty result as idle.
+            async with _create_async_sqs_client(self.sqs_profile) as sqs_client:
+                await sqs_client.get_queue_url(QueueName=queue_name)
+            async with _create_async_cloudwatch_client(self.sqs_profile) as cloudwatch_client:
+                response = await cloudwatch_client.get_metric_statistics(
+                    Namespace="AWS/SQS",
+                    MetricName="NumberOfMessagesSent",
+                    Dimensions=[{"Name": "QueueName", "Value": queue_name}],
+                    StartTime=since,
+                    EndTime=datetime.now(timezone.utc),
+                    Period=86400,
+                    Statistics=["Sum"],
+                )
+        except Exception:
+            logger.exception(f"Queue activity lookup failed for queue {queue_name}")
+            return None
+        return int(sum(point.get("Sum", 0) for point in response.get("Datapoints", [])))

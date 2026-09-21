@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from datetime import datetime
 from typing import Any, Dict, NamedTuple, Optional, Sequence
 
 __all__: Sequence[str] = (
@@ -46,6 +47,13 @@ class QueueEndpointResourceDelegate(ABC):
         """
         Get attributes of a queue.
         """
+
+    async def messages_sent_since(self, endpoint_id: str, since: datetime) -> Optional[int]:
+        """
+        Number of messages enqueued for the endpoint since ``since``, or None when the broker
+        cannot answer. Callers must treat None as "possibly active".
+        """
+        return None
 
     @staticmethod
     def endpoint_id_to_queue_name(endpoint_id: str) -> str:

@@ -1,12 +1,11 @@
 {{- if .Values.endpointGc.enabled }}
-{{- $app := printf "%s-endpoint-gc" (include "modelEngine.fullname" .) }}
+{{- $app := include "modelEngine.endpointgcname" . }}
 apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: {{ $app }}
   labels:
     {{- include "modelEngine.labels" . | nindent 4 }}
-    tags.datadoghq.com/service: {{ $app }}
 spec:
   schedule: {{ .Values.endpointGc.schedule | quote }}
   concurrencyPolicy: Forbid
@@ -58,18 +57,7 @@ spec:
                 {{- if .Values.endpointGc.deleteEnabled }}
                 - --delete
                 {{- end }}
-              {{- include "modelEngine.serviceEnvGitTagFromHelmVar" . | indent 14 }}
-                - name: DD_SERVICE
-                  value: {{ $app }}
-                {{- if .Values.endpointGc.slack.secretName }}
-                - name: ENDPOINT_GC_SLACK_BOT_TOKEN
-                  valueFrom:
-                    secretKeyRef:
-                      name: {{ .Values.endpointGc.slack.secretName }}
-                      key: {{ .Values.endpointGc.slack.secretKey }}
-                - name: ENDPOINT_GC_SLACK_CHANNEL
-                  value: {{ .Values.endpointGc.slack.channel | quote }}
-                {{- end }}
+              {{- include "modelEngine.endpointGcEnv" . | indent 14 }}
               {{- include "modelEngine.volumeMounts" . | indent 14 }}
           automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
           serviceAccountName: {{ include "modelEngine.fullname" . }}

@@ -162,7 +162,9 @@ podDisruptionBudget:
 # whose queue received no messages in that window. Candidates are flagged first and deleted only
 # after graceDays more. State is kept in the endpoint's metadata; set metadata `_gc_exempt: true`
 # on an endpoint to opt it out. With deleteEnabled=false the job records observations and posts
-# the digest but deletes nothing.
+# the digest but deletes nothing. The job runs under the chart service account; on AWS that role
+# also needs cloudwatch:GetMetricStatistics and sqs:GetQueueUrl for the async-endpoint activity
+# check, otherwise async endpoints are reported as "queue unknown" and never collected.
 endpointGc:
   enabled: false
   schedule: "0 6 * * *"

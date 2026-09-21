@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Any, Dict, Optional, Sequence
 
 from model_engine_server.infra.gateways.resources.queue_endpoint_resource_delegate import (
@@ -39,3 +40,6 @@ class FakeQueueEndpointResourceDelegate(QueueEndpointResourceDelegate):
                 "RetryAttempts": 0,
             },
         }
+
+    async def messages_sent_since(self, endpoint_id: str, since: datetime) -> Optional[int]:
+        return 0

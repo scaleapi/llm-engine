@@ -1,5 +1,6 @@
 from .async_model_endpoint_inference_gateway import AsyncModelEndpointInferenceGateway
 from .cron_job_gateway import CronJobGateway
+from .digest_gateway import DigestGateway
 from .docker_image_batch_job_gateway import DockerImageBatchJobGateway
 from .file_storage_gateway import FileStorageGateway
 from .inference_autoscaling_metrics_gateway import InferenceAutoscalingMetricsGateway
@@ -14,6 +15,7 @@ from .task_queue_gateway import TaskQueueGateway
 __all__ = (
     "AsyncModelEndpointInferenceGateway",
     "CronJobGateway",
+    "DigestGateway",
     "DockerImageBatchJobGateway",
     "FileStorageGateway",
     "InferenceAutoscalingMetricsGateway",

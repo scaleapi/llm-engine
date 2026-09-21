@@ -983,6 +983,47 @@ async def test_update_model_endpoint_success(
     assert isinstance(response, UpdateModelEndpointV1Response)
 
 
+@pytest.mark.parametrize(
+    "request_metadata,expected_exempt",
+    [
+        pytest.param({"user_key": "v"}, True, id="omitted-gc-key-is-kept"),
+        pytest.param({"_gc_exempt": False}, False, id="explicit-gc-key-wins"),
+    ],
+)
+@pytest.mark.asyncio
+async def test_update_model_endpoint_preserves_gc_metadata(
+    fake_model_bundle_repository,
+    fake_model_endpoint_service,
+    model_bundle_1: ModelBundle,
+    model_bundle_2: ModelBundle,
+    model_endpoint_1: ModelEndpoint,
+    update_model_endpoint_request: UpdateModelEndpointV1Request,
+    request_metadata,
+    expected_exempt,
+):
+    model_endpoint_1.record.metadata = {"_gc_exempt": True}
+    fake_model_bundle_repository.add_model_bundle(model_bundle_1)
+    fake_model_bundle_repository.add_model_bundle(model_bundle_2)
+    fake_model_endpoint_service.add_model_endpoint(model_endpoint_1)
+    fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
+    use_case = UpdateModelEndpointByIdV1UseCase(
+        model_bundle_repository=fake_model_bundle_repository,
+        model_endpoint_service=fake_model_endpoint_service,
+    )
+    user_id = model_endpoint_1.record.created_by
+    user = User(user_id=user_id, team_id=user_id, is_privileged_user=True)
+    update_model_endpoint_request.metadata = request_metadata
+    await use_case.execute(
+        user=user,
+        model_endpoint_id=model_endpoint_1.record.id,
+        request=update_model_endpoint_request,
+    )
+    stored = fake_model_endpoint_service.db[model_endpoint_1.record.id].record.metadata
+    assert stored.get("_gc_exempt") is expected_exempt
+    for key, value in request_metadata.items():
+        assert stored[key] == value
+
+
 @pytest.mark.asyncio
 async def test_update_model_endpoint_team_success(
     fake_model_bundle_repository,
