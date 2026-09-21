@@ -365,7 +365,9 @@ class RedisBroker(AutoscalerBroker):
         (
             host,
             port,
-        ) = get_redis_host_port()  # Switches the redis instance based on CELERY_ELASTICACHE_ENABLED's value
+        ) = (
+            get_redis_host_port()
+        )  # Switches the redis instance based on CELERY_ELASTICACHE_ENABLED's value
         self.redis = {
             db_index: build_aioredis_client(build_redis_url(host, port, db_index))
             for db_index in get_all_db_indexes()
@@ -614,9 +616,7 @@ async def main():
     broker_type = (
         "redis"
         if isinstance(broker, RedisBroker)
-        else "sqs"
-        if isinstance(broker, SQSBroker)
-        else "servicebus"
+        else "sqs" if isinstance(broker, SQSBroker) else "servicebus"
     )
 
     if broker_type == "redis":
