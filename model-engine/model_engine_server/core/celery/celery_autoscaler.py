@@ -54,6 +54,10 @@ SQS_SAMPLE_COUNT = 10
 
 logger = make_logger(logger_name())
 
+ITERATION_WARN_THRESHOLD_SECONDS = float(
+    os.environ.get("CELERY_AUTOSCALER_ITERATION_WARN_SECONDS", "5.0")
+)
+
 autoscaler_broker = os.environ.get("BROKER_NAME", SQS_BROKER)
 aws_profile = os.environ.get("AWS_PROFILE")
 aws_region = os.environ.get("AWS_REGION", "us-west-2")
@@ -73,7 +77,8 @@ class CeleryAutoscalerParams:
 def _hash_any_to_int(data: Any):
     # Use MD5 for hashing (non-security purpose) - FIPS compliant with usedforsecurity=False
     return int(
-        hashlib.new("md5", str(data).encode(), usedforsecurity=False).hexdigest(), 16  # nosemgrep
+        hashlib.new("md5", str(data).encode(), usedforsecurity=False).hexdigest(),
+        16,  # nosemgrep
     )
 
 
@@ -96,7 +101,7 @@ async def list_deployments(apps_api) -> Dict[Tuple[str, str], CeleryAutoscalerPa
             # other. Log and move on; the next iteration of the outer loop will retry.
             logger.error(f"Failed to list deployments in namespace {namespace_name}: {exc}")
             continue
-        logger.info(
+        logger.debug(
             f"list_namespaced_deployment in {namespace_name} took {time.time() - namespace_start_time} seconds"
         )
         for deployment in deployments.items:
@@ -445,7 +450,7 @@ class SQSBroker(AutoscalerBroker):
             # SQS's ApproximateNumberOfMessagesNotVisible should correspond to celery's
             #  number of active + number of reserved tasks
             reserved_size = max(reserved_size_hist)
-            logger.info(
+            logger.debug(
                 f"SQS {queue_name} total: {total_end_time - total_start_time} seconds, queue size {queue_size}, reserved size {reserved_size}"
             )
 
@@ -498,7 +503,7 @@ class ASBBroker(AutoscalerBroker):
                 queue_attributes = client.get_queue_runtime_properties(queue_name=queue_name)
                 active_queue_size = queue_attributes.active_message_count
 
-                logger.info(f"ASB {queue_name} total: active queue size {active_queue_size}")
+                logger.debug(f"ASB {queue_name} total: active queue size {active_queue_size}")
             except ResourceNotFoundError as e:
                 logger.info(f"Queue does not exist {queue_name}: {e}")
                 active_queue_size = 0
@@ -647,7 +652,7 @@ async def main():
         try:
             loop_start = time.time()
             deployments = await list_deployments(apps_api=apps_api)
-            logger.info(f"list_deployments took {time.time() - loop_start} seconds")
+            logger.debug(f"list_deployments took {time.time() - loop_start} seconds")
             celery_queues = set()
             celery_queues_params = []
             for deployment_and_namespace, params in sorted(
@@ -679,12 +684,12 @@ async def main():
             # (queue_name, db_index) -> QueueSizes
             start_get_metrics = time.time()
             metrics = await get_metrics(broker, inspect=inspect, queues=celery_queues)
-            logger.info(f"get_metrics took {time.time() - start_get_metrics} seconds")
+            logger.debug(f"get_metrics took {time.time() - start_get_metrics} seconds")
 
             queue_sizes = metrics.broker_metrics.queue_sizes
             for k, v in sorted(queue_sizes.items()):
                 queue_name, _ = k
-                logger.info(f"Inflight : {queue_name} : {v.total}")
+                logger.debug(f"Inflight : {queue_name} : {v.total}")
 
             emit_metrics(metrics=metrics, env=env)
 
@@ -700,7 +705,11 @@ async def main():
 
             # Wait before next iteration
             iteration_len = time.time() - loop_start
-            logger.info(f"Iteration length: {iteration_len} seconds.")
+            iteration_log = f"Iteration length: {iteration_len} seconds."
+            if iteration_len >= ITERATION_WARN_THRESHOLD_SECONDS:
+                logger.warning(iteration_log)
+            else:
+                logger.debug(iteration_log)
             if iteration_len < 3:
                 await aio.sleep(3 - iteration_len)
 
