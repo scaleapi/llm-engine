@@ -163,6 +163,35 @@ GIT_SHA="$(git rev-parse HEAD)-rcX" SETENV=prod LOCAL=true AWS_PROFILE=ml-servin
 4. Send a `POST` request to `http://localhost:5001/v1/llm/model-endpoints` with the following body:
 
 ```json
+# do i need to set borrowing to false?
+{
+  "name": "deepseek-r1-0528",
+  "model_name": "deepseek-r1-0528",
+  "endpoint_type": "streaming",
+  "cpus": 160,
+  "memory": "800Gi",
+  "min_workers": 1,
+  "max_workers": 1,
+  "gpus": 8,
+  "gpu_type": "nvidia-hopper-h100",
+  "storage": "900Gi",
+  "per_worker": 1,
+  "num_shards": 8,
+  "nodes_per_worker": 2,
+  "labels": {
+    "team": "infra",
+    "product": "inference.llm_model_zoo"
+  },
+  "inference_framework": "sglang",
+  "inference_framework_image_tag": "multinode-latest-2", # TODO change this?
+  "high_priority": true,
+  "metadata": {
+      "_llm": 
+        {"source": "hugging_face", "quantize": null, "model_name": "deepseek-r1-0528", "num_shards": 8, "checkpoint_path": "s3://scale-ml/models/hf-synced-weights/deepseek-ai/DeepSeek-R1-0528", "inference_framework": "sglang", "chat_template_override": null, "inference_framework_image_tag": "multinode-latest-2"} # TODO change this?
+  }
+}
+
+
 {
   "name": "deepseek-r1",
   "model_name": "deepseek-r1",
