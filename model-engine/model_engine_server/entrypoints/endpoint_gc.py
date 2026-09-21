@@ -1,7 +1,7 @@
 # Entrypoint for the endpoint garbage collector. Meant to run as a CronJob: one pass over every
 # endpoint, bookkeeping in endpoint_metadata, optional deletions, one digest, exit.
 #
-# Deletions only happen with --apply. Without it the run still records observations and flags
+# Deletions only happen with --delete. Without it the run still records observations and flags
 # so that the 30 day clock advances during a dry-run rollout.
 
 import argparse
@@ -77,7 +77,11 @@ async def main(config: EndpointGcConfig) -> None:
             ),
             config=config,
         )
-        report = await service.execute()
+        try:
+            report = await service.execute()
+        except Exception:
+            logger.exception("Endpoint GC run failed before completing")
+            raise SystemExit(1)
     finally:
         await external_interfaces.file_storage_gateway.close()
     logger.info(
@@ -95,7 +99,9 @@ if __name__ == "__main__":
     parser.add_argument("--grace-days", type=int, default=14)
     parser.add_argument("--delete-cap", type=int, default=20)
     parser.add_argument(
-        "--apply", action="store_true", help="Delete eligible endpoints. Default is dry run."
+        "--delete",
+        action="store_true",
+        help="Delete eligible endpoints. Without it the run only records and reports.",
     )
     args = parser.parse_args()
     asyncio.run(
@@ -104,7 +110,7 @@ if __name__ == "__main__":
                 unavailable_days=args.unavailable_days,
                 grace_days=args.grace_days,
                 delete_cap=args.delete_cap,
-                apply=args.apply,
+                delete_enabled=args.delete,
             )
         )
     )

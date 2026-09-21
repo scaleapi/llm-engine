@@ -14,7 +14,7 @@ from model_engine_server.infra.services.endpoint_gc_service import (
 )
 
 NOW = datetime(2026, 9, 21, 6, 0, tzinfo=timezone.utc)
-CONFIG = EndpointGcConfig(unavailable_days=30, grace_days=14, delete_cap=20, apply=True)
+CONFIG = EndpointGcConfig(unavailable_days=30, grace_days=14, delete_cap=20, delete_enabled=True)
 
 
 def _days_ago(days: int) -> str:
@@ -176,8 +176,11 @@ async def test_bookkeeping(
 
 
 @pytest.mark.parametrize(
-    "apply,deleted_expected",
-    [pytest.param(True, True, id="apply-deletes"), pytest.param(False, False, id="dry-run-defers")],
+    "delete_enabled,deleted_expected",
+    [
+        pytest.param(True, True, id="delete-enabled-deletes"),
+        pytest.param(False, False, id="observe-only-defers"),
+    ],
 )
 @pytest.mark.asyncio
 async def test_delete_after_grace(
@@ -185,7 +188,7 @@ async def test_delete_after_grace(
     fake_resource_gateway,
     fake_model_endpoint_service,
     model_endpoint_1,
-    apply,
+    delete_enabled,
     deleted_expected,
 ):
     endpoint = _endpoint(
@@ -199,7 +202,9 @@ async def test_delete_after_grace(
         fake_resource_gateway,
         fake_model_endpoint_service,
         endpoint,
-        config=EndpointGcConfig(unavailable_days=30, grace_days=14, delete_cap=20, apply=apply),
+        config=EndpointGcConfig(
+            unavailable_days=30, grace_days=14, delete_cap=20, delete_enabled=delete_enabled
+        ),
     )
     report = await service.execute()
 
@@ -278,7 +283,9 @@ async def test_delete_cap_oldest_first(
         fake_resource_gateway,
         fake_model_endpoint_service,
         older,
-        config=EndpointGcConfig(unavailable_days=30, grace_days=14, delete_cap=1, apply=True),
+        config=EndpointGcConfig(
+            unavailable_days=30, grace_days=14, delete_cap=1, delete_enabled=True
+        ),
     )
     fake_model_endpoint_record_repository.add_model_endpoint_record(newer.record)
     fake_model_endpoint_service.add_model_endpoint(newer)
@@ -318,3 +325,40 @@ async def test_no_deployment_clears_state_and_never_deletes(
     assert stored.metadata == {}
     assert [r.id for r in report.cleared] == [endpoint.record.id]
     assert report.deleted == []
+
+
+@pytest.mark.asyncio
+async def test_metadata_write_keeps_concurrent_user_keys(
+    fake_model_endpoint_record_repository,
+    fake_resource_gateway,
+    fake_model_endpoint_service,
+    model_endpoint_1,
+):
+    endpoint = _endpoint(
+        model_endpoint_1, available=0, unavailable=1, metadata={"_llm": {"model_name": "m"}}
+    )
+    service, _ = _build(
+        fake_model_endpoint_record_repository,
+        fake_resource_gateway,
+        fake_model_endpoint_service,
+        endpoint,
+    )
+    # A user updates metadata after GC has listed the records but before it writes.
+    original_list = fake_model_endpoint_record_repository.list_model_endpoint_records
+
+    async def list_then_mutate(**kwargs):
+        records = await original_list(**kwargs)
+        stored = fake_model_endpoint_record_repository.db[endpoint.record.id]
+        stored.metadata = {**stored.metadata, "user_key": "added-mid-run"}
+        return records
+
+    fake_model_endpoint_record_repository.list_model_endpoint_records = list_then_mutate
+
+    await service.execute()
+
+    stored = await fake_model_endpoint_record_repository.get_model_endpoint_record(
+        endpoint.record.id
+    )
+    assert stored.metadata["user_key"] == "added-mid-run"
+    assert stored.metadata["_llm"] == {"model_name": "m"}
+    assert GC_UNAVAILABLE_SINCE_KEY in stored.metadata

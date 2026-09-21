@@ -55,8 +55,8 @@ spec:
                 - {{ .Values.endpointGc.graceDays | quote }}
                 - --delete-cap
                 - {{ .Values.endpointGc.deleteCap | quote }}
-                {{- if .Values.endpointGc.apply }}
-                - --apply
+                {{- if .Values.endpointGc.deleteEnabled }}
+                - --delete
                 {{- end }}
               {{- include "modelEngine.serviceEnvGitTagFromHelmVar" . | indent 14 }}
                 - name: DD_SERVICE

@@ -161,12 +161,12 @@ podDisruptionBudget:
 # unavailableDays consecutive days (as observed by the collector itself) and, for async endpoints,
 # whose queue received no messages in that window. Candidates are flagged first and deleted only
 # after graceDays more. State is kept in the endpoint's metadata; set metadata `_gc_exempt: true`
-# on an endpoint to opt it out. With apply=false the job records observations and posts the
-# digest but deletes nothing.
+# on an endpoint to opt it out. With deleteEnabled=false the job records observations and posts
+# the digest but deletes nothing.
 endpointGc:
   enabled: false
   schedule: "0 6 * * *"
-  apply: false
+  deleteEnabled: false
   unavailableDays: 30
   graceDays: 14
   deleteCap: 20

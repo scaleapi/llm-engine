@@ -61,7 +61,7 @@ class EndpointGcConfig:
     unavailable_days: int = 30
     grace_days: int = 14
     delete_cap: int = 20
-    apply: bool = False  # False: bookkeeping and digest only, no deletions.
+    delete_enabled: bool = False  # False: bookkeeping and digest only, no deletions.
 
 
 @dataclass
@@ -72,7 +72,9 @@ class EndpointGcReport:
     in_grace: List[ModelEndpointRecord] = field(default_factory=list)
     deleted: List[ModelEndpointRecord] = field(default_factory=list)
     delete_failed: List[ModelEndpointRecord] = field(default_factory=list)
-    delete_deferred: List[ModelEndpointRecord] = field(default_factory=list)  # cap or dry run
+    delete_deferred: List[ModelEndpointRecord] = field(
+        default_factory=list
+    )  # cap or delete disabled
     cleared: List[ModelEndpointRecord] = field(default_factory=list)
     exempt: List[ModelEndpointRecord] = field(default_factory=list)
     queue_unknown: List[ModelEndpointRecord] = field(default_factory=list)
@@ -180,7 +182,7 @@ class EndpointGarbageCollectionService:
             if index >= self.config.delete_cap:
                 report.delete_deferred.append(record)
                 continue
-            if not self.config.apply:
+            if not self.config.delete_enabled:
                 report.delete_deferred.append(record)
                 continue
             try:
@@ -190,7 +192,10 @@ class EndpointGarbageCollectionService:
                 logger.exception(f"GC failed to delete endpoint {record.id} ({record.name})")
                 report.delete_failed.append(record)
 
-        self.digest_gateway.send_digest(format_digest(report, self.config, run_at))
+        try:
+            self.digest_gateway.send_digest(format_digest(report, self.config, run_at))
+        except Exception:
+            logger.exception("GC digest delivery failed")
         return report
 
     async def _qualifies(
@@ -215,8 +220,16 @@ class EndpointGarbageCollectionService:
         return sent == 0
 
     async def _write_metadata(self, record: ModelEndpointRecord, metadata: Dict) -> None:
+        # Re-read right before writing so a concurrent user metadata update during this run is
+        # kept; only the GC keys are taken from the in-memory copy.
+        fresh = await self.record_repository.get_model_endpoint_record(model_endpoint_id=record.id)
+        merged = dict((fresh.metadata if fresh else record.metadata) or {})
+        for key in GC_KEYS:
+            merged.pop(key, None)
+            if key in metadata:
+                merged[key] = metadata[key]
         await self.record_repository.update_model_endpoint_record(
-            model_endpoint_id=record.id, metadata=metadata
+            model_endpoint_id=record.id, metadata=merged
         )
 
 
@@ -227,7 +240,7 @@ def _describe(record: ModelEndpointRecord, labels: Dict[str, str]) -> str:
 
 
 def format_digest(report: EndpointGcReport, config: EndpointGcConfig, run_at: datetime) -> str:
-    mode = "APPLY" if config.apply else "DRY RUN (no deletions)"
+    mode = "DELETE ENABLED" if config.delete_enabled else "OBSERVE ONLY (no deletions)"
     lines = [
         f"model-engine endpoint GC {run_at.strftime('%Y-%m-%d %H:%M UTC')} [{mode}] "
         f"unavailable>{config.unavailable_days}d, grace {config.grace_days}d, cap {config.delete_cap}/run",
@@ -239,7 +252,7 @@ def format_digest(report: EndpointGcReport, config: EndpointGcConfig, run_at: da
     sections = [
         ("Deleted", report.deleted),
         ("Delete failed", report.delete_failed),
-        ("Deferred (cap or dry run)", report.delete_deferred),
+        ("Deferred (cap or delete disabled)", report.delete_deferred),
         (f"Newly flagged, delete after {config.grace_days}d", report.flagged_new),
         ("In grace", report.in_grace),
         ("Newly observed unavailable", report.observing_new),

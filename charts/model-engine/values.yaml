@@ -102,7 +102,7 @@ keda:
 endpointGc:
   enabled: false
   schedule: "0 6 * * *"
-  apply: false
+  deleteEnabled: false
   unavailableDays: 30
   graceDays: 14
   deleteCap: 20

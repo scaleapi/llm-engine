@@ -23,10 +23,14 @@ class SQSQueueActivityGateway(QueueActivityGateway):
 
     async def messages_sent_since(self, endpoint_id: str, since: datetime) -> Optional[int]:
         queue_name = QueueEndpointResourceDelegate.endpoint_id_to_queue_name(endpoint_id)
+        aws_session = session(role=self.sqs_profile, session_type=AioSession)
+        region = infra_config().default_region
         try:
-            async with session(role=self.sqs_profile, session_type=AioSession).create_client(
-                "cloudwatch", region_name=infra_config().default_region
-            ) as cloudwatch:
+            # CloudWatch returns no datapoints both for an idle queue and for a queue that does
+            # not exist, so confirm the queue exists before reading an empty result as "idle".
+            async with aws_session.create_client("sqs", region_name=region) as sqs:
+                await sqs.get_queue_url(QueueName=queue_name)
+            async with aws_session.create_client("cloudwatch", region_name=region) as cloudwatch:
                 response = await cloudwatch.get_metric_statistics(
                     Namespace="AWS/SQS",
                     MetricName="NumberOfMessagesSent",
@@ -37,7 +41,7 @@ class SQSQueueActivityGateway(QueueActivityGateway):
                     Statistics=["Sum"],
                 )
         except Exception:
-            logger.exception(f"CloudWatch lookup failed for queue {queue_name}")
+            logger.exception(f"Queue activity lookup failed for queue {queue_name}")
             return None
         return int(sum(point.get("Sum", 0) for point in response.get("Datapoints", [])))
 
