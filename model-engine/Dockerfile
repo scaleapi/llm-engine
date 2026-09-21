@@ -1,5 +1,7 @@
 # syntax = docker/dockerfile:1
 
+FROM cgr.dev/chainguard/kubectl:latest@sha256:e305bc9ffe65a62c20e3bad506a4c42e2d6d79fbe624cd8dcab13a3687f979a6 AS kubectl
+
 FROM cgr.dev/chainguard/python:latest-dev AS builder
 
 USER root
@@ -42,13 +44,11 @@ RUN mkdir -p /tmp/runtime-bin /tmp/runtime-libs && \
   cp /usr/lib/libreadline.so.8* /tmp/runtime-libs/ && \
   cp /usr/lib/libtinfo.so.6* /tmp/runtime-libs/ && \
   cp /usr/lib/libz.so.1* /tmp/runtime-libs/ && \
-  git clone --depth 1 --branch v1.35.4 https://github.com/kubernetes/kubernetes.git /tmp/k8s && \
-  cd /tmp/k8s && \
-  GOTOOLCHAIN=local KUBE_BUILD_PLATFORMS=linux/${TARGETARCH} make WHAT=cmd/kubectl && \
-  cp _output/local/bin/linux/${TARGETARCH}/kubectl /tmp/runtime-bin/kubectl && \
-  git clone --depth 1 --branch v0.7.15 https://github.com/kubernetes-sigs/aws-iam-authenticator.git /tmp/aws-iam-authenticator && \
+  git clone --depth 1 --branch v0.7.18 https://github.com/kubernetes-sigs/aws-iam-authenticator.git /tmp/aws-iam-authenticator && \
   cd /tmp/aws-iam-authenticator && \
   GOOS=linux GOARCH=${TARGETARCH} go build -o /tmp/runtime-bin/aws-iam-authenticator ./cmd/aws-iam-authenticator
+
+COPY --from=kubectl /usr/bin/kubectl /tmp/runtime-bin/kubectl
 
 FROM cgr.dev/chainguard/python:latest AS model-engine
 
