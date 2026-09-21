@@ -157,6 +157,27 @@ podDisruptionBudget:
   enabled: true
   minAvailable: 1
 
+# endpointGc runs a CronJob that deletes endpoints whose workers have all been unavailable for
+# unavailableDays consecutive days (as observed by the collector itself) and, for async endpoints,
+# whose queue received no messages in that window. Candidates are flagged first and deleted only
+# after graceDays more. State is kept in the endpoint's metadata; set metadata `_gc_exempt: true`
+# on an endpoint to opt it out. With apply=false the job records observations and posts the
+# digest but deletes nothing.
+endpointGc:
+  enabled: false
+  schedule: "0 6 * * *"
+  apply: false
+  unavailableDays: 30
+  graceDays: 14
+  deleteCap: 20
+  activeDeadlineSeconds: 3600
+  # Optional Slack digest via a bot token stored in a kubernetes secret. Leave secretName empty
+  # to log the digest instead.
+  slack:
+    secretName: ""
+    secretKey: "bot_token"
+    channel: ""
+
 # resources specify the k8s resources for LLM Engine server deployments (e.g gateway, cache, and builder deployments)
 resources:
   requests:

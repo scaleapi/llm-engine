@@ -99,6 +99,19 @@ nodeSelector:
 keda:
   cooldownPeriod: 300
 
+endpointGc:
+  enabled: false
+  schedule: "0 6 * * *"
+  apply: false
+  unavailableDays: 30
+  graceDays: 14
+  deleteCap: 20
+  activeDeadlineSeconds: 3600
+  slack:
+    secretName: ""
+    secretKey: "bot_token"
+    channel: ""
+
 # Configurable inference framework image tags
 inferenceFramework:
   vllm: "latest"

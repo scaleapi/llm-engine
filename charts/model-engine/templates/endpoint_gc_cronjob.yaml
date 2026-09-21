@@ -1,0 +1,89 @@
+{{- if .Values.endpointGc.enabled }}
+{{- $app := printf "%s-endpoint-gc" (include "modelEngine.fullname" .) }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ $app }}
+  labels:
+    {{- include "modelEngine.labels" . | nindent 4 }}
+    tags.datadoghq.com/service: {{ $app }}
+spec:
+  schedule: {{ .Values.endpointGc.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: {{ .Values.endpointGc.activeDeadlineSeconds }}
+      template:
+        metadata:
+          annotations:
+            ad.datadoghq.com/main.logs: '[{"service": "{{ $app }}", "source": "python"}]'
+            sidecar.istio.io/inject: "false"
+          labels:
+            {{- include "modelEngine.labels" . | nindent 12 }}
+            tags.datadoghq.com/service: {{ $app }}
+        spec:
+          restartPolicy: Never
+          {{- with .Values.podSecurityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          containers:
+            - name: main
+              {{- with .Values.containerSecurityContext }}
+              securityContext:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+              image: "{{ .Values.image.gatewayRepository }}:{{ .Values.tag }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              command:
+                - dumb-init
+                - --
+              args:
+                - python
+                - -m
+                - model_engine_server.entrypoints.endpoint_gc
+                - --unavailable-days
+                - {{ .Values.endpointGc.unavailableDays | quote }}
+                - --grace-days
+                - {{ .Values.endpointGc.graceDays | quote }}
+                - --delete-cap
+                - {{ .Values.endpointGc.deleteCap | quote }}
+                {{- if .Values.endpointGc.apply }}
+                - --apply
+                {{- end }}
+              {{- include "modelEngine.serviceEnvGitTagFromHelmVar" . | indent 14 }}
+                - name: DD_SERVICE
+                  value: {{ $app }}
+                {{- if .Values.endpointGc.slack.secretName }}
+                - name: ENDPOINT_GC_SLACK_BOT_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.endpointGc.slack.secretName }}
+                      key: {{ .Values.endpointGc.slack.secretKey }}
+                - name: ENDPOINT_GC_SLACK_CHANNEL
+                  value: {{ .Values.endpointGc.slack.channel | quote }}
+                {{- end }}
+              {{- include "modelEngine.volumeMounts" . | indent 14 }}
+          automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
+          serviceAccountName: {{ include "modelEngine.fullname" . }}
+          {{- include "modelEngine.volumes" . | indent 10 }}
+          {{- with .Values.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.affinity }}
+          affinity:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+{{- end }}
