@@ -48,14 +48,18 @@ spec:
                 - python
                 - -m
                 - model_engine_server.entrypoints.endpoint_gc
-                - --unavailable-days
-                - {{ .Values.endpointGc.unavailableDays | quote }}
-                - --grace-days
-                - {{ .Values.endpointGc.graceDays | quote }}
-                - --delete-cap
-                - {{ .Values.endpointGc.deleteCap | quote }}
-                {{- if .Values.endpointGc.deleteEnabled }}
-                - --delete
+                - --broken-scale-to-zero-days
+                - {{ .Values.endpointGc.broken.scaleToZeroDays | quote }}
+                - --broken-delete-days
+                - {{ .Values.endpointGc.broken.deleteDays | quote }}
+                - --idle-scale-to-zero-days
+                - {{ .Values.endpointGc.idle.scaleToZeroDays | quote }}
+                - --idle-delete-days
+                - {{ .Values.endpointGc.idle.deleteDays | quote }}
+                - --action-cap
+                - {{ .Values.endpointGc.actionCap | quote }}
+                {{- if .Values.endpointGc.actionsEnabled }}
+                - --act
                 {{- end }}
               {{- include "modelEngine.endpointGcEnv" . | indent 14 }}
               {{- include "modelEngine.volumeMounts" . | indent 14 }}

@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta, timezone
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Set
 
 import pytest
 from model_engine_server.domain.entities import (
@@ -7,32 +7,53 @@ from model_engine_server.domain.entities import (
     ModelEndpointStatus,
     ModelEndpointType,
 )
-from model_engine_server.domain.gateways import DigestGateway
+from model_engine_server.domain.gateways import DigestGateway, EndpointTrafficGateway, TrafficKey
 from model_engine_server.infra.gateways.resources.fake_queue_endpoint_resource_delegate import (
     FakeQueueEndpointResourceDelegate,
 )
 from model_engine_server.infra.services.endpoint_gc_service import (
+    BROKEN,
+    DELETE,
     GC_EXEMPT_KEY,
-    GC_FLAGGED_AT_KEY,
+    GC_LAST_TRAFFIC_AT_KEY,
+    GC_SCALE_TO_ZERO_REQUESTED_AT_KEY,
+    GC_TOUCHED_AT_KEY,
     GC_UNAVAILABLE_SINCE_KEY,
+    IDLE,
+    SCALE_TO_ZERO,
     EndpointGarbageCollectionService,
     EndpointGcConfig,
 )
 
-NOW = datetime(2026, 9, 21, 6, 0, tzinfo=timezone.utc)
-DELETING = EndpointGcConfig(unavailable_days=30, grace_days=14, delete_cap=20, delete_enabled=True)
+NOW = datetime(2026, 9, 23, 6, 0, tzinfo=timezone.utc)
+ACTING = EndpointGcConfig(actions_enabled=True)
 
 
-def _days_ago(days: int) -> str:
+def _days_ago(days: float) -> str:
     return (NOW - timedelta(days=days)).isoformat()
 
 
-class QueueWithActivity(FakeQueueEndpointResourceDelegate):
-    def __init__(self, sent: Optional[int]):
+class FakeQueue(FakeQueueEndpointResourceDelegate):
+    def __init__(self, sent: Optional[int] = 0):
         self.sent = sent
 
     async def messages_sent_since(self, endpoint_id: str, since: datetime) -> Optional[int]:
         return self.sent
+
+
+class FakeTraffic(EndpointTrafficGateway):
+    key = TrafficKey.ENDPOINT_NAME
+
+    def __init__(
+        self, active: Optional[Set[str]] = None, history: Optional[Dict[str, datetime]] = None
+    ):
+        self.active, self.history = active, history
+
+    async def active_keys(self, since: datetime) -> Optional[Set[str]]:
+        return None if self.active is None else set(self.active)
+
+    async def last_active_at(self, since: datetime) -> Optional[Dict[str, datetime]]:
+        return self.history
 
 
 class CapturingDigestGateway(DigestGateway):
@@ -50,9 +71,16 @@ def _endpoint(
     unavailable: int,
     metadata: Optional[Dict] = None,
     endpoint_type: ModelEndpointType = ModelEndpointType.STREAMING,
+    status: ModelEndpointStatus = ModelEndpointStatus.READY,
+    last_updated_at: Optional[datetime] = None,
 ) -> ModelEndpoint:
     record = base.record.model_copy(
-        update={"metadata": metadata or {}, "endpoint_type": endpoint_type}
+        update={
+            "metadata": metadata or {},
+            "endpoint_type": endpoint_type,
+            "status": status,
+            "last_updated_at": last_updated_at,
+        }
     )
     deployment_state = base.infra_state.deployment_state.model_copy(
         update={"available_workers": available, "unavailable_workers": unavailable}
@@ -61,445 +89,554 @@ def _endpoint(
     return ModelEndpoint(record=record, infra_state=infra_state)
 
 
-def _build(
-    fake_model_endpoint_record_repository,
-    fake_resource_gateway,
-    fake_model_endpoint_service,
-    *endpoints: ModelEndpoint,
-    queue_sent: Optional[int] = 0,
-    config: EndpointGcConfig = DELETING,
-    with_resources: bool = True,
-):
-    for endpoint in endpoints:
-        fake_model_endpoint_record_repository.add_model_endpoint_record(endpoint.record)
-        fake_model_endpoint_service.add_model_endpoint(endpoint)
+class Harness:
+    def __init__(self, repo, resource_gateway, endpoint_service):
+        self.repo, self.resources, self.service = repo, resource_gateway, endpoint_service
+        self.digest = CapturingDigestGateway()
+
+    def add(self, endpoint: ModelEndpoint, with_resources: bool = True) -> ModelEndpoint:
+        self.repo.add_model_endpoint_record(endpoint.record)
+        self.service.add_model_endpoint(endpoint)
         if with_resources:
-            fake_resource_gateway.add_resource(endpoint.record.id, endpoint.infra_state)
-    digest = CapturingDigestGateway()
-    service = EndpointGarbageCollectionService(
-        model_endpoint_record_repository=fake_model_endpoint_record_repository,
-        resource_gateway=fake_resource_gateway,
-        queue_delegate=QueueWithActivity(queue_sent),
-        model_endpoint_service=fake_model_endpoint_service,
-        digest_gateway=digest,
-        config=config,
-        now=lambda: NOW,
+            self.resources.add_resource(endpoint.record.id, endpoint.infra_state)
+        return endpoint
+
+    async def run(
+        self,
+        *,
+        traffic_names: Optional[Set[str]] = frozenset(),
+        history: Optional[Dict[str, datetime]] = None,
+        queue_sent: Optional[int] = 0,
+        config: EndpointGcConfig = ACTING,
+    ):
+        gc = EndpointGarbageCollectionService(
+            model_endpoint_record_repository=self.repo,
+            resource_gateway=self.resources,
+            queue_delegate=FakeQueue(queue_sent),
+            traffic_gateways=[
+                FakeTraffic(None if traffic_names is None else set(traffic_names), history)
+            ],
+            model_endpoint_service=self.service,
+            digest_gateway=self.digest,
+            config=config,
+            now=lambda: NOW,
+        )
+        return await gc.execute()
+
+    async def stored(self, endpoint: ModelEndpoint) -> Dict:
+        record = await self.repo.get_model_endpoint_record(endpoint.record.id)
+        return dict(record.metadata or {})
+
+
+@pytest.fixture
+def harness(
+    fake_model_endpoint_record_repository, fake_resource_gateway, fake_model_endpoint_service
+):
+    return Harness(
+        fake_model_endpoint_record_repository, fake_resource_gateway, fake_model_endpoint_service
     )
-    return service, digest
+
+
+def _keys(metadata: Dict) -> Set[str]:
+    return {k for k in metadata if k != GC_TOUCHED_AT_KEY}
+
+
+# ---- broken clock ------------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize(
-    "available,unavailable,metadata,bucket,expected_keys",
+    "metadata,expect_bucket,expect_kind,expect_keys",
     [
-        pytest.param(0, 1, {}, "observing", {GC_UNAVAILABLE_SINCE_KEY}, id="first-sighting"),
+        pytest.param({}, "tracking", None, {GC_UNAVAILABLE_SINCE_KEY}, id="first-sighting"),
         pytest.param(
-            0,
-            2,
-            {GC_UNAVAILABLE_SINCE_KEY: _days_ago(10)},
-            "observing",
+            {GC_UNAVAILABLE_SINCE_KEY: _days_ago(16)},
+            "upcoming14",
+            SCALE_TO_ZERO,
             {GC_UNAVAILABLE_SINCE_KEY},
-            id="inside-window",
+            id="14-day-notice",
         ),
         pytest.param(
-            0,
-            1,
+            {GC_UNAVAILABLE_SINCE_KEY: _days_ago(29)},
+            "upcoming1",
+            SCALE_TO_ZERO,
+            {GC_UNAVAILABLE_SINCE_KEY},
+            id="1-day-notice",
+        ),
+        pytest.param(
             {GC_UNAVAILABLE_SINCE_KEY: _days_ago(30)},
-            "flagged_new",
-            {GC_UNAVAILABLE_SINCE_KEY, GC_FLAGGED_AT_KEY},
-            id="window-elapsed-flags",
-        ),
-        pytest.param(
-            0,
-            1,
-            {GC_UNAVAILABLE_SINCE_KEY: _days_ago(40), GC_FLAGGED_AT_KEY: _days_ago(5)},
-            "in_grace",
-            {GC_UNAVAILABLE_SINCE_KEY, GC_FLAGGED_AT_KEY},
-            id="inside-grace",
-        ),
-        pytest.param(
-            1,
-            0,
-            {GC_UNAVAILABLE_SINCE_KEY: _days_ago(40), GC_FLAGGED_AT_KEY: _days_ago(5)},
-            "cleared",
-            set(),
-            id="recovered-clears-state",
-        ),
-        pytest.param(
-            0,
-            0,
-            {GC_UNAVAILABLE_SINCE_KEY: _days_ago(40)},
-            "cleared",
-            set(),
-            id="scaled-to-zero-clears-state",
-        ),
-        pytest.param(
-            0,
-            1,
-            {GC_UNAVAILABLE_SINCE_KEY: "not-a-timestamp"},
-            "state_invalid",
-            {GC_UNAVAILABLE_SINCE_KEY},
-            id="unparseable-stamp-left-alone",
-        ),
-        pytest.param(1, 0, {}, None, set(), id="healthy-untouched"),
-        pytest.param(0, 0, {}, None, set(), id="scaled-to-zero-untouched"),
-        pytest.param(
-            0,
-            1,
-            {GC_EXEMPT_KEY: True, GC_UNAVAILABLE_SINCE_KEY: _days_ago(90)},
-            "exempt",
-            {GC_EXEMPT_KEY, GC_UNAVAILABLE_SINCE_KEY},
-            id="exempt-bool-untouched",
-        ),
-        pytest.param(
-            0,
-            1,
-            {GC_EXEMPT_KEY: "true"},
-            "exempt",
-            {GC_EXEMPT_KEY},
-            id="exempt-string-true",
-        ),
-        pytest.param(
-            0,
-            1,
-            {GC_EXEMPT_KEY: "false"},
-            "observing",
-            {GC_EXEMPT_KEY, GC_UNAVAILABLE_SINCE_KEY},
-            id="exempt-string-false-is-not-exempt",
+            "scaled_to_zero",
+            SCALE_TO_ZERO,
+            {GC_UNAVAILABLE_SINCE_KEY, GC_SCALE_TO_ZERO_REQUESTED_AT_KEY},
+            id="day-30-scales-to-zero",
         ),
     ],
 )
 @pytest.mark.asyncio
-async def test_bookkeeping(
-    fake_model_endpoint_record_repository,
-    fake_resource_gateway,
-    fake_model_endpoint_service,
-    model_endpoint_1,
-    available,
-    unavailable,
-    metadata,
-    bucket,
-    expected_keys,
+async def test_broken_clock(
+    harness, model_endpoint_1, metadata, expect_bucket, expect_kind, expect_keys
 ):
-    endpoint = _endpoint(
-        model_endpoint_1, available=available, unavailable=unavailable, metadata=metadata
+    endpoint = harness.add(
+        _endpoint(model_endpoint_1, available=0, unavailable=1, metadata=metadata)
     )
-    service, _ = _build(
-        fake_model_endpoint_record_repository,
-        fake_resource_gateway,
-        fake_model_endpoint_service,
-        endpoint,
-    )
-    report = await service.execute()
+    report = await harness.run()
 
-    stored = await fake_model_endpoint_record_repository.get_model_endpoint_record(
-        endpoint.record.id
-    )
-    assert stored is not None
-    assert set(stored.metadata.keys()) == expected_keys
+    assert _keys(await harness.stored(endpoint)) == expect_keys
+    if expect_bucket.startswith("upcoming"):
+        actions = report.upcoming[int(expect_bucket[len("upcoming") :])]
+    else:
+        actions = getattr(report, expect_bucket)
+    ids = [a.record.id if hasattr(a, "record") else a.id for a in actions]
+    assert ids == [endpoint.record.id]
+    if expect_kind:
+        assert actions[0].kind == expect_kind and actions[0].reason == BROKEN
     assert report.deleted == []
-    if bucket is not None:
-        assert [r.id for r in getattr(report, bucket)] == [endpoint.record.id]
-    if bucket == "flagged_new":
-        assert stored.metadata[GC_FLAGGED_AT_KEY] == NOW.isoformat()
-    if bucket == "observing" and GC_UNAVAILABLE_SINCE_KEY not in metadata:
-        assert stored.metadata[GC_UNAVAILABLE_SINCE_KEY] == NOW.isoformat()
+
+
+@pytest.mark.asyncio
+async def test_broken_parked_by_gc_is_deleted_at_90(harness, model_endpoint_1):
+    endpoint = harness.add(
+        _endpoint(
+            model_endpoint_1,
+            available=0,
+            unavailable=0,
+            metadata={
+                GC_UNAVAILABLE_SINCE_KEY: _days_ago(90),
+                GC_SCALE_TO_ZERO_REQUESTED_AT_KEY: _days_ago(60),
+                GC_TOUCHED_AT_KEY: _days_ago(60),
+            },
+            last_updated_at=NOW - timedelta(days=60, hours=-1),
+        )
+    )
+    report = await harness.run()
+
+    assert [a.record.id for a in report.deleted] == [endpoint.record.id]
+    assert report.deleted[0].kind == DELETE and report.deleted[0].reason == BROKEN
+    assert endpoint.record.id not in harness.service.db
+
+
+@pytest.mark.asyncio
+async def test_broken_update_failed_still_counts_down(harness, model_endpoint_1):
+    # Scale-to-zero went through the builder and failed; the Deployment is still up and dead.
+    endpoint = harness.add(
+        _endpoint(
+            model_endpoint_1,
+            available=0,
+            unavailable=1,
+            status=ModelEndpointStatus.UPDATE_FAILED,
+            metadata={
+                GC_UNAVAILABLE_SINCE_KEY: _days_ago(90),
+                GC_SCALE_TO_ZERO_REQUESTED_AT_KEY: _days_ago(60),
+                GC_TOUCHED_AT_KEY: _days_ago(60),
+            },
+            last_updated_at=NOW - timedelta(days=59, hours=23),
+        )
+    )
+    report = await harness.run()
+
+    assert [a.record.id for a in report.deleted] == [endpoint.record.id]
 
 
 @pytest.mark.parametrize(
-    "delete_enabled,deleted_expected",
+    "queue_sent,expected",
     [
-        pytest.param(True, True, id="delete-enabled-deletes"),
-        pytest.param(False, False, id="observe-only-defers"),
+        pytest.param(0, "tracking", id="silent-queue-is-broken"),
+        pytest.param(5, "recovered", id="active-queue-clears-broken-clock"),
+        pytest.param(None, None, id="unknown-queue-freezes"),
     ],
 )
 @pytest.mark.asyncio
-async def test_delete_after_grace(
-    fake_model_endpoint_record_repository,
-    fake_resource_gateway,
-    fake_model_endpoint_service,
-    model_endpoint_1,
-    delete_enabled,
-    deleted_expected,
-):
-    endpoint = _endpoint(
-        model_endpoint_1,
-        available=0,
-        unavailable=1,
-        metadata={GC_UNAVAILABLE_SINCE_KEY: _days_ago(50), GC_FLAGGED_AT_KEY: _days_ago(14)},
+async def test_broken_async_needs_silent_queue(harness, model_endpoint_1, queue_sent, expected):
+    endpoint = harness.add(
+        _endpoint(
+            model_endpoint_1,
+            available=0,
+            unavailable=1,
+            endpoint_type=ModelEndpointType.ASYNC,
+            metadata={GC_UNAVAILABLE_SINCE_KEY: _days_ago(10)},
+        )
     )
-    service, digest = _build(
-        fake_model_endpoint_record_repository,
-        fake_resource_gateway,
-        fake_model_endpoint_service,
-        endpoint,
-        config=EndpointGcConfig(
-            unavailable_days=30, grace_days=14, delete_cap=20, delete_enabled=delete_enabled
-        ),
-    )
-    report = await service.execute()
+    report = await harness.run(queue_sent=queue_sent)
 
-    assert ([r.id for r in report.deleted] == [endpoint.record.id]) is deleted_expected
-    assert ([r.id for r in report.delete_deferred] == [endpoint.record.id]) is not deleted_expected
-    assert (endpoint.record.id in fake_model_endpoint_service.db) is not deleted_expected
-    assert len(digest.digests) == 1
-    assert ("DELETE ENABLED" in digest.digests[0]) is deleted_expected
+    stored = await harness.stored(endpoint)
+    if expected == "tracking":
+        assert [r.id for r in report.tracking] == [endpoint.record.id]
+        assert GC_UNAVAILABLE_SINCE_KEY in stored
+    elif expected == "recovered":
+        assert [r.id for r in report.recovered] == [endpoint.record.id]
+        assert GC_UNAVAILABLE_SINCE_KEY not in stored
+    else:
+        assert report.sources_unknown == ["queue"]
+        assert stored[GC_UNAVAILABLE_SINCE_KEY] == _days_ago(10)
+        assert report.tracking == [] and report.deferred == []
+
+
+@pytest.mark.asyncio
+async def test_sync_attempts_do_not_revive_a_broken_endpoint(harness, model_endpoint_1):
+    endpoint = harness.add(
+        _endpoint(
+            model_endpoint_1,
+            available=0,
+            unavailable=1,
+            metadata={GC_UNAVAILABLE_SINCE_KEY: _days_ago(30)},
+        )
+    )
+    report = await harness.run(traffic_names={endpoint.record.name})
+
+    assert [a.record.id for a in report.scaled_to_zero] == [endpoint.record.id]
+
+
+# ---- idle clock --------------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize(
-    "queue_sent,bucket,expected_keys",
+    "metadata,traffic,history_days,expect,expect_last_traffic",
     [
-        pytest.param(0, "observing", {GC_UNAVAILABLE_SINCE_KEY}, id="idle-queue-keeps-clock"),
-        pytest.param(3, "cleared", set(), id="active-queue-resets-clock"),
+        pytest.param({}, set(), None, "start-now", NOW, id="first-sight-no-history"),
+        pytest.param({}, set(), 120, "scaled", NOW - timedelta(days=120), id="history-backfills"),
         pytest.param(
-            None, "queue_unknown", {GC_UNAVAILABLE_SINCE_KEY}, id="unknown-queue-leaves-state"
+            {GC_LAST_TRAFFIC_AT_KEY: _days_ago(50)},
+            {"hit"},
+            None,
+            "refreshed",
+            NOW,
+            id="traffic-refreshes-stamp",
+        ),
+        pytest.param(
+            {GC_LAST_TRAFFIC_AT_KEY: _days_ago(83)},
+            set(),
+            None,
+            "upcoming7",
+            NOW - timedelta(days=83),
+            id="7-day-notice",
+        ),
+        pytest.param(
+            {GC_LAST_TRAFFIC_AT_KEY: _days_ago(90)},
+            set(),
+            None,
+            "scaled",
+            NOW - timedelta(days=90),
+            id="day-90-scales-to-zero",
         ),
     ],
 )
 @pytest.mark.asyncio
-async def test_async_requires_idle_queue(
-    fake_model_endpoint_record_repository,
-    fake_resource_gateway,
-    fake_model_endpoint_service,
-    model_endpoint_1,
-    queue_sent,
-    bucket,
-    expected_keys,
+async def test_idle_clock(
+    harness, model_endpoint_1, metadata, traffic, history_days, expect, expect_last_traffic
 ):
-    endpoint = _endpoint(
-        model_endpoint_1,
-        available=0,
-        unavailable=1,
-        endpoint_type=ModelEndpointType.ASYNC,
-        metadata={GC_UNAVAILABLE_SINCE_KEY: _days_ago(10)},
+    endpoint = harness.add(
+        _endpoint(model_endpoint_1, available=1, unavailable=0, metadata=metadata)
     )
-    service, _ = _build(
-        fake_model_endpoint_record_repository,
-        fake_resource_gateway,
-        fake_model_endpoint_service,
-        endpoint,
-        queue_sent=queue_sent,
-    )
-    report = await service.execute()
+    names = {endpoint.record.name} if traffic else set()
+    history = {endpoint.record.name: NOW - timedelta(days=history_days)} if history_days else None
+    report = await harness.run(traffic_names=names, history=history)
 
-    stored = await fake_model_endpoint_record_repository.get_model_endpoint_record(
-        endpoint.record.id
-    )
-    assert set(stored.metadata.keys()) == expected_keys
-    assert [r.id for r in getattr(report, bucket)] == [endpoint.record.id]
+    stored = await harness.stored(endpoint)
+    assert stored[GC_LAST_TRAFFIC_AT_KEY] == expect_last_traffic.isoformat()
+    if expect == "scaled":
+        assert [a.record.id for a in report.scaled_to_zero] == [endpoint.record.id]
+        assert report.scaled_to_zero[0].reason == IDLE
+        assert GC_SCALE_TO_ZERO_REQUESTED_AT_KEY in stored
+    elif expect == "upcoming7":
+        assert [a.record.id for a in report.upcoming[7]] == [endpoint.record.id]
+    else:
+        assert report.scaled_to_zero == [] and report.deferred == []
 
 
 @pytest.mark.asyncio
-async def test_delete_cap_oldest_first(
-    fake_model_endpoint_record_repository,
-    fake_resource_gateway,
-    fake_model_endpoint_service,
-    model_endpoint_1,
-    model_endpoint_2,
-):
-    older = _endpoint(
-        model_endpoint_1,
-        available=0,
-        unavailable=1,
-        metadata={GC_UNAVAILABLE_SINCE_KEY: _days_ago(60), GC_FLAGGED_AT_KEY: _days_ago(20)},
+async def test_idle_parked_by_gc_deleted_at_180(harness, model_endpoint_1):
+    endpoint = harness.add(
+        _endpoint(
+            model_endpoint_1,
+            available=0,
+            unavailable=0,
+            metadata={
+                GC_LAST_TRAFFIC_AT_KEY: _days_ago(180),
+                GC_SCALE_TO_ZERO_REQUESTED_AT_KEY: _days_ago(90),
+                GC_TOUCHED_AT_KEY: _days_ago(90),
+            },
+        )
     )
-    newer = _endpoint(
-        model_endpoint_2,
-        available=0,
-        unavailable=1,
-        metadata={GC_UNAVAILABLE_SINCE_KEY: _days_ago(50), GC_FLAGGED_AT_KEY: _days_ago(15)},
-    )
-    service, _ = _build(
-        fake_model_endpoint_record_repository,
-        fake_resource_gateway,
-        fake_model_endpoint_service,
-        newer,
-        older,
-        config=EndpointGcConfig(
-            unavailable_days=30, grace_days=14, delete_cap=1, delete_enabled=True
-        ),
-    )
+    report = await harness.run()
 
-    report = await service.execute()
-
-    assert [r.id for r in report.deleted] == [older.record.id]
-    assert [r.id for r in report.delete_deferred] == [newer.record.id]
+    assert [a.record.id for a in report.deleted] == [endpoint.record.id]
+    assert report.deleted[0].reason == IDLE
 
 
 @pytest.mark.asyncio
-async def test_no_deployment_clears_state_and_never_deletes(
-    fake_model_endpoint_record_repository,
-    fake_resource_gateway,
-    fake_model_endpoint_service,
-    model_endpoint_1,
-):
-    endpoint = _endpoint(
-        model_endpoint_1,
-        available=0,
-        unavailable=1,
-        metadata={GC_UNAVAILABLE_SINCE_KEY: _days_ago(60), GC_FLAGGED_AT_KEY: _days_ago(20)},
+async def test_idle_parked_by_gc_with_traffic_recovers(harness, model_endpoint_1):
+    endpoint = harness.add(
+        _endpoint(
+            model_endpoint_1,
+            available=0,
+            unavailable=0,
+            metadata={
+                GC_LAST_TRAFFIC_AT_KEY: _days_ago(100),
+                GC_SCALE_TO_ZERO_REQUESTED_AT_KEY: _days_ago(10),
+                GC_TOUCHED_AT_KEY: _days_ago(10),
+            },
+        )
     )
-    service, _ = _build(
-        fake_model_endpoint_record_repository,
-        fake_resource_gateway,
-        fake_model_endpoint_service,
-        endpoint,
-        with_resources=False,
-    )
-    report = await service.execute()
+    report = await harness.run(traffic_names={endpoint.record.name})
 
-    stored = await fake_model_endpoint_record_repository.get_model_endpoint_record(
-        endpoint.record.id
-    )
-    assert stored.metadata == {}
-    assert [r.id for r in report.no_deployment] == [endpoint.record.id]
+    assert [r.id for r in report.recovered] == [endpoint.record.id]
+    assert (await harness.stored(endpoint))[GC_LAST_TRAFFIC_AT_KEY] == NOW.isoformat()
     assert report.deleted == []
+
+
+# ---- guards --------------------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_owner_parked_endpoint_is_never_touched(harness, model_endpoint_1):
+    endpoint = harness.add(_endpoint(model_endpoint_1, available=0, unavailable=0))
+    report = await harness.run()
+
+    assert await harness.stored(endpoint) == {}
+    assert report.tracking == [] and report.deferred == []
+
+
+@pytest.mark.asyncio
+async def test_traffic_source_unknown_freezes_everything(
+    harness, model_endpoint_1, model_endpoint_2
+):
+    idle = harness.add(
+        _endpoint(
+            model_endpoint_1,
+            available=1,
+            unavailable=0,
+            metadata={GC_LAST_TRAFFIC_AT_KEY: _days_ago(90)},
+        )
+    )
+    fresh = harness.add(_endpoint(model_endpoint_2, available=1, unavailable=0))
+    report = await harness.run(traffic_names=None)
+
+    assert report.sources_unknown == ["FakeTraffic"]
+    assert report.scaled_to_zero == [] and report.deferred == []
+    assert await harness.stored(fresh) == {}
+    assert (await harness.stored(idle))[GC_LAST_TRAFFIC_AT_KEY] == _days_ago(90)
+
+
+@pytest.mark.asyncio
+async def test_owner_edit_clears_state(harness, model_endpoint_1):
+    endpoint = harness.add(
+        _endpoint(
+            model_endpoint_1,
+            available=0,
+            unavailable=1,
+            metadata={GC_UNAVAILABLE_SINCE_KEY: _days_ago(20), GC_TOUCHED_AT_KEY: _days_ago(20)},
+            last_updated_at=NOW - timedelta(days=2),
+        )
+    )
+    report = await harness.run()
+
+    assert [r.id for r in report.owner_reset] == [endpoint.record.id]
+    assert await harness.stored(endpoint) == {}
+
+
+@pytest.mark.asyncio
+async def test_builder_writes_after_scale_request_are_not_owner_edits(harness, model_endpoint_1):
+    endpoint = harness.add(
+        _endpoint(
+            model_endpoint_1,
+            available=0,
+            unavailable=1,
+            metadata={
+                GC_UNAVAILABLE_SINCE_KEY: _days_ago(31),
+                GC_SCALE_TO_ZERO_REQUESTED_AT_KEY: _days_ago(0.5),
+                GC_TOUCHED_AT_KEY: _days_ago(0.5),
+            },
+            last_updated_at=NOW - timedelta(hours=6),
+        )
+    )
+    report = await harness.run()
+
+    assert report.owner_reset == []
+    assert [r.id for r in report.tracking] == [endpoint.record.id]
 
 
 @pytest.mark.parametrize(
     "status", [ModelEndpointStatus.UPDATE_PENDING, ModelEndpointStatus.UPDATE_IN_PROGRESS]
 )
 @pytest.mark.asyncio
-async def test_in_flight_update_is_never_deleted(
-    fake_model_endpoint_record_repository,
-    fake_resource_gateway,
-    fake_model_endpoint_service,
-    model_endpoint_1,
-    status,
-):
-    endpoint = _endpoint(
-        model_endpoint_1,
-        available=0,
-        unavailable=1,
-        metadata={GC_UNAVAILABLE_SINCE_KEY: _days_ago(60), GC_FLAGGED_AT_KEY: _days_ago(20)},
+async def test_in_flight_is_skipped(harness, model_endpoint_1, status):
+    endpoint = harness.add(
+        _endpoint(
+            model_endpoint_1,
+            available=0,
+            unavailable=1,
+            status=status,
+            metadata={GC_UNAVAILABLE_SINCE_KEY: _days_ago(60)},
+        )
     )
-    endpoint.record.status = status
-    service, _ = _build(
-        fake_model_endpoint_record_repository,
-        fake_resource_gateway,
-        fake_model_endpoint_service,
-        endpoint,
-    )
-    report = await service.execute()
+    report = await harness.run()
 
     assert [r.id for r in report.in_flight] == [endpoint.record.id]
-    assert report.deleted == [] and report.delete_deferred == []
-    assert endpoint.record.id in fake_model_endpoint_service.db
+    assert report.deferred == [] and report.scaled_to_zero == []
+
+
+@pytest.mark.parametrize(
+    "value,exempt", [(True, True), ("true", True), ("false", False), (1, False)]
+)
+@pytest.mark.asyncio
+async def test_exempt_semantics(harness, model_endpoint_1, value, exempt):
+    endpoint = harness.add(
+        _endpoint(model_endpoint_1, available=0, unavailable=1, metadata={GC_EXEMPT_KEY: value})
+    )
+    report = await harness.run()
+
+    assert ([r.id for r in report.exempt] == [endpoint.record.id]) is exempt
+    assert (GC_UNAVAILABLE_SINCE_KEY in await harness.stored(endpoint)) is not exempt
 
 
 @pytest.mark.asyncio
-async def test_owner_update_during_grace_restarts_grace(
-    fake_model_endpoint_record_repository,
-    fake_resource_gateway,
-    fake_model_endpoint_service,
-    model_endpoint_1,
-):
-    endpoint = _endpoint(
-        model_endpoint_1,
-        available=0,
-        unavailable=1,
-        metadata={GC_UNAVAILABLE_SINCE_KEY: _days_ago(60), GC_FLAGGED_AT_KEY: _days_ago(20)},
+async def test_unreadable_state_left_alone(harness, model_endpoint_1):
+    endpoint = harness.add(
+        _endpoint(
+            model_endpoint_1, available=0, unavailable=1, metadata={GC_UNAVAILABLE_SINCE_KEY: "x"}
+        )
     )
-    endpoint.record.last_updated_at = NOW - timedelta(days=3)
-    service, _ = _build(
-        fake_model_endpoint_record_repository,
-        fake_resource_gateway,
-        fake_model_endpoint_service,
-        endpoint,
-    )
-    report = await service.execute()
+    report = await harness.run()
 
-    stored = await fake_model_endpoint_record_repository.get_model_endpoint_record(
-        endpoint.record.id
-    )
-    assert [r.id for r in report.flagged_new] == [endpoint.record.id]
-    assert stored.metadata[GC_FLAGGED_AT_KEY] == NOW.isoformat()
-    assert report.deleted == []
+    assert [r.id for r in report.state_invalid] == [endpoint.record.id]
+    assert (await harness.stored(endpoint))[GC_UNAVAILABLE_SINCE_KEY] == "x"
 
 
 @pytest.mark.asyncio
-async def test_metadata_write_keeps_concurrent_user_keys(
-    fake_model_endpoint_record_repository,
-    fake_resource_gateway,
-    fake_model_endpoint_service,
-    model_endpoint_1,
+async def test_no_deployment_clears_state(harness, model_endpoint_1):
+    endpoint = harness.add(
+        _endpoint(
+            model_endpoint_1,
+            available=0,
+            unavailable=1,
+            metadata={GC_UNAVAILABLE_SINCE_KEY: _days_ago(60)},
+        ),
+        with_resources=False,
+    )
+    report = await harness.run()
+
+    assert [r.id for r in report.no_deployment] == [endpoint.record.id]
+    assert await harness.stored(endpoint) == {}
+
+
+# ---- actions -------------------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_observe_only_defers_but_still_writes_clocks(
+    harness, model_endpoint_1, model_endpoint_2
 ):
-    endpoint = _endpoint(
-        model_endpoint_1, available=0, unavailable=1, metadata={"_llm": {"model_name": "m"}}
+    due = harness.add(
+        _endpoint(
+            model_endpoint_1,
+            available=0,
+            unavailable=1,
+            metadata={GC_UNAVAILABLE_SINCE_KEY: _days_ago(40)},
+        )
     )
-    service, _ = _build(
-        fake_model_endpoint_record_repository,
-        fake_resource_gateway,
-        fake_model_endpoint_service,
-        endpoint,
+    fresh = harness.add(_endpoint(model_endpoint_2, available=0, unavailable=1))
+    report = await harness.run(config=EndpointGcConfig(actions_enabled=False))
+
+    assert [a.record.id for a in report.deferred] == [due.record.id]
+    assert report.scaled_to_zero == []
+    assert GC_UNAVAILABLE_SINCE_KEY in await harness.stored(fresh)
+    assert "OBSERVE ONLY" in harness.digest.digests[0]
+
+
+@pytest.mark.asyncio
+async def test_action_cap_oldest_due_first(harness, model_endpoint_1, model_endpoint_2):
+    older = harness.add(
+        _endpoint(
+            model_endpoint_1,
+            available=0,
+            unavailable=1,
+            metadata={GC_UNAVAILABLE_SINCE_KEY: _days_ago(50)},
+        )
     )
-    # A user updates metadata after GC has listed the records but before it writes.
-    original_list = fake_model_endpoint_record_repository.list_model_endpoint_records
+    newer = harness.add(
+        _endpoint(
+            model_endpoint_2,
+            available=0,
+            unavailable=1,
+            metadata={GC_UNAVAILABLE_SINCE_KEY: _days_ago(31)},
+        )
+    )
+    report = await harness.run(config=EndpointGcConfig(actions_enabled=True, action_cap=1))
+
+    assert [a.record.id for a in report.scaled_to_zero] == [older.record.id]
+    assert [a.record.id for a in report.deferred] == [newer.record.id]
+
+
+@pytest.mark.asyncio
+async def test_scale_to_zero_calls_update_with_min_workers_zero(harness, model_endpoint_1):
+    endpoint = harness.add(
+        _endpoint(
+            model_endpoint_1,
+            available=0,
+            unavailable=1,
+            metadata={GC_UNAVAILABLE_SINCE_KEY: _days_ago(30)},
+        )
+    )
+    calls = []
+    original = harness.service.update_model_endpoint
+
+    async def spy(**kwargs):
+        calls.append(kwargs)
+        return await original(**kwargs)
+
+    harness.service.update_model_endpoint = spy
+    await harness.run()
+
+    assert calls == [{"model_endpoint_id": endpoint.record.id, "min_workers": 0}]
+
+
+@pytest.mark.asyncio
+async def test_metadata_write_keeps_concurrent_user_keys(harness, model_endpoint_1):
+    endpoint = harness.add(
+        _endpoint(
+            model_endpoint_1, available=0, unavailable=1, metadata={"_llm": {"model_name": "m"}}
+        )
+    )
+    original_list = harness.repo.list_model_endpoint_records
 
     async def list_then_mutate(**kwargs):
         records = await original_list(**kwargs)
-        stored = fake_model_endpoint_record_repository.db[endpoint.record.id]
+        stored = harness.repo.db[endpoint.record.id]
         stored.metadata = {**stored.metadata, "user_key": "added-mid-run"}
         return records
 
-    fake_model_endpoint_record_repository.list_model_endpoint_records = list_then_mutate
+    harness.repo.list_model_endpoint_records = list_then_mutate
+    await harness.run()
 
-    await service.execute()
-
-    stored = await fake_model_endpoint_record_repository.get_model_endpoint_record(
-        endpoint.record.id
-    )
-    assert stored.metadata["user_key"] == "added-mid-run"
-    assert stored.metadata["_llm"] == {"model_name": "m"}
-    assert GC_UNAVAILABLE_SINCE_KEY in stored.metadata
+    stored = await harness.stored(endpoint)
+    assert stored["user_key"] == "added-mid-run"
+    assert stored["_llm"] == {"model_name": "m"}
+    assert GC_UNAVAILABLE_SINCE_KEY in stored
 
 
 @pytest.mark.asyncio
-async def test_locked_endpoint_skips_metadata_write(
-    fake_model_endpoint_record_repository,
-    fake_resource_gateway,
-    fake_model_endpoint_service,
-    model_endpoint_1,
-):
-    endpoint = _endpoint(model_endpoint_1, available=0, unavailable=1)
-    service, _ = _build(
-        fake_model_endpoint_record_repository,
-        fake_resource_gateway,
-        fake_model_endpoint_service,
-        endpoint,
-    )
-    fake_model_endpoint_record_repository.force_lock_model_endpoint(endpoint.record)
+async def test_locked_endpoint_skips_metadata_write(harness, model_endpoint_1):
+    endpoint = harness.add(_endpoint(model_endpoint_1, available=0, unavailable=1))
+    harness.repo.force_lock_model_endpoint(endpoint.record)
+    report = await harness.run()
 
-    report = await service.execute()
-
-    stored = await fake_model_endpoint_record_repository.get_model_endpoint_record(
-        endpoint.record.id
-    )
-    assert stored.metadata == {}
+    assert await harness.stored(endpoint) == {}
     assert [r.id for r in report.write_skipped] == [endpoint.record.id]
 
 
 @pytest.mark.asyncio
-async def test_digest_lists_owner_fields_and_delete_date(
-    fake_model_endpoint_record_repository,
-    fake_resource_gateway,
-    fake_model_endpoint_service,
-    model_endpoint_1,
-):
-    endpoint = _endpoint(
-        model_endpoint_1,
-        available=0,
-        unavailable=1,
-        metadata={GC_UNAVAILABLE_SINCE_KEY: _days_ago(30)},
+async def test_digest_lists_action_with_date_and_owner_fields(harness, model_endpoint_1):
+    endpoint = harness.add(
+        _endpoint(
+            model_endpoint_1,
+            available=0,
+            unavailable=1,
+            metadata={GC_UNAVAILABLE_SINCE_KEY: _days_ago(16)},
+        )
     )
-    service, digest = _build(
-        fake_model_endpoint_record_repository,
-        fake_resource_gateway,
-        fake_model_endpoint_service,
-        endpoint,
-    )
-    await service.execute()
+    await harness.run()
 
-    text = digest.digests[0]
+    text = harness.digest.digests[0]
+    assert "In 14 days (1):" in text
+    assert f"scale to zero [broken] {(NOW + timedelta(days=14)).strftime('%Y-%m-%d')}" in text
     assert f"created_by={endpoint.record.created_by}" in text
     assert f"owner={endpoint.record.owner}" in text
-    assert f"delete_after={(NOW + timedelta(days=14)).strftime('%Y-%m-%d')}" in text

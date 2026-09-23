@@ -157,21 +157,31 @@ podDisruptionBudget:
   enabled: true
   minAvailable: 1
 
-# endpointGc runs a CronJob that deletes endpoints whose workers have all been unavailable for
-# unavailableDays consecutive days (as observed by the collector itself) and, for async endpoints,
-# whose queue received no messages in that window. Candidates are flagged first and deleted only
-# after graceDays more. State is kept in the endpoint's metadata; set metadata `_gc_exempt: true`
-# on an endpoint to opt it out. With deleteEnabled=false the job records observations and posts
-# the digest but deletes nothing. The job runs under the chart service account; on AWS that role
-# also needs cloudwatch:GetMetricStatistics and sqs:GetQueueUrl for the async-endpoint activity
-# check, otherwise async endpoints are reported as "queue unknown" and never collected.
+# endpointGc runs a CronJob that manages the lifecycle of model endpoints. Broken endpoints
+# (Deployment has workers but none available; async ones also need a silent queue) are scaled to
+# zero and later deleted on the broken.* schedule. Healthy endpoints with no traffic from any
+# source are scaled to zero and later deleted on the idle.* schedule. Clocks run from the
+# collector's own observations, kept in the endpoint's metadata; set metadata `_gc_exempt: true`
+# on an endpoint to opt it out. The digest lists actions taken and those due in 14, 7 and 1 days.
+# The job runs under the chart service account; on AWS that role also needs
+# cloudwatch:GetMetricStatistics and sqs:GetQueueUrl for the async queue check.
 endpointGc:
   enabled: false
   schedule: "0 6 * * *"
-  deleteEnabled: false
-  unavailableDays: 30
-  graceDays: 14
-  deleteCap: 20
+  # With actionsEnabled false the job records observations and posts the digest but never
+  # scales or deletes anything.
+  actionsEnabled: false
+  # Endpoints whose Deployment has workers but none available (async ones also need a silent
+  # queue): scaled to zero, then deleted, this many days after GC first saw them broken.
+  broken:
+    scaleToZeroDays: 30
+    deleteDays: 90
+  # Healthy endpoints with no traffic from any source: scaled to zero, then deleted, this many
+  # days after the last request GC saw.
+  idle:
+    scaleToZeroDays: 90
+    deleteDays: 180
+  actionCap: 20
   activeDeadlineSeconds: 3600
   # Optional Slack digest via a bot token stored in a kubernetes secret. Leave secretName empty
   # to log the digest instead.
@@ -179,6 +189,14 @@ endpointGc:
     secretName: ""
     secretKey: "bot_token"
     channel: ""
+  # Optional Datadog traffic source (trace.fastapi.request.hits by service, probes excluded).
+  # Prometheus (infra prometheus_server_address) is always used when configured; at least one
+  # source is required.
+  datadog:
+    secretName: ""
+    apiKeyKey: "api_key"
+    appKeyKey: "app_key"
+    site: "datadoghq.com"
 
 # resources specify the k8s resources for LLM Engine server deployments (e.g gateway, cache, and builder deployments)
 resources:

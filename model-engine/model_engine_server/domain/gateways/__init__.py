@@ -2,6 +2,7 @@ from .async_model_endpoint_inference_gateway import AsyncModelEndpointInferenceG
 from .cron_job_gateway import CronJobGateway
 from .digest_gateway import DigestGateway
 from .docker_image_batch_job_gateway import DockerImageBatchJobGateway
+from .endpoint_traffic_gateway import EndpointTrafficGateway, TrafficKey
 from .file_storage_gateway import FileStorageGateway
 from .inference_autoscaling_metrics_gateway import InferenceAutoscalingMetricsGateway
 from .llm_artifact_gateway import LLMArtifactGateway
@@ -17,6 +18,7 @@ __all__ = (
     "CronJobGateway",
     "DigestGateway",
     "DockerImageBatchJobGateway",
+    "EndpointTrafficGateway",
     "FileStorageGateway",
     "InferenceAutoscalingMetricsGateway",
     "LLMArtifactGateway",
@@ -26,4 +28,5 @@ __all__ = (
     "StreamingModelEndpointInferenceGateway",
     "SyncModelEndpointInferenceGateway",
     "TaskQueueGateway",
+    "TrafficKey",
 )

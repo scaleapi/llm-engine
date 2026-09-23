@@ -102,15 +102,24 @@ keda:
 endpointGc:
   enabled: false
   schedule: "0 6 * * *"
-  deleteEnabled: false
-  unavailableDays: 30
-  graceDays: 14
-  deleteCap: 20
+  actionsEnabled: false
+  broken:
+    scaleToZeroDays: 30
+    deleteDays: 90
+  idle:
+    scaleToZeroDays: 90
+    deleteDays: 180
+  actionCap: 20
   activeDeadlineSeconds: 3600
   slack:
     secretName: ""
     secretKey: "bot_token"
     channel: ""
+  datadog:
+    secretName: ""
+    apiKeyKey: "api_key"
+    appKeyKey: "app_key"
+    site: "datadoghq.com"
 
 # Configurable inference framework image tags
 inferenceFramework:

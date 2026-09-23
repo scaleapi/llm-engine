@@ -498,6 +498,20 @@ env:
   - name: ENDPOINT_GC_SLACK_CHANNEL
     value: {{ .Values.endpointGc.slack.channel | quote }}
   {{- end }}
+  {{- if .Values.endpointGc.datadog.secretName }}
+  - name: DD_API_KEY
+    valueFrom:
+      secretKeyRef:
+        name: {{ .Values.endpointGc.datadog.secretName }}
+        key: {{ .Values.endpointGc.datadog.apiKeyKey }}
+  - name: DD_APP_KEY
+    valueFrom:
+      secretKeyRef:
+        name: {{ .Values.endpointGc.datadog.secretName }}
+        key: {{ .Values.endpointGc.datadog.appKeyKey }}
+  - name: DD_SITE
+    value: {{ .Values.endpointGc.datadog.site | quote }}
+  {{- end }}
 {{- end }}
 
 {{- define "modelEngine.volumes" }}
