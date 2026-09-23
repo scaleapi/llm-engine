@@ -640,3 +640,52 @@ async def test_digest_lists_action_with_date_and_owner_fields(harness, model_end
     assert f"scale to zero [broken] {(NOW + timedelta(days=14)).strftime('%Y-%m-%d')}" in text
     assert f"created_by={endpoint.record.created_by}" in text
     assert f"owner={endpoint.record.owner}" in text
+
+
+@pytest.mark.asyncio
+async def test_revived_after_scale_request_gets_a_fresh_idle_clock(harness, model_endpoint_1):
+    # Owner scaled it back up within GC's attribution window; the old request must not turn the
+    # next action into a delete.
+    endpoint = harness.add(
+        _endpoint(
+            model_endpoint_1,
+            available=1,
+            unavailable=0,
+            metadata={
+                GC_LAST_TRAFFIC_AT_KEY: _days_ago(50),
+                GC_SCALE_TO_ZERO_REQUESTED_AT_KEY: _days_ago(0.5),
+                GC_TOUCHED_AT_KEY: _days_ago(0.5),
+            },
+            last_updated_at=NOW - timedelta(hours=6),
+        )
+    )
+    report = await harness.run()
+
+    stored = await harness.stored(endpoint)
+    assert GC_SCALE_TO_ZERO_REQUESTED_AT_KEY not in stored
+    assert stored[GC_LAST_TRAFFIC_AT_KEY] == _days_ago(50)
+    assert [r.id for r in report.recovered] == [endpoint.record.id]
+    assert report.deleted == [] and report.deferred == [] and report.scaled_to_zero == []
+    assert [r.id for r in report.tracking] == [endpoint.record.id]
+
+
+@pytest.mark.asyncio
+async def test_idle_scale_request_failed_in_builder_still_deletes(harness, model_endpoint_1):
+    endpoint = harness.add(
+        _endpoint(
+            model_endpoint_1,
+            available=1,
+            unavailable=0,
+            status=ModelEndpointStatus.UPDATE_FAILED,
+            metadata={
+                GC_LAST_TRAFFIC_AT_KEY: _days_ago(180),
+                GC_SCALE_TO_ZERO_REQUESTED_AT_KEY: _days_ago(90),
+                GC_TOUCHED_AT_KEY: _days_ago(90),
+            },
+            last_updated_at=NOW - timedelta(days=89, hours=23),
+        )
+    )
+    report = await harness.run()
+
+    assert [a.record.id for a in report.deleted] == [endpoint.record.id]
+    assert report.deleted[0].reason == IDLE

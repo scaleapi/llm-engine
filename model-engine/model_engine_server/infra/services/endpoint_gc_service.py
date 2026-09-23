@@ -293,12 +293,25 @@ class EndpointGarbageCollectionService:
             if has_state:
                 report.tracking.append(record)
             return
+        if available > 0 and requested_at and record.status != ModelEndpointStatus.UPDATE_FAILED:
+            # Serving again after GC asked for zero: the owner or a wake-up revived it. The
+            # request is void; only a failed builder run keeps it (that path ends in delete).
+            requested_at = None
+            keep_request = {}
+        stale = unavailable_since is not None or (
+            (record.metadata or {}).get(GC_SCALE_TO_ZERO_REQUESTED_AT_KEY) is not None
+            and requested_at is None
+            and not gc_parked
+        )
         if active:
-            if unavailable_since or (gc_parked and requested_at):
+            if stale or (gc_parked and requested_at):
                 report.recovered.append(record)
-            if last_traffic_at is None or run_at - last_traffic_at > timedelta(hours=12):
+            if stale or last_traffic_at is None or run_at - last_traffic_at > timedelta(hours=12):
                 await self._write_gc_state(
-                    record, {GC_LAST_TRAFFIC_AT_KEY: run_at.isoformat()}, run_at, report
+                    record,
+                    {GC_LAST_TRAFFIC_AT_KEY: run_at.isoformat(), **keep_request},
+                    run_at,
+                    report,
                 )
             return
         if last_traffic_at is None:
@@ -309,8 +322,8 @@ class EndpointGarbageCollectionService:
                 run_at,
                 report,
             )
-        elif unavailable_since:
-            # Was broken, now serving again: drop the broken clock, keep the idle one.
+        elif stale:
+            # Was broken or asked to scale down, now serving: keep only the idle clock.
             await self._write_gc_state(
                 record,
                 {GC_LAST_TRAFFIC_AT_KEY: last_traffic_at.isoformat(), **keep_request},
