@@ -111,6 +111,12 @@ endpointGc:
     deleteDays: 180
   actionCap: 20
   activeDeadlineSeconds: 3600
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      memory: 2Gi
   slack:
     secretName: ""
     secretKey: "bot_token"

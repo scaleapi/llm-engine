@@ -183,6 +183,12 @@ endpointGc:
     deleteDays: 180
   actionCap: 20
   activeDeadlineSeconds: 3600
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      memory: 2Gi
   # Optional Slack digest via a bot token stored in a kubernetes secret. Leave secretName empty
   # to log the digest instead.
   slack:

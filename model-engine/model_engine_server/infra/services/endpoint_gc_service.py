@@ -20,7 +20,6 @@ stamps. Scaled-to-zero endpoints without GC stamps are the owner's business and 
 """
 
 import asyncio
-import math
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from typing import Callable, Dict, List, Optional, Sequence, Set, Tuple
@@ -91,6 +90,8 @@ class EndpointGcConfig:
     idle_delete_days: int = 180
     action_cap: int = 20  # scale-to-zero and delete actions per run, together
     actions_enabled: bool = False  # False: bookkeeping and digest only
+    # Sync and streaming endpoints can only scale from zero when KEDA has a Prometheus source.
+    http_scale_to_zero_supported: bool = True
 
 
 @dataclass(frozen=True)
@@ -106,7 +107,8 @@ class EndpointGcReport:
     scaled_to_zero: List[PlannedAction] = field(default_factory=list)
     deleted: List[PlannedAction] = field(default_factory=list)
     action_failed: List[PlannedAction] = field(default_factory=list)
-    deferred: List[PlannedAction] = field(default_factory=list)  # due, but cap or actions disabled
+    deferred: List[PlannedAction] = field(default_factory=list)  # due, but cap/disabled/frozen
+    unsupported: List[PlannedAction] = field(default_factory=list)  # cluster cannot scale http to 0
     upcoming: Dict[int, List[PlannedAction]] = field(
         default_factory=lambda: {days: [] for days in NOTICE_DAYS}
     )
@@ -116,6 +118,7 @@ class EndpointGcReport:
     no_deployment: List[ModelEndpointRecord] = field(default_factory=list)
     in_flight: List[ModelEndpointRecord] = field(default_factory=list)
     exempt: List[ModelEndpointRecord] = field(default_factory=list)
+    queue_unknown: List[ModelEndpointRecord] = field(default_factory=list)
     state_invalid: List[ModelEndpointRecord] = field(default_factory=list)
     write_skipped: List[ModelEndpointRecord] = field(default_factory=list)
     sources_unknown: List[str] = field(default_factory=list)
@@ -125,8 +128,9 @@ class EndpointGcReport:
 class _Traffic:
     active: Set[str]  # endpoint ids with a request in the lookback (empty when frozen)
     queue_active: Set[str]  # async endpoint ids with messages in the lookback
+    queue_unknown: Set[str]  # async endpoint ids whose queue could not be read: skipped
     last_seen: Dict[str, datetime]  # from history-capable sources, for first sightings
-    frozen: bool  # a source could not answer: no clock may start or advance this run
+    frozen: bool  # a cluster-wide source could not answer: no clock starts, no action runs
 
 
 def _parse_ts(value: object) -> Optional[datetime]:
@@ -190,7 +194,7 @@ class EndpointGarbageCollectionService:
         due: List[PlannedAction] = []
         for record in records:
             await self._judge(record, states_by_id.get(record.id), traffic, run_at, due, report)
-        await self._act(due, run_at, report)
+        await self._act(due, traffic, run_at, report)
         try:
             self.digest_gateway.send_digest(
                 format_digest(report, self.config, run_at, states_by_id)
@@ -237,13 +241,33 @@ class EndpointGarbageCollectionService:
         unavailable_since = _parse_ts(metadata.get(GC_UNAVAILABLE_SINCE_KEY))
         last_traffic_at = _parse_ts(metadata.get(GC_LAST_TRAFFIC_AT_KEY))
         requested_at = _parse_ts(metadata.get(GC_SCALE_TO_ZERO_REQUESTED_AT_KEY))
-        gc_parked = desired == 0 and requested_at is not None
         is_async = record.endpoint_type == ModelEndpointType.ASYNC
         active = record.id in traffic.active
+        if is_async and record.id in traffic.queue_unknown:
+            report.queue_unknown.append(record)
+            return
         queue_active = is_async and record.id in traffic.queue_active
+
+        if requested_at and infra_state.deployment_state.min_workers > 0:
+            if record.status == ModelEndpointStatus.UPDATE_FAILED:
+                # GC's scale-to-zero never took (the builder failed); the request stays and the
+                # schedule ends in the delete.
+                pass
+            else:
+                # min_workers is back above zero: the owner revived it. Judge fresh.
+                await self._write_gc_state(record, {}, run_at, report)
+                report.owner_reset.append(record)
+                return
+        # Parked by GC means min_workers is 0 on our request, whether or not KEDA has a pod up.
+        gc_parked = requested_at is not None
         keep_request = (
             {GC_SCALE_TO_ZERO_REQUESTED_AT_KEY: requested_at.isoformat()} if requested_at else {}
         )
+        if has_state and GC_TOUCHED_AT_KEY not in metadata:
+            # Seeded state: stamp our own write time so owner edits become detectable.
+            await self._write_gc_state(
+                record, {k: v for k, v in metadata.items() if k in GC_STATE_KEYS}, run_at, report
+            )
 
         if desired == 0 and not gc_parked:
             # Parked by the owner: never ours to judge.
@@ -255,15 +279,18 @@ class EndpointGarbageCollectionService:
         broken = desired > 0 and available == 0
         if broken and queue_active:
             # Dead async endpoint with work still arriving: not ours to collect.
-            if has_state:
-                await self._write_gc_state(record, {}, run_at, report)
+            if has_state and unavailable_since:
+                await self._write_gc_state(
+                    record,
+                    {GC_LAST_TRAFFIC_AT_KEY: run_at.isoformat(), **keep_request},
+                    run_at,
+                    report,
+                )
                 report.recovered.append(record)
             return
-        if broken or (gc_parked and requested_at and unavailable_since):
+        if broken or (gc_parked and desired == 0 and unavailable_since):
             # Broken, or parked by GC because it was broken. Traffic to a dead sync endpoint is a
             # caller's problem, not a sign of life, so only the async queue check above counts.
-            if traffic.frozen and is_async:
-                return
             if unavailable_since is None:
                 if traffic.frozen:
                     return
@@ -279,7 +306,7 @@ class EndpointGarbageCollectionService:
                 record,
                 BROKEN,
                 unavailable_since,
-                parked=gc_parked or requested_at is not None,
+                parked=gc_parked,
                 scale_days=self.config.broken_scale_to_zero_days,
                 delete_days=self.config.broken_delete_days,
                 run_at=run_at,
@@ -289,24 +316,14 @@ class EndpointGarbageCollectionService:
             return
 
         # Serving (available > 0) or parked by GC for idleness: the idle clock.
-        if traffic.frozen:
-            if has_state:
-                report.tracking.append(record)
-            return
-        if available > 0 and requested_at and record.status != ModelEndpointStatus.UPDATE_FAILED:
-            # Serving again after GC asked for zero: the owner or a wake-up revived it. The
-            # request is void; only a failed builder run keeps it (that path ends in delete).
-            requested_at = None
-            keep_request = {}
-        stale = unavailable_since is not None or (
-            (record.metadata or {}).get(GC_SCALE_TO_ZERO_REQUESTED_AT_KEY) is not None
-            and requested_at is None
-            and not gc_parked
-        )
-        if active:
-            if stale or (gc_parked and requested_at):
+        if active and not traffic.frozen:
+            if unavailable_since:
                 report.recovered.append(record)
-            if stale or last_traffic_at is None or run_at - last_traffic_at > timedelta(hours=12):
+            if (
+                unavailable_since
+                or last_traffic_at is None
+                or run_at - last_traffic_at > timedelta(hours=12)
+            ):
                 await self._write_gc_state(
                     record,
                     {GC_LAST_TRAFFIC_AT_KEY: run_at.isoformat(), **keep_request},
@@ -315,15 +332,20 @@ class EndpointGarbageCollectionService:
                 )
             return
         if last_traffic_at is None:
-            last_traffic_at = traffic.last_seen.get(record.id) or run_at
+            if traffic.frozen:
+                return
+            # First sight. History may push the clock back, but never so far that the first
+            # action lands before the first notice.
+            floor = run_at - timedelta(days=self.config.idle_scale_to_zero_days - NOTICE_DAYS[0])
+            last_traffic_at = max(traffic.last_seen.get(record.id, run_at), floor)
             await self._write_gc_state(
                 record,
                 {GC_LAST_TRAFFIC_AT_KEY: last_traffic_at.isoformat(), **keep_request},
                 run_at,
                 report,
             )
-        elif stale:
-            # Was broken or asked to scale down, now serving: keep only the idle clock.
+        elif unavailable_since:
+            # Was broken, now serving: keep only the idle clock.
             await self._write_gc_state(
                 record,
                 {GC_LAST_TRAFFIC_AT_KEY: last_traffic_at.isoformat(), **keep_request},
@@ -336,7 +358,7 @@ class EndpointGarbageCollectionService:
             record,
             IDLE,
             last_traffic_at,
-            parked=gc_parked or requested_at is not None,
+            parked=gc_parked,
             scale_days=self.config.idle_scale_to_zero_days,
             delete_days=self.config.idle_delete_days,
             run_at=run_at,
@@ -358,6 +380,10 @@ class EndpointGarbageCollectionService:
         by_name: Dict[str, List[str]] = {}
         for record in records:
             by_name.setdefault(record.name, []).append(record.id)
+        needs_history = any(
+            GC_LAST_TRAFFIC_AT_KEY not in (record.metadata or {}) and record.id in states_by_id
+            for record in records
+        )
 
         active: Set[str] = set()
         last_seen: Dict[str, datetime] = {}
@@ -369,29 +395,35 @@ class EndpointGarbageCollectionService:
                 report.sources_unknown.append(type(gateway).__name__)
                 continue
             active.update(self._resolve(keys, gateway.key, by_deployment, by_name))
+            if not needs_history:
+                continue
             history = await gateway.last_active_at(
                 run_at - timedelta(days=self.config.idle_delete_days)
             )
             for key, seen in (history or {}).items():
-                for eid in self._resolve({key}, gateway.key, by_deployment, by_name):
-                    if eid not in last_seen or seen > last_seen[eid]:
-                        last_seen[eid] = seen
+                ids = self._resolve({key}, gateway.key, by_deployment, by_name)
+                if len(ids) != 1:
+                    # Endpoint names are unique per owner only: an ambiguous key is no history.
+                    continue
+                (eid,) = ids
+                if eid not in last_seen or seen > last_seen[eid]:
+                    last_seen[eid] = seen
 
         queue_active: Set[str] = set()
+        queue_unknown: Set[str] = set()
         for record in records:
             if record.endpoint_type != ModelEndpointType.ASYNC or record.id not in states_by_id:
                 continue
             sent = await self.queue_delegate.messages_sent_since(record.id, since)
             if sent is None:
-                frozen = True
-                report.sources_unknown.append("queue")
-                break
-            if sent > 0:
+                queue_unknown.add(record.id)
+            elif sent > 0:
                 queue_active.add(record.id)
                 active.add(record.id)
         return _Traffic(
             active=set() if frozen else active,
-            queue_active=set() if frozen else queue_active,
+            queue_active=queue_active,
+            queue_unknown=queue_unknown,
             last_seen=last_seen,
             frozen=frozen,
         )
@@ -437,20 +469,32 @@ class EndpointGarbageCollectionService:
             action = PlannedAction(
                 record, SCALE_TO_ZERO, reason, clock_start + timedelta(days=scale_days)
             )
-        if action.due_at <= run_at:
+        # Compare on calendar days: the stamp and the daily run both sit at the same hour, and
+        # seconds of scheduler jitter must not skip a notice.
+        days_left = (action.due_at.date() - run_at.date()).days
+        if days_left <= 0:
             due.append(action)
-            return
-        days_left = math.ceil((action.due_at - run_at) / timedelta(days=1))
-        if days_left in report.upcoming:
+        elif days_left in report.upcoming:
             report.upcoming[days_left].append(action)
 
     async def _act(
-        self, due: List[PlannedAction], run_at: datetime, report: EndpointGcReport
+        self,
+        due: List[PlannedAction],
+        traffic: _Traffic,
+        run_at: datetime,
+        report: EndpointGcReport,
     ) -> None:
         due.sort(key=lambda action: action.due_at)
         for index, action in enumerate(due):
-            if index >= self.config.action_cap or not self.config.actions_enabled:
+            if index >= self.config.action_cap or not self.config.actions_enabled or traffic.frozen:
                 report.deferred.append(action)
+                continue
+            if (
+                action.kind == SCALE_TO_ZERO
+                and action.record.endpoint_type != ModelEndpointType.ASYNC
+                and not self.config.http_scale_to_zero_supported
+            ):
+                report.unsupported.append(action)
                 continue
             try:
                 if action.kind == DELETE:
@@ -464,7 +508,9 @@ class EndpointGarbageCollectionService:
                         if key in GC_STATE_KEYS and key != GC_TOUCHED_AT_KEY
                     }
                     state[GC_SCALE_TO_ZERO_REQUESTED_AT_KEY] = run_at.isoformat()
-                    await self._write_gc_state(action.record, state, run_at, report)
+                    if not await self._write_gc_state(action.record, state, run_at, report):
+                        report.deferred.append(action)
+                        continue
                     await self.model_endpoint_service.update_model_endpoint(
                         model_endpoint_id=action.record.id, min_workers=0
                     )
@@ -500,7 +546,7 @@ class EndpointGarbageCollectionService:
         gc_state: Dict[str, str],
         run_at: datetime,
         report: EndpointGcReport,
-    ) -> None:
+    ) -> bool:
         """Replace the GC keys in the endpoint's metadata, leaving every other key as stored."""
         # Endpoint updates replace the whole JSONB, so take the same per-endpoint advisory lock
         # they take and re-read before writing; a concurrent user update is then kept.
@@ -508,7 +554,7 @@ class EndpointGarbageCollectionService:
             if not lock.lock_acquired():
                 logger.warning(f"GC skipped metadata write for {record.id}: endpoint locked")
                 report.write_skipped.append(record)
-                return
+                return False
             fresh = await self.record_repository.get_model_endpoint_record(
                 model_endpoint_id=record.id
             )
@@ -517,13 +563,15 @@ class EndpointGarbageCollectionService:
                 for key, value in ((fresh or record).metadata or {}).items()
                 if key not in GC_STATE_KEYS
             }
-            merged.update(gc_state)
+            merged.update({k: v for k, v in gc_state.items() if k != GC_TOUCHED_AT_KEY})
             if gc_state:
-                merged[GC_TOUCHED_AT_KEY] = run_at.isoformat()
+                # Write time, not run start: a long run must not read its own write as an edit.
+                merged[GC_TOUCHED_AT_KEY] = self.now().isoformat()
             await self.record_repository.update_model_endpoint_record(
                 model_endpoint_id=record.id, metadata=merged
             )
             record.metadata = merged  # keep the in-memory record coherent for later steps
+            return True
 
 
 def format_digest(
@@ -543,6 +591,7 @@ def format_digest(
         f"tracking {len(report.tracking)}, recovered {len(report.recovered)}, "
         f"owner reset {len(report.owner_reset)}, no deployment {len(report.no_deployment)}, "
         f"in flight {len(report.in_flight)}, exempt {len(report.exempt)}, "
+        f"queue unknown {len(report.queue_unknown)}, unsupported {len(report.unsupported)}, "
         f"state invalid {len(report.state_invalid)}, write skipped {len(report.write_skipped)}",
     ]
     if report.sources_unknown:
@@ -563,7 +612,8 @@ def format_digest(
         ("Scaled to zero today", report.scaled_to_zero),
         ("Deleted today", report.deleted),
         ("Action failed", report.action_failed),
-        ("Due, deferred (cap or actions disabled)", report.deferred),
+        ("Due, deferred (cap, actions disabled, or a source was unavailable)", report.deferred),
+        ("Due, unsupported (cluster cannot scale http endpoints to zero)", report.unsupported),
     ]
     for days in NOTICE_DAYS:
         action_sections.append((f"In {days} day{'s' if days != 1 else ''}", report.upcoming[days]))
@@ -580,6 +630,7 @@ def format_digest(
         ("Recovered, clock dropped", report.recovered),
         ("No Deployment found, GC state cleared (record left as is)", report.no_deployment),
         ("Update or delete in flight, skipped", report.in_flight),
+        ("Queue activity unknown, skipped", report.queue_unknown),
         ("GC state unreadable, skipped (fix the metadata)", report.state_invalid),
         ("Metadata write skipped, endpoint locked", report.write_skipped),
     ]

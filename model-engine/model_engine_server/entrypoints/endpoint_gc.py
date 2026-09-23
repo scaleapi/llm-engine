@@ -7,6 +7,7 @@
 
 import argparse
 import asyncio
+import dataclasses
 import os
 from contextlib import asynccontextmanager
 from typing import List
@@ -91,7 +92,12 @@ async def main(config: EndpointGcConfig) -> None:
                 bot_token=os.getenv("ENDPOINT_GC_SLACK_BOT_TOKEN"),
                 channel=os.getenv("ENDPOINT_GC_SLACK_CHANNEL"),
             ),
-            config=config,
+            config=dataclasses.replace(
+                config,
+                http_scale_to_zero_supported=(
+                    external_interfaces.model_endpoint_service.can_scale_http_endpoint_from_zero()
+                ),
+            ),
         )
         report = await service.execute()
     logger.info(

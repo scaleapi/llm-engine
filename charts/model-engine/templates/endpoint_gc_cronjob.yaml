@@ -61,6 +61,8 @@ spec:
                 {{- if .Values.endpointGc.actionsEnabled }}
                 - --act
                 {{- end }}
+              resources:
+                {{- toYaml .Values.endpointGc.resources | nindent 16 }}
               {{- include "modelEngine.endpointGcEnv" . | indent 14 }}
               {{- include "modelEngine.volumeMounts" . | indent 14 }}
           automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
