@@ -1634,3 +1634,42 @@ def test_load_k8s_yaml_command_with_mixed_quotes_renders_valid_yaml(tmp_path):
         rendered = load_k8s_yaml("command-only.yaml", cast(ResourceArguments, {"COMMAND": command}))
 
     assert rendered["command"] == command
+
+
+@pytest.mark.parametrize(
+    "statuses,expect_conflict,expect_calls",
+    [
+        pytest.param([None], False, 1, id="canonical-name-claimed"),
+        pytest.param([409], True, 1, id="changed-since-read"),
+        pytest.param([404, None], False, 2, id="legacy-name-claimed"),
+        pytest.param([404, 409], True, 2, id="legacy-name-changed"),
+        pytest.param([404, 404], True, 2, id="observed-deployment-gone"),
+        pytest.param([500], True, 1, id="rejected"),
+    ],
+)
+@pytest.mark.asyncio
+async def test_annotate_deployment_precondition(
+    k8s_endpoint_resource_delegate, mock_apps_client, statuses, expect_conflict, expect_calls
+):
+    mock_apps_client.patch_namespaced_deployment.side_effect = [
+        ApiException(status=s) if s else None for s in statuses
+    ]
+    call = k8s_endpoint_resource_delegate.annotate_deployment(
+        endpoint_id="e",
+        deployment_name="legacy",
+        annotations={"a": "b"},
+        expected_resource_version="100",
+    )
+    if expect_conflict:
+        with pytest.raises(EndpointResourceConflictException):
+            await call
+    else:
+        await call
+    calls = mock_apps_client.patch_namespaced_deployment.call_args_list
+    assert len(calls) == expect_calls
+    for c in calls:
+        assert c.kwargs["body"] == {
+            "metadata": {"resourceVersion": "100", "annotations": {"a": "b"}}
+        }
+    if expect_calls == 2:
+        assert calls[-1].kwargs["name"] == "legacy"

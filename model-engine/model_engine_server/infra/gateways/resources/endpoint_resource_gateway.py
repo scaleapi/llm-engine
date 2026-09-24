@@ -104,6 +104,20 @@ class EndpointResourceGateway(ABC, Generic[Q]):
         """
 
     @abstractmethod
+    async def annotate_deployment(
+        self,
+        endpoint_id: str,
+        deployment_name: str,
+        annotations: Dict[str, str],
+        expected_resource_version: str,
+    ) -> None:
+        """
+        Adds metadata annotations to the endpoint's Deployment only if its resourceVersion is
+        still ``expected_resource_version``; raises EndpointResourceConflictException otherwise
+        (or when the Deployment is gone). No pod template change, so no rollout.
+        """
+
+    @abstractmethod
     async def restart_deployment(self, deployment_name: str) -> None:
         """
         Restarts the given deployment.

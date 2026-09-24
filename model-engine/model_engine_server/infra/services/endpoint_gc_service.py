@@ -107,6 +107,7 @@ IN_FLIGHT_STATUSES = {
     ModelEndpointStatus.DELETE_IN_PROGRESS,
 }
 NOTICE_DAYS = (14, 7, 1)
+GC_SCALE_TO_ZERO_ANNOTATION = "launch.scale.ai/gc-scale-to-zero-requested-at"
 SCALE_TO_ZERO = "scale_to_zero"
 DELETE = "delete"
 BROKEN = "broken"
@@ -950,7 +951,7 @@ class EndpointGarbageCollectionService:
                     )
                     report.deleted.append(action)
                 else:
-                    await self._scale_to_zero(action, fresh, run_at, report)
+                    await self._scale_to_zero(action, fresh, live, run_at, report)
             except EndpointResourceConflictException:
                 report.skipped_at_action.append(action)
             except Exception:
@@ -1139,9 +1140,21 @@ class EndpointGarbageCollectionService:
         self,
         action: PlannedAction,
         fresh: ModelEndpointRecord,
+        live: ModelEndpointInfraState,
         run_at: datetime,
         report: EndpointGcReport,
     ) -> None:
+        if live.resource_version is not None:
+            # Claim the Deployment exactly as last read: a restart or scale-up since then makes
+            # the apiserver refuse (EndpointResourceConflictException, reported as skipped). The
+            # builder's own patch follows within its queue; a change in that window is caught by
+            # the next run's restart and min_workers checks, and the endpoint can be woken.
+            await self.resource_gateway.annotate_deployment(
+                endpoint_id=fresh.id,
+                deployment_name=action.infra_state.deployment_name,
+                annotations={GC_SCALE_TO_ZERO_ANNOTATION: run_at.isoformat()},
+                expected_resource_version=live.resource_version,
+            )
         # Stamp first so the builder's record writes are attributed to GC, then record the
         # builder task id the update returns; owner updates get a different task id.
         base = {
@@ -1316,10 +1329,20 @@ class EndpointGarbageCollectionService:
                     )
                 elif GC_SEEN_RESTART_AT_KEY in current_metadata:
                     merged[GC_SEEN_RESTART_AT_KEY] = current_metadata[GC_SEEN_RESTART_AT_KEY]
-            # Bookkeeping, not an owner edit: last_updated_at stays as the owner left it.
-            await self.record_repository.update_model_endpoint_metadata(
-                model_endpoint_id=record.id, metadata=merged
-            )
+            # Bookkeeping, not an owner edit: last_updated_at stays as the owner left it. One
+            # conditional statement against the stored row, so an owner write that got past
+            # the advisory lock between the read above and this write loses nothing: the merge
+            # is refused and the next run reads the owner's edit.
+            gc_payload = {k: v for k, v in merged.items() if k in GC_STATE_KEYS}
+            if not await self.record_repository.merge_model_endpoint_metadata(
+                model_endpoint_id=record.id,
+                gc_state=gc_payload,
+                remove_keys=GC_STATE_KEYS,
+                expected_creation_task_id=current.creation_task_id,
+            ):
+                logger.info(f"GC metadata write for {record.id} refused: endpoint edited meanwhile")
+                report.write_skipped.append(record)
+                return False
             record.metadata = merged  # keep the in-memory record coherent for later steps
             return not reset
         return False  # unreachable: the exit stack does not swallow exceptions

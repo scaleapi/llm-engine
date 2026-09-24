@@ -2166,13 +2166,15 @@ async def test_record_read_failure_at_final_check_does_not_lose_the_digest(
     first = harness.add(_parked(model_endpoint_1))
     second = harness.add(_parked(model_endpoint_1, record_id="test_second", name="second"))
     original_get = harness.repo.get_model_endpoint_record
-    refreshes = {second.record.id: 0}
 
     async def get_or_fail(model_endpoint_id: str, refresh: bool = False):
-        if model_endpoint_id == second.record.id and refresh:
-            refreshes[model_endpoint_id] += 1
-            if refreshes[model_endpoint_id] == 2:  # the pre-action re-read, after bookkeeping
-                raise RuntimeError("db gone")
+        # The pre-action re-read of the second endpoint: the first one has been deleted by then.
+        if (
+            model_endpoint_id == second.record.id
+            and refresh
+            and first.record.id not in harness.service.db
+        ):
+            raise RuntimeError("db gone")
         return await original_get(model_endpoint_id, refresh=refresh)
 
     harness.repo.get_model_endpoint_record = get_or_fail
@@ -2608,3 +2610,84 @@ async def test_deployment_change_during_final_record_read_is_refused_by_the_prec
     assert report.deleted == [] and report.action_failed == []
     assert [a.record.id for a in report.skipped_at_action] == [endpoint.record.id]
     assert endpoint.record.id in harness.repo.db
+
+
+# ---- clean-slate adversary round 3 -----------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_bookkeeping_write_refused_when_an_owner_write_slipped_in(harness, model_endpoint_1):
+    endpoint = harness.add(
+        _endpoint(
+            model_endpoint_1,
+            available=1,
+            unavailable=0,
+            metadata={
+                GC_LAST_TRAFFIC_AT_KEY: _days_ago(10),
+                GC_OBSERVED_AT_KEY: _days_ago(1),
+                GC_TOUCHED_AT_KEY: _days_ago(1),
+                GC_SEEN_TASK_ID_KEY: model_endpoint_1.record.creation_task_id or "",
+            },
+        )
+    )
+    original_merge = harness.repo.merge_model_endpoint_metadata
+
+    async def owner_writes_then_merge(**kwargs):
+        # Accepted API update between GC's read under the lock and its write.
+        record = harness.repo.db[endpoint.record.id]
+        record.creation_task_id = "owner-task"
+        record.metadata = {"customer": "new", GC_EXEMPT_KEY: True}
+        return await original_merge(**kwargs)
+
+    harness.repo.merge_model_endpoint_metadata = owner_writes_then_merge
+    report = await harness.run(config=EndpointGcConfig(actions_enabled=False))
+
+    assert [r.id for r in report.write_skipped] == [endpoint.record.id]
+    assert await harness.stored(endpoint) == {"customer": "new", GC_EXEMPT_KEY: True}
+
+
+@pytest.mark.asyncio
+async def test_deployment_change_during_final_record_read_blocks_the_scale_to_zero(
+    harness, model_endpoint_1
+):
+    endpoint = _endpoint(
+        model_endpoint_1,
+        available=0,
+        unavailable=1,
+        metadata={
+            GC_UNAVAILABLE_SINCE_KEY: _days_ago(31),
+            GC_OBSERVED_AT_KEY: _days_ago(1),
+            GC_TOUCHED_AT_KEY: _days_ago(1),
+            GC_SEEN_TASK_ID_KEY: model_endpoint_1.record.creation_task_id or "",
+        },
+    )
+    endpoint.infra_state = endpoint.infra_state.model_copy(update={"resource_version": "100"})
+    harness.add(endpoint)
+    original_get = harness.repo.get_model_endpoint_record
+    refreshes = {"n": 0}
+
+    async def get_then_owner_restarts(model_endpoint_id: str, refresh: bool = False):
+        record = await original_get(model_endpoint_id, refresh=refresh)
+        if refresh:
+            refreshes["n"] += 1
+            if refreshes["n"] == 3:  # the last record read, after both Deployment reads
+                harness.resources.db[endpoint.record.id] = endpoint.infra_state.model_copy(
+                    update={"restarted_at": NOW + timedelta(seconds=10), "resource_version": "101"}
+                )
+        return record
+
+    harness.repo.get_model_endpoint_record = get_then_owner_restarts
+    calls = []
+    original_update = harness.service.update_model_endpoint
+
+    async def spy(**kwargs):
+        calls.append(kwargs)
+        return await original_update(**kwargs)
+
+    harness.service.update_model_endpoint = spy
+    report = await harness.run()
+
+    assert report.scaled_to_zero == [] and report.action_failed == []
+    assert [a.record.id for a in report.skipped_at_action] == [endpoint.record.id]
+    assert calls == []
+    assert GC_SCALE_TO_ZERO_REQUESTED_AT_KEY not in await harness.stored(endpoint)

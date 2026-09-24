@@ -1399,6 +1399,20 @@ class FakeEndpointResourceGateway(EndpointResourceGateway[QueueInfo]):
         del self.db[endpoint_id]
         return True
 
+    async def annotate_deployment(
+        self,
+        endpoint_id: str,
+        deployment_name: str,
+        annotations: Dict[str, str],
+        expected_resource_version: str,
+    ) -> None:
+        if (
+            endpoint_id not in self.db
+            or self.db[endpoint_id].resource_version != expected_resource_version
+        ):
+            raise EndpointResourceConflictException
+        self.annotations = {**getattr(self, "annotations", {}), endpoint_id: annotations}
+
     async def restart_deployment(self, deployment_name: str) -> None:
         # Always succeeds
         pass

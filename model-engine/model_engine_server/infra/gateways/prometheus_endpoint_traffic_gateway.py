@@ -10,18 +10,20 @@ from model_engine_server.domain.gateways import EndpointTrafficGateway, TrafficK
 logger = make_logger(logger_name())
 
 # The only Istio request metric this cluster's Prometheus keeps (see its metric_relabel_configs).
-# Readiness probes bypass the sidecar, so this counts real requests only.
+# Readiness probes bypass the sidecar, so this counts real requests only. Both reporters count:
+# the caller's sidecar or the ingress gateway reports a request even when the endpoint's own
+# pod was not scraped or no longer exists, and that is the series the KEDA trigger that wakes
+# a parked endpoint reads (no reporter filter there either).
 _QUERY = (
     "sum by (destination_workload) (increase(istio_request_duration_milliseconds_count"
-    '{reporter="destination", destination_workload=~"%s.*"}[%ds]))'
+    '{destination_workload=~"%s.*"}[%ds]))'
 )
 # Envoy's Prometheus endpoint, on the sidecar (15090) or merged through the agent (15020).
 _ISTIO_STATS_PATH = "/stats/prometheus"
 # Coverage probe: with no series at all for the prefix, the metric or the scrape is gone and an
 # empty answer means "unknown", not "idle".
 _COVERAGE_QUERY = (
-    "count(istio_request_duration_milliseconds_count"
-    '{reporter="destination", destination_workload=~"%s.*"})'
+    "count(istio_request_duration_milliseconds_count" '{destination_workload=~"%s.*"})'
 )
 
 

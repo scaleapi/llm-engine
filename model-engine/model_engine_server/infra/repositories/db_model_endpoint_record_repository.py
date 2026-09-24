@@ -1,6 +1,6 @@
 from contextlib import AsyncExitStack
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Sequence
 
 from cachetools import TTLCache
 from model_engine_server.common import dict_not_none
@@ -304,33 +304,24 @@ class DbModelEndpointRecordRepository(ModelEndpointRecordRepository, DbRepositor
         return True
 
     @raise_if_read_only
-    async def update_model_endpoint_metadata(
-        self, model_endpoint_id: str, metadata: Dict[str, Any]
-    ) -> Optional[ModelEndpointRecord]:
+    @raise_if_read_only
+    async def merge_model_endpoint_metadata(
+        self,
+        model_endpoint_id: str,
+        gc_state: Dict[str, Any],
+        remove_keys: Sequence[str],
+        expected_creation_task_id: Optional[str],
+    ) -> bool:
         async with self.session() as session:
-            model_endpoint_orm = await OrmModelEndpoint.select_by_id(
-                session=session, endpoint_id=model_endpoint_id
-            )
-            if model_endpoint_orm is None:
-                return None
-            # The column has onupdate=now(); setting it explicitly keeps the owner's timestamp.
-            await OrmModelEndpoint.update_by_name_owner(
+            updated = await OrmModelEndpoint.merge_metadata_if_task(
                 session=session,
-                name=model_endpoint_orm.name,
-                owner=model_endpoint_orm.owner,
-                kwargs={
-                    "endpoint_metadata": metadata,
-                    "last_updated_at": model_endpoint_orm.last_updated_at,
-                },
+                endpoint_id=model_endpoint_id,
+                gc_state=gc_state,
+                remove_keys=list(remove_keys),
+                expected_creation_task_id=expected_creation_task_id,
             )
-            updated_model_endpoint_orm = await OrmModelEndpoint.select_by_id(
-                session=session, endpoint_id=model_endpoint_id
-            )
-        model_endpoint = translate_model_endpoint_orm_to_model_endpoint_record(
-            updated_model_endpoint_orm
-        )
-        cache[model_endpoint_id] = model_endpoint
-        return model_endpoint
+        cache.pop(model_endpoint_id, None)
+        return updated == 1
 
     @raise_if_read_only
     async def update_model_endpoint_record(

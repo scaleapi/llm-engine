@@ -142,5 +142,19 @@ class LiveEndpointResourceGateway(EndpointResourceGateway[QueueInfo]):
 
         return k8s_result and sqs_result
 
+    async def annotate_deployment(
+        self,
+        endpoint_id: str,
+        deployment_name: str,
+        annotations: Dict[str, str],
+        expected_resource_version: str,
+    ) -> None:
+        await self.k8s_delegate.annotate_deployment(
+            endpoint_id=endpoint_id,
+            deployment_name=deployment_name,
+            annotations=annotations,
+            expected_resource_version=expected_resource_version,
+        )
+
     async def restart_deployment(self, deployment_name: str) -> None:
         await self.k8s_delegate.restart_deployment(deployment_name=deployment_name)

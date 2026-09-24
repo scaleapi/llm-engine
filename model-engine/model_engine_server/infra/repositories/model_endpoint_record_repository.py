@@ -78,16 +78,33 @@ class ModelEndpointRecordRepository(ABC):
             A Model Endpoint Record domain entity.
         """
 
-    async def update_model_endpoint_metadata(
-        self, model_endpoint_id: str, metadata: Dict[str, Any]
-    ) -> Optional[ModelEndpointRecord]:
+    async def merge_model_endpoint_metadata(
+        self,
+        model_endpoint_id: str,
+        gc_state: Dict[str, Any],
+        remove_keys: Sequence[str],
+        expected_creation_task_id: Optional[str],
+    ) -> bool:
         """
-        Replaces the endpoint's metadata without touching last_updated_at. For bookkeeping that
-        is not an edit by the endpoint's owner.
+        Bookkeeping write that is not an edit by the endpoint's owner: drops ``remove_keys``
+        from the stored metadata, merges ``gc_state`` in, keeps every other key and
+        last_updated_at as stored, and only if creation_task_id is still
+        ``expected_creation_task_id``. Returns False (nothing written) when another writer moved
+        the endpoint on. The database implementation does this in one conditional statement.
         """
-        return await self.update_model_endpoint_record(
-            model_endpoint_id=model_endpoint_id, metadata=metadata
+        record = await self.get_model_endpoint_record(
+            model_endpoint_id=model_endpoint_id, refresh=True
         )
+        if record is None or (record.creation_task_id or None) != (
+            expected_creation_task_id or None
+        ):
+            return False
+        merged = {k: v for k, v in (record.metadata or {}).items() if k not in remove_keys}
+        merged.update(gc_state)
+        await self.update_model_endpoint_record(
+            model_endpoint_id=model_endpoint_id, metadata=merged
+        )
+        return True
 
     @abstractmethod
     async def update_model_endpoint_record(

@@ -605,6 +605,34 @@ class K8SEndpointResourceDelegate:
         await maybe_load_kube_config()
         await self._restart_deployment(deployment_name=deployment_name)
 
+    async def annotate_deployment(
+        self,
+        endpoint_id: str,
+        deployment_name: str,
+        annotations: Dict[str, str],
+        expected_resource_version: str,
+    ) -> None:
+        await maybe_load_kube_config()
+        apps_client = get_kubernetes_apps_client()
+        # metadata.resourceVersion in a patch body makes the apiserver refuse (409) when the
+        # object changed since it was read. Reads fall back to the legacy name, so the write does.
+        body = {
+            "metadata": {"resourceVersion": expected_resource_version, "annotations": annotations}
+        }
+        for name in (_endpoint_id_to_k8s_resource_group_name(endpoint_id), deployment_name):
+            try:
+                await apps_client.patch_namespaced_deployment(
+                    name=name, namespace=hmi_config.endpoint_namespace, body=body
+                )
+                return
+            except ApiException as e:
+                if e.status == 404:
+                    continue
+                if e.status == 409:
+                    logger.info(f"Deployment {name} changed since it was read")
+                raise EndpointResourceConflictException from e
+        raise EndpointResourceConflictException  # the observed Deployment is gone
+
     @staticmethod
     def _get_restarted_at(deployment_config: V1Deployment) -> Optional[datetime.datetime]:
         template = deployment_config.spec.template if deployment_config.spec else None

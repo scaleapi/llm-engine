@@ -533,3 +533,49 @@ def test_get_lock_context_raises_if_read_only(
     )
     with pytest.raises(ReadOnlyDatabaseException):
         repo.get_lock_context(entity_model_endpoint_record)
+
+
+@pytest.mark.parametrize("rowcount,expected", [(1, True), (0, False)])
+@pytest.mark.asyncio
+async def test_merge_model_endpoint_metadata_is_one_conditional_statement(
+    dbsession: Callable[[], AsyncSession],
+    fake_monitoring_metrics_gateway: FakeMonitoringMetricsGateway,
+    rowcount: int,
+    expected: bool,
+):
+    OrmModelEndpoint.merge_metadata_if_task = AsyncMock(return_value=rowcount)
+    repo = DbModelEndpointRecordRepository(
+        monitoring_metrics_gateway=fake_monitoring_metrics_gateway,
+        session=dbsession,
+        read_only=False,
+    )
+    merged = await repo.merge_model_endpoint_metadata(
+        model_endpoint_id="test_model_endpoint_id",
+        gc_state={"_gc_last_traffic_at": "2026-01-01T00:00:00+00:00"},
+        remove_keys=("_gc_last_traffic_at", "_gc_observed_at"),
+        expected_creation_task_id="task",
+    )
+    assert merged is expected
+    OrmModelEndpoint.merge_metadata_if_task.assert_awaited_once()
+    kwargs = OrmModelEndpoint.merge_metadata_if_task.await_args.kwargs
+    assert kwargs["expected_creation_task_id"] == "task"
+    assert kwargs["remove_keys"] == ["_gc_last_traffic_at", "_gc_observed_at"]
+
+
+@pytest.mark.asyncio
+async def test_merge_model_endpoint_metadata_raises_if_read_only(
+    dbsession: Callable[[], AsyncSession],
+    fake_monitoring_metrics_gateway: FakeMonitoringMetricsGateway,
+):
+    repo = DbModelEndpointRecordRepository(
+        monitoring_metrics_gateway=fake_monitoring_metrics_gateway,
+        session=dbsession,
+        read_only=True,
+    )
+    with pytest.raises(ReadOnlyDatabaseException):
+        await repo.merge_model_endpoint_metadata(
+            model_endpoint_id="test_model_endpoint_id",
+            gc_state={},
+            remove_keys=(),
+            expected_creation_task_id=None,
+        )

@@ -12,9 +12,10 @@ from sqlalchemy import (
     Numeric,
     String,
     Text,
+    cast,
     select,
 )
-from sqlalchemy.dialects.postgresql import ARRAY, JSONB
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB, array
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import relationship, selectinload
 from sqlalchemy.sql import func, text
@@ -536,6 +537,39 @@ class Endpoint(Base):
 
         await session.execute(stmt)
         await session.commit()
+
+    @classmethod
+    async def merge_metadata_if_task(
+        cls,
+        session: AsyncSession,
+        endpoint_id: str,
+        gc_state: Dict[str, Any],
+        remove_keys: List[str],
+        expected_creation_task_id: Optional[str],
+    ) -> int:
+        """One conditional UPDATE: drop ``remove_keys`` from endpoint_metadata and merge
+        ``gc_state`` in, only if creation_task_id is still ``expected_creation_task_id``. Other
+        keys are left as stored; last_updated_at is kept. Returns the number of rows updated
+        (0 when another writer moved the endpoint on)."""
+        task_matches = (
+            Endpoint.creation_task_id.is_(None)
+            if expected_creation_task_id is None
+            else Endpoint.creation_task_id == expected_creation_task_id
+        )
+        current = func.coalesce(Endpoint.endpoint_metadata, cast({}, JSONB))
+        stmt = (
+            update(Endpoint)
+            .where(Endpoint.id == endpoint_id, task_matches)
+            .values(
+                endpoint_metadata=current.op("-")(array(remove_keys)).op("||")(
+                    cast(gc_state, JSONB)
+                ),
+                last_updated_at=Endpoint.last_updated_at,
+            )
+        )
+        result = await session.execute(stmt)
+        await session.commit()
+        return result.rowcount
 
     @classmethod
     async def update_endpoint_status(
