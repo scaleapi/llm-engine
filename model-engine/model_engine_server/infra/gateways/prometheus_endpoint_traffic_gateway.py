@@ -97,3 +97,18 @@ class PrometheusEndpointTrafficGateway(EndpointTrafficGateway):
             if workload and float(result["value"][1]) > 0:
                 active.add(workload)
         return active
+
+    async def last_active_at(self, since: datetime) -> Optional[Dict[str, datetime]]:
+        """Workloads with any request in the window, as far back as this server's retention
+        reaches. The exact time is not recovered: a workload seen at all is reported as seen
+        now, which only ever starts a clock later, never earlier."""
+        window = int((datetime.now(timezone.utc) - since).total_seconds())
+        results = await self._query(_QUERY % (self.workload_prefix, window))
+        if results is None:
+            return None
+        now = datetime.now(timezone.utc)
+        return {
+            result["metric"]["destination_workload"]: now
+            for result in results
+            if result["metric"].get("destination_workload") and float(result["value"][1]) > 0
+        }

@@ -1384,6 +1384,78 @@ async def test_update_model_endpoint_use_case_success(
 
 
 @pytest.mark.asyncio
+@mock.patch(
+    "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases._get_latest_tag",
+    mocked__get_latest_tag(),
+)
+async def test_update_llm_model_endpoint_ignores_echoed_gc_clock_keys(
+    test_api_key: str,
+    fake_model_bundle_repository,
+    fake_model_endpoint_service,
+    fake_docker_repository_image_always_exists,
+    fake_model_primitive_gateway,
+    fake_llm_artifact_gateway,
+    fake_llm_model_endpoint_service,
+    create_llm_model_endpoint_request_streaming: CreateLLMModelEndpointV1Request,
+    update_llm_model_endpoint_request: UpdateLLMModelEndpointV1Request,
+    update_llm_model_endpoint_request_only_workers: UpdateLLMModelEndpointV1Request,
+):
+    fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
+    bundle_use_case = CreateModelBundleV2UseCase(
+        model_bundle_repository=fake_model_bundle_repository,
+        docker_repository=fake_docker_repository_image_always_exists,
+        model_primitive_gateway=fake_model_primitive_gateway,
+    )
+    llm_bundle_use_case = CreateLLMModelBundleV1UseCase(
+        create_model_bundle_use_case=bundle_use_case,
+        model_bundle_repository=fake_model_bundle_repository,
+        llm_artifact_gateway=fake_llm_artifact_gateway,
+        docker_repository=fake_docker_repository_image_always_exists,
+    )
+    create_use_case = CreateLLMModelEndpointV1UseCase(
+        create_llm_model_bundle_use_case=llm_bundle_use_case,
+        model_endpoint_service=fake_model_endpoint_service,
+        docker_repository=fake_docker_repository_image_always_exists,
+        llm_artifact_gateway=fake_llm_artifact_gateway,
+    )
+    update_use_case = UpdateLLMModelEndpointV1UseCase(
+        create_llm_model_bundle_use_case=llm_bundle_use_case,
+        model_endpoint_service=fake_model_endpoint_service,
+        llm_model_endpoint_service=fake_llm_model_endpoint_service,
+        docker_repository=fake_docker_repository_image_always_exists,
+    )
+
+    user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
+
+    await create_use_case.execute(user=user, request=create_llm_model_endpoint_request_streaming)
+    endpoint = (
+        await fake_model_endpoint_service.list_model_endpoints(
+            owner=None,
+            name=create_llm_model_endpoint_request_streaming.name,
+            order_by=None,
+        )
+    )[0]
+    fake_llm_model_endpoint_service.add_model_endpoint(endpoint)
+
+    fake_model_endpoint_service.db[endpoint.record.id].record.metadata = {
+        **(endpoint.record.metadata or {}),
+        "_gc_last_traffic_at": "2026-03-01T00:00:00+00:00",
+    }
+    update_llm_model_endpoint_request.metadata = {
+        "_gc_last_traffic_at": "2020-01-01T00:00:00+00:00",
+        "user_key": "v",
+    }
+    await update_use_case.execute(
+        user=user,
+        model_endpoint_name=create_llm_model_endpoint_request_streaming.name,
+        request=update_llm_model_endpoint_request,
+    )
+    stored = fake_model_endpoint_service.db[endpoint.record.id].record.metadata
+    assert stored["_gc_last_traffic_at"] == "2026-03-01T00:00:00+00:00"
+    assert stored["user_key"] == "v"
+
+
+@pytest.mark.asyncio
 async def test_update_model_endpoint_use_case_clears_checkpoint_path(
     test_api_key: str,
     fake_model_bundle_repository,

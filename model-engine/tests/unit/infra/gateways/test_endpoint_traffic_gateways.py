@@ -136,3 +136,36 @@ async def test_prometheus_observed_pod_counts(data, expected):
 
     gateway._get = fake_get  # type: ignore[method-assign]
     assert await gateway.observed_pod_counts() == expected
+
+
+@pytest.mark.parametrize(
+    "results,expected_keys",
+    [
+        pytest.param(None, None, id="query-failed-is-unknown"),
+        pytest.param([], set(), id="nothing-in-retention"),
+        pytest.param(
+            [
+                {"metric": {"destination_workload": "launch-endpoint-id-end-a"}, "value": [0, "3"]},
+                {"metric": {"destination_workload": "launch-endpoint-id-end-b"}, "value": [0, "0"]},
+            ],
+            {"launch-endpoint-id-end-a"},
+            id="seen-in-retention-reported-as-now",
+        ),
+    ],
+)
+@pytest.mark.asyncio
+async def test_prometheus_last_active_at(results, expected_keys):
+    gateway = PrometheusEndpointTrafficGateway("http://prom")
+
+    async def fake_query(query: str):
+        return results
+
+    gateway._query = fake_query  # type: ignore[method-assign]
+    history = await gateway.last_active_at(SINCE - timedelta(days=180))
+    if expected_keys is None:
+        assert history is None
+    else:
+        assert set(history) == expected_keys
+        assert all(
+            datetime.now(timezone.utc) - seen < timedelta(minutes=1) for seen in history.values()
+        )

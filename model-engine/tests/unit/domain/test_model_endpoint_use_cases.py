@@ -1037,8 +1037,48 @@ async def test_update_model_endpoint_success(
     assert isinstance(response, UpdateModelEndpointV1Response)
 
 
+@pytest.mark.parametrize(
+    "echoed",
+    [
+        pytest.param({"_gc_last_traffic_at": "2020-01-01T00:00:00+00:00"}, id="stale-clock"),
+        pytest.param({"_gc_last_traffic_at": "2026-03-01T00:00:00+00:00"}, id="same-clock"),
+        pytest.param({"_gc_anything": "x"}, id="unknown-gc-key"),
+    ],
+)
 @pytest.mark.asyncio
-async def test_update_model_endpoint_rejects_gc_clock_keys(
+async def test_update_model_endpoint_ignores_echoed_gc_clock_keys(
+    fake_model_bundle_repository,
+    fake_model_endpoint_service,
+    model_bundle_1: ModelBundle,
+    model_bundle_2: ModelBundle,
+    model_endpoint_1: ModelEndpoint,
+    update_model_endpoint_request: UpdateModelEndpointV1Request,
+    echoed,
+):
+    # GET-modify-PUT: clients send back what they read, GC clocks included.
+    model_endpoint_1.record.metadata = {"_gc_last_traffic_at": "2026-03-01T00:00:00+00:00"}
+    fake_model_bundle_repository.add_model_bundle(model_bundle_1)
+    fake_model_bundle_repository.add_model_bundle(model_bundle_2)
+    fake_model_endpoint_service.add_model_endpoint(model_endpoint_1)
+    fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
+    use_case = UpdateModelEndpointByIdV1UseCase(
+        model_bundle_repository=fake_model_bundle_repository,
+        model_endpoint_service=fake_model_endpoint_service,
+    )
+    user_id = model_endpoint_1.record.created_by
+    user = User(user_id=user_id, team_id=user_id, is_privileged_user=True)
+    update_model_endpoint_request.metadata = {**echoed, "user_key": "v"}
+    await use_case.execute(
+        user=user,
+        model_endpoint_id=model_endpoint_1.record.id,
+        request=update_model_endpoint_request,
+    )
+    stored = fake_model_endpoint_service.db[model_endpoint_1.record.id].record.metadata
+    assert stored == {"_gc_last_traffic_at": "2026-03-01T00:00:00+00:00", "user_key": "v"}
+
+
+@pytest.mark.asyncio
+async def test_update_model_endpoint_rejects_non_boolean_gc_exempt(
     fake_model_bundle_repository,
     fake_model_endpoint_service,
     model_bundle_1: ModelBundle,
@@ -1056,7 +1096,7 @@ async def test_update_model_endpoint_rejects_gc_clock_keys(
     )
     user_id = model_endpoint_1.record.created_by
     user = User(user_id=user_id, team_id=user_id, is_privileged_user=True)
-    update_model_endpoint_request.metadata = {"_gc_last_traffic_at": "2020-01-01T00:00:00+00:00"}
+    update_model_endpoint_request.metadata = {"_gc_exempt": "true"}
     with pytest.raises(ObjectHasInvalidValueException):
         await use_case.execute(
             user=user,

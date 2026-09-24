@@ -521,12 +521,11 @@ class EndpointGarbageCollectionService:
                 observed_at = _parse_ts(metadata.get(GC_OBSERVED_AT_KEY))
                 if unavailable_since is None:
                     unavailable_since = run_at
-                elif (is_async or gc_parked) and (
-                    observed_at is None or run_at - observed_at > TRAFFIC_LOOKBACK
-                ):
-                    # Queue activity, or a request that woke a GC-parked endpoint, during an
-                    # unobserved stretch would have been missed; silence is only known since
-                    # the start of the current lookback.
+                elif observed_at is None or run_at - observed_at > TRAFFIC_LOOKBACK:
+                    # During an unobserved stretch the endpoint may have recovered, served and
+                    # broken again, or (async, or parked) taken work; silence is only known
+                    # since the start of the current lookback. Seeded clocks therefore carry
+                    # an observation stamp too.
                     unavailable_since = max(unavailable_since, run_at - TRAFFIC_LOOKBACK)
                 if not await self._write_gc_state(
                     record,
@@ -650,6 +649,7 @@ class EndpointGarbageCollectionService:
             )
 
         needs_history = any(wants_history(record) for record in records)
+        history_complete = True  # every http source answered for its own history window
 
         active: Set[str] = set()
         last_seen: Dict[str, datetime] = {}
@@ -676,7 +676,10 @@ class EndpointGarbageCollectionService:
             history = await gateway.last_active_at(
                 run_at - timedelta(days=self.config.idle_delete_days)
             )
-            for key, seen in (history or {}).items():
+            if history is None:
+                history_complete = False
+                continue
+            for key, seen in history.items():
                 ids = self._resolve({key}, gateway.key, by_deployment, by_name)
                 if len(ids) != 1:
                     # Endpoint names are unique per owner only: an ambiguous key is no history.
@@ -685,6 +688,10 @@ class EndpointGarbageCollectionService:
                 if eid not in last_seen or seen > last_seen[eid]:
                     last_seen[eid] = seen
 
+        if not history_complete:
+            # A source that cannot say when it last saw a request may have seen one after the
+            # others did; no clock is backdated on partial history.
+            last_seen = {}
         queue_active: Set[str] = set()
         queue_unknown: Set[str] = set()
         semaphore = asyncio.Semaphore(QUEUE_LOOKUP_CONCURRENCY)
@@ -861,16 +868,8 @@ class EndpointGarbageCollectionService:
             if not lock.lock_acquired():
                 report.deferred.append(action)
                 return
-            fresh = await self.record_repository.get_model_endpoint_record(
-                model_endpoint_id=action.record.id, refresh=True
-            )
-            if (
-                fresh is None
-                or fresh.status in IN_FLIGHT_STATUSES
-                or _is_exempt(fresh.metadata or {})
-                or self._owner_touched(fresh, fresh.metadata or {})
-            ):
-                report.skipped_at_action.append(action)
+            fresh = await self._record_allows(action, report)
+            if fresh is None:
                 return
             live = await self._live_state_allows(action, fresh, run_at, report)
             if live is None:
@@ -907,8 +906,12 @@ class EndpointGarbageCollectionService:
                 report.recovered.append(fresh)
                 report.skipped_at_action.append(action)
                 return
-            # The telemetry calls took time; restarts and scale-ups do not go through the
-            # record lock, so look at the Deployment once more right before touching it.
+            # The telemetry calls took time. Restarts and scale-ups do not go through the record
+            # lock, and API writers proceed when they fail to take it, so read the record and the
+            # Deployment once more right before touching either.
+            fresh = await self._record_allows(action, report)
+            if fresh is None:
+                return
             live = await self._live_state_allows(action, fresh, run_at, report)
             if live is None:
                 return
@@ -939,6 +942,24 @@ class EndpointGarbageCollectionService:
             except Exception:
                 logger.exception(f"GC {action.kind} failed for {fresh.id} ({fresh.name})")
                 report.action_failed.append(action)
+
+    async def _record_allows(
+        self, action: PlannedAction, report: EndpointGcReport
+    ) -> Optional[ModelEndpointRecord]:
+        """Re-read the record (bypassing the cache); None (after reporting) when it says not to
+        act: gone, an update in flight, opted out, or edited by the owner since the listing."""
+        fresh = await self.record_repository.get_model_endpoint_record(
+            model_endpoint_id=action.record.id, refresh=True
+        )
+        if (
+            fresh is None
+            or fresh.status in IN_FLIGHT_STATUSES
+            or _is_exempt(fresh.metadata or {})
+            or self._owner_touched(fresh, fresh.metadata or {})
+        ):
+            report.skipped_at_action.append(action)
+            return None
+        return fresh
 
     async def _live_state_allows(
         self,

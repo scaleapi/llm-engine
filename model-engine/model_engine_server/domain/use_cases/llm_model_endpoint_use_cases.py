@@ -150,6 +150,7 @@ from .model_endpoint_use_cases import (
     CONVERTED_FROM_ARTIFACT_LIKE_KEY,
     _handle_post_inference_hooks,
     model_endpoint_entity_to_get_model_endpoint_response,
+    strip_gc_metadata,
     validate_billing_tags,
     validate_deployment_resources,
     validate_gc_metadata,
@@ -2230,9 +2231,7 @@ class UpdateLLMModelEndpointV1UseCase:
                     raise ObjectHasInvalidValueException(
                         f"{key} is a reserved metadata key and cannot be used by user."
                     )
-        validate_gc_metadata(request.metadata)
-
-        metadata = merge_metadata(request.metadata, endpoint_record.metadata)
+        metadata = merge_metadata(strip_gc_metadata(request.metadata), endpoint_record.metadata)
 
         updated_endpoint_record = await self.model_endpoint_service.update_model_endpoint(
             model_endpoint_id=model_endpoint_id,

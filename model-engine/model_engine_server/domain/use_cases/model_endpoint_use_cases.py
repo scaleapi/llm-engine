@@ -129,6 +129,21 @@ def validate_gc_metadata(metadata: Optional[Dict[str, Any]]) -> None:
         raise ObjectHasInvalidValueException(f"{ENDPOINT_GC_EXEMPT_KEY} must be a boolean.")
 
 
+def strip_gc_metadata(metadata: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    """For updates: GC clocks read back from GET and echoed in a PUT are not the user's to
+    set; drop them so the stored values win. The opt-out stays writable, as a boolean."""
+    if not metadata:
+        return metadata
+    if ENDPOINT_GC_EXEMPT_KEY in metadata:
+        validate_gc_metadata({ENDPOINT_GC_EXEMPT_KEY: metadata[ENDPOINT_GC_EXEMPT_KEY]})
+    return {
+        key: value
+        for key, value in metadata.items()
+        if key == ENDPOINT_GC_EXEMPT_KEY
+        or not (key in ENDPOINT_GC_METADATA_KEYS or str(key).startswith("_gc_"))
+    }
+
+
 def validate_deployment_resources(
     min_workers: Optional[int],
     max_workers: Optional[int],
@@ -523,9 +538,7 @@ class UpdateModelEndpointByIdV1UseCase:
             raise ObjectHasInvalidValueException(
                 f"{CONVERTED_FROM_ARTIFACT_LIKE_KEY} is a reserved metadata key and cannot be used by user."
             )
-        validate_gc_metadata(request.metadata)
-
-        metadata = request.metadata
+        metadata = strip_gc_metadata(request.metadata)
         if metadata is not None:
             # The update replaces the whole metadata; keep GC state the request did not mention.
             preserved = {
