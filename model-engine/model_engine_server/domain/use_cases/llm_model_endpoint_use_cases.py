@@ -1837,6 +1837,7 @@ class CreateLLMModelEndpointV1UseCase:
         validate_labels(request.labels)
         validate_billing_tags(request.billing_tags)
         validate_post_inference_hooks(user, request.post_inference_hooks)
+        validate_gc_metadata(request.metadata)
         validate_model_name(request.model_name, request.inference_framework)
         validate_num_shards(request.num_shards, request.inference_framework, request.gpus)
         validate_quantization(request.quantize, request.inference_framework)

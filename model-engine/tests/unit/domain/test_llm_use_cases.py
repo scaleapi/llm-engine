@@ -1179,6 +1179,48 @@ async def test_create_llm_model_endpoint_use_case_quantization_exception(
         )
 
 
+@pytest.mark.parametrize(
+    "metadata",
+    [
+        pytest.param({"_gc_unavailable_since": "2026-01-01T00:00:00+00:00"}, id="clock-key"),
+        pytest.param({"_gc_exempt": "true"}, id="exempt-not-a-boolean"),
+    ],
+)
+@pytest.mark.asyncio
+async def test_create_llm_model_endpoint_rejects_gc_metadata(
+    test_api_key: str,
+    fake_model_bundle_repository,
+    fake_model_endpoint_service,
+    fake_docker_repository_image_always_exists,
+    fake_model_primitive_gateway,
+    fake_llm_artifact_gateway,
+    create_llm_model_endpoint_request_sync: CreateLLMModelEndpointV1Request,
+    metadata,
+):
+    fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
+    bundle_use_case = CreateModelBundleV2UseCase(
+        model_bundle_repository=fake_model_bundle_repository,
+        docker_repository=fake_docker_repository_image_always_exists,
+        model_primitive_gateway=fake_model_primitive_gateway,
+    )
+    llm_bundle_use_case = CreateLLMModelBundleV1UseCase(
+        create_model_bundle_use_case=bundle_use_case,
+        model_bundle_repository=fake_model_bundle_repository,
+        llm_artifact_gateway=fake_llm_artifact_gateway,
+        docker_repository=fake_docker_repository_image_always_exists,
+    )
+    use_case = CreateLLMModelEndpointV1UseCase(
+        create_llm_model_bundle_use_case=llm_bundle_use_case,
+        model_endpoint_service=fake_model_endpoint_service,
+        docker_repository=fake_docker_repository_image_always_exists,
+        llm_artifact_gateway=fake_llm_artifact_gateway,
+    )
+    user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
+    request = create_llm_model_endpoint_request_sync.model_copy(update={"metadata": metadata})
+    with pytest.raises(ObjectHasInvalidValueException):
+        await use_case.execute(user=user, request=request)
+
+
 @pytest.mark.asyncio
 async def test_get_llm_model_endpoint_use_case_raises_not_found(
     test_api_key: str,

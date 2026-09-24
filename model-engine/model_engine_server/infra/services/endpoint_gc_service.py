@@ -118,6 +118,7 @@ class EndpointGcConfig:
 @dataclass(frozen=True)
 class PlannedAction:
     record: ModelEndpointRecord
+    infra_state: ModelEndpointInfraState
     kind: str  # SCALE_TO_ZERO | DELETE
     reason: str  # BROKEN | IDLE
     due_at: datetime
@@ -417,6 +418,7 @@ class EndpointGarbageCollectionService:
                 report.tracking.append(record)
                 self._plan(
                     record,
+                    infra_state,
                     IDLE,
                     run_at,
                     parked=True,
@@ -444,6 +446,7 @@ class EndpointGarbageCollectionService:
             report.tracking.append(record)
             self._plan(
                 record,
+                infra_state,
                 BROKEN,
                 unavailable_since,
                 parked=gc_parked,
@@ -460,7 +463,9 @@ class EndpointGarbageCollectionService:
             # Unobserved day: nothing starts or ages. Existing plans are shown, not acted on.
             if last_traffic_at is not None:
                 report.tracking.append(record)
-                self._plan_idle(record, last_traffic_at, gc_parked, run_at, due, report)
+                self._plan_idle(
+                    record, infra_state, last_traffic_at, gc_parked, run_at, due, report
+                )
             return
         observed_at = _parse_ts(metadata.get(GC_OBSERVED_AT_KEY))
         if last_traffic_at is None:
@@ -494,11 +499,12 @@ class EndpointGarbageCollectionService:
         ):
             return
         report.tracking.append(record)
-        self._plan_idle(record, last_traffic_at, gc_parked, run_at, due, report)
+        self._plan_idle(record, infra_state, last_traffic_at, gc_parked, run_at, due, report)
 
     def _plan_idle(
         self,
         record: ModelEndpointRecord,
+        infra_state: ModelEndpointInfraState,
         last_traffic_at: datetime,
         parked: bool,
         run_at: datetime,
@@ -507,6 +513,7 @@ class EndpointGarbageCollectionService:
     ) -> None:
         self._plan(
             record,
+            infra_state,
             IDLE,
             last_traffic_at,
             parked=parked,
@@ -624,6 +631,7 @@ class EndpointGarbageCollectionService:
     @staticmethod
     def _plan(
         record: ModelEndpointRecord,
+        infra_state: ModelEndpointInfraState,
         reason: str,
         clock_start: datetime,
         *,
@@ -638,11 +646,15 @@ class EndpointGarbageCollectionService:
         # builder: the next and last step is the delete, on the same schedule.
         if parked:
             action = PlannedAction(
-                record, DELETE, reason, clock_start + timedelta(days=delete_days)
+                record, infra_state, DELETE, reason, clock_start + timedelta(days=delete_days)
             )
         else:
             action = PlannedAction(
-                record, SCALE_TO_ZERO, reason, clock_start + timedelta(days=scale_days)
+                record,
+                infra_state,
+                SCALE_TO_ZERO,
+                reason,
+                clock_start + timedelta(days=scale_days),
             )
         # Compare on calendar days: the stamp and the daily run both sit at the same hour, and
         # seconds of scheduler jitter must not skip a notice.
@@ -669,11 +681,7 @@ class EndpointGarbageCollectionService:
             ):
                 report.deferred.append(action)
                 continue
-            if (
-                action.kind == SCALE_TO_ZERO
-                and action.record.endpoint_type != ModelEndpointType.ASYNC
-                and not self.config.http_scale_to_zero_supported
-            ):
+            if action.kind == SCALE_TO_ZERO and not self._scale_to_zero_supported(action):
                 report.unsupported.append(action)
                 continue
             # The judgement used the run's initial listing; re-check the record before acting,
@@ -712,10 +720,29 @@ class EndpointGarbageCollectionService:
                     )
                     report.action_failed.append(action)
 
+    def _scale_to_zero_supported(self, action: PlannedAction) -> bool:
+        if action.record.endpoint_type == ModelEndpointType.ASYNC:
+            return True  # the celery autoscaler wakes async endpoints on queue depth
+        if not self.config.http_scale_to_zero_supported:
+            return False
+        # Multinode (LeaderWorkerSet) endpoints get neither an HPA nor a KEDA ScaledObject, so
+        # nothing would ever wake them again.
+        return (action.infra_state.resource_state.nodes_per_worker or 1) <= 1
+
     async def _queued_messages(self, endpoint_id: str) -> Optional[int]:
+        """Visible plus in-flight plus delayed messages, or None when any count is unreadable."""
         try:
-            attributes = await self.queue_delegate.get_queue_attributes(endpoint_id=endpoint_id)
-            return int(attributes["Attributes"]["ApproximateNumberOfMessages"])
+            attributes = (await self.queue_delegate.get_queue_attributes(endpoint_id=endpoint_id))[
+                "Attributes"
+            ]
+            return sum(
+                int(attributes[name])
+                for name in (
+                    "ApproximateNumberOfMessages",
+                    "ApproximateNumberOfMessagesNotVisible",
+                    "ApproximateNumberOfMessagesDelayed",
+                )
+            )
         except Exception:
             logger.exception(f"could not read queue depth for {endpoint_id}")
             return None

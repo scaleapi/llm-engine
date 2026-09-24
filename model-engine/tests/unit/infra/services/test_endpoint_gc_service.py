@@ -37,12 +37,20 @@ def _days_ago(days: float) -> str:
 
 
 class FakeQueue(FakeQueueEndpointResourceDelegate):
-    def __init__(self, sent: Optional[int] = 0, depth: int = 0):
+    def __init__(
+        self, sent: Optional[int] = 0, depth: int = 0, in_flight: int = 0, delayed: int = 0
+    ):
         self.sent = sent
-        self.depth = depth
+        self.depth, self.in_flight, self.delayed = depth, in_flight, delayed
 
     async def get_queue_attributes(self, endpoint_id: str) -> Dict:
-        return {"Attributes": {"ApproximateNumberOfMessages": str(self.depth)}}
+        return {
+            "Attributes": {
+                "ApproximateNumberOfMessages": str(self.depth),
+                "ApproximateNumberOfMessagesNotVisible": str(self.in_flight),
+                "ApproximateNumberOfMessagesDelayed": str(self.delayed),
+            }
+        }
 
     async def messages_sent_since(self, endpoint_id: str, since: datetime) -> Optional[int]:
         return self.sent
@@ -124,12 +132,14 @@ class Harness:
         history: Optional[Dict[str, datetime]] = None,
         queue_sent: Optional[int] = 0,
         queue_depth: int = 0,
+        queue_in_flight: int = 0,
+        queue_delayed: int = 0,
         config: EndpointGcConfig = ACTING,
     ):
         gc = EndpointGarbageCollectionService(
             model_endpoint_record_repository=self.repo,
             resource_gateway=self.resources,
-            queue_delegate=FakeQueue(queue_sent, queue_depth),
+            queue_delegate=FakeQueue(queue_sent, queue_depth, queue_in_flight, queue_delayed),
             traffic_gateways=[
                 FakeTraffic(None if traffic_names is None else set(traffic_names), history)
             ],
@@ -1306,9 +1316,19 @@ async def test_owner_update_after_listing_during_pending_reconciliation_resets(
     )
 
 
-@pytest.mark.parametrize("depth,deleted", [(0, True), (3, False)])
+@pytest.mark.parametrize(
+    "depth,in_flight,delayed,deleted",
+    [
+        pytest.param(0, 0, 0, True, id="empty"),
+        pytest.param(3, 0, 0, False, id="visible"),
+        pytest.param(0, 3, 0, False, id="in-flight"),
+        pytest.param(0, 0, 3, False, id="delayed"),
+    ],
+)
 @pytest.mark.asyncio
-async def test_async_delete_requires_an_empty_queue(harness, model_endpoint_1, depth, deleted):
+async def test_async_delete_requires_an_empty_queue(
+    harness, model_endpoint_1, depth, in_flight, delayed, deleted
+):
     endpoint = harness.add(
         _endpoint(
             model_endpoint_1,
@@ -1325,7 +1345,27 @@ async def test_async_delete_requires_an_empty_queue(harness, model_endpoint_1, d
         )
     )
     endpoint.record.creation_task_id = "gc-task"
-    report = await harness.run(queue_depth=depth)
+    report = await harness.run(queue_depth=depth, queue_in_flight=in_flight, queue_delayed=delayed)
 
     assert ([a.record.id for a in report.deleted] == [endpoint.record.id]) is deleted
     assert ([a.record.id for a in report.skipped_at_action] == [endpoint.record.id]) is not deleted
+
+
+@pytest.mark.asyncio
+async def test_multinode_endpoint_is_never_scaled_to_zero(harness, model_endpoint_1):
+    endpoint = _endpoint(
+        model_endpoint_1,
+        available=1,
+        unavailable=0,
+        metadata={GC_LAST_TRAFFIC_AT_KEY: _days_ago(90), GC_OBSERVED_AT_KEY: _days_ago(1)},
+    )
+    resource_state = endpoint.infra_state.resource_state.model_copy(update={"nodes_per_worker": 2})
+    endpoint = ModelEndpoint(
+        record=endpoint.record,
+        infra_state=endpoint.infra_state.model_copy(update={"resource_state": resource_state}),
+    )
+    harness.add(endpoint)
+    report = await harness.run()
+
+    assert report.scaled_to_zero == []
+    assert [a.record.id for a in report.unsupported] == [endpoint.record.id]
