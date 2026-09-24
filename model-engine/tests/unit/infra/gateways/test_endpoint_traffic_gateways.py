@@ -69,32 +69,54 @@ def test_slack_digest_is_split_and_every_part_must_deliver():
     assert gateway.send_digest("short") is False
 
 
+def _target(app: str, pod: str, health: str = "up", ready: str = "true", port: int = 15020):
+    return {
+        "health": health,
+        "scrapeUrl": (
+            f"http://10.0.0.1:{port}/stats/prometheus"
+            if port in (15020, 15090)
+            else f"http://10.0.0.1:{port}/metrics"
+        ),
+        "discoveredLabels": {
+            "__meta_kubernetes_pod_label_app": app,
+            "__meta_kubernetes_pod_name": pod,
+            "__meta_kubernetes_pod_ready": ready,
+        },
+    }
+
+
+A, B = "launch-endpoint-id-end-a", "launch-endpoint-id-end-b"
+
+
 @pytest.mark.parametrize(
     "data,expected",
     [
         pytest.param(None, None, id="request-failed"),
-        pytest.param({"activeTargets": []}, None, id="no-healthy-endpoint-pod-is-unknown"),
+        pytest.param({"activeTargets": []}, None, id="no-endpoint-sidecar-is-unknown"),
         pytest.param(
-            {
-                "activeTargets": [
-                    {
-                        "health": "up",
-                        "discoveredLabels": {
-                            "__meta_kubernetes_pod_label_app": "launch-endpoint-id-end-a"
-                        },
-                    },
-                    {
-                        "health": "down",
-                        "discoveredLabels": {
-                            "__meta_kubernetes_pod_label_app": "launch-endpoint-id-end-b"
-                        },
-                    },
-                    {"health": "up", "discoveredLabels": {"__meta_kubernetes_pod_label_app": "x"}},
-                    {"health": "up", "discoveredLabels": {}},
-                ]
-            },
-            {"launch-endpoint-id-end-a"},
-            id="healthy-endpoint-targets-only",
+            {"activeTargets": [_target(A, "a-1"), _target("other", "o-1"), {"health": "up"}]},
+            {A},
+            id="healthy-sidecar-on-every-ready-pod",
+        ),
+        pytest.param(
+            {"activeTargets": [_target(A, "a-1"), _target(B, "b-1", health="down")]},
+            {A},
+            id="sidecar-down-is-not-covered",
+        ),
+        pytest.param(
+            {"activeTargets": [_target(A, "a-1"), _target(B, "b-1", port=5000)]},
+            {A},
+            id="app-metrics-target-does-not-count",
+        ),
+        pytest.param(
+            {"activeTargets": [_target(A, "a-1"), _target(B, "b-1"), _target(B, "b-2", "down")]},
+            {A},
+            id="one-unscraped-sibling-pod-uncovers-the-deployment",
+        ),
+        pytest.param(
+            {"activeTargets": [_target(A, "a-1"), _target(A, "a-2", "down", ready="false")]},
+            {A},
+            id="not-ready-pod-needs-no-coverage",
         ),
     ],
 )

@@ -171,6 +171,11 @@ class _Traffic:
     frozen: bool  # a cluster-wide source could not answer: no clock starts, no action runs
 
 
+@dataclass
+class _Attempt:
+    made: bool = False  # set right before the destructive call, so cleanup failures still count
+
+
 def _parse_ts(value: object) -> Optional[datetime]:
     if not isinstance(value, str):
         return None
@@ -805,25 +810,34 @@ class EndpointGarbageCollectionService:
             if action.kind == SCALE_TO_ZERO and not self._scale_to_zero_supported(action):
                 report.unsupported.append(action)
                 continue
+            attempt = _Attempt()
             try:
-                if await self._act_one(action, run_at, report):
-                    attempted += 1
+                await self._act_one(action, run_at, report, attempt)
             except Exception:
-                # A failed pre-action read must not take the rest of the run (or the digest)
-                # down with it.
-                logger.exception(f"GC pre-action checks failed for {action.record.id}; not acting")
-                report.check_failed.append(action)
+                if attempt.made:
+                    # The action itself was already reported; only the cleanup after it failed.
+                    logger.exception(f"GC cleanup after acting on {action.record.id} failed")
+                else:
+                    # A failed pre-action read must not take the rest of the run (or the
+                    # digest) down with it.
+                    logger.exception(f"GC pre-action checks failed for {action.record.id}")
+                    report.check_failed.append(action)
+            attempted += attempt.made
 
     async def _act_one(
-        self, action: PlannedAction, run_at: datetime, report: EndpointGcReport
-    ) -> bool:
-        """Re-check one due action against live state and perform it. True if attempted."""
+        self,
+        action: PlannedAction,
+        run_at: datetime,
+        report: EndpointGcReport,
+        attempt: "_Attempt",
+    ) -> None:
+        """Re-check one due action against live state and perform it."""
         # The judgement used the run's initial listing; re-check the record before acting,
         # under the endpoint's advisory lock so well-behaved writers wait.
         async with self.record_repository.get_lock_context(action.record) as lock:
             if not lock.lock_acquired():
                 report.deferred.append(action)
-                return False
+                return
             fresh = await self.record_repository.get_model_endpoint_record(
                 model_endpoint_id=action.record.id, refresh=True
             )
@@ -834,83 +848,18 @@ class EndpointGarbageCollectionService:
                 or self._owner_touched(fresh, fresh.metadata or {})
             ):
                 report.skipped_at_action.append(action)
-                return False
-            metadata = fresh.metadata or {}
-            live = await self.resource_gateway.get_resources(
-                endpoint_id=fresh.id,
-                deployment_name=action.infra_state.deployment_name,
-                endpoint_type=fresh.endpoint_type,
-            )
-            if self._owner_restarted(live, metadata):
-                report.skipped_at_action.append(action)
-                return False
-            live_desired, live_available = _worker_counts(live)
-            gc_parked = GC_SCALE_TO_ZERO_REQUESTED_AT_KEY in metadata
-            if (
-                live.deployment_state.min_workers > 0
-                and gc_parked
-                and fresh.status != ModelEndpointStatus.UPDATE_FAILED
-            ):
-                # The owner raised min_workers since the listing: revived, not ours.
-                report.skipped_at_action.append(action)
-                return False
-            if action.reason == BROKEN and live_available > 0:
-                # Recovered since the listing: drop the broken clock, take no action.
-                await self._write_gc_state(
-                    fresh,
-                    {
-                        k: v
-                        for k, v in metadata.items()
-                        if k in GC_STATE_KEYS
-                        and k not in GC_BOOKKEEPING_KEYS
-                        and k != GC_UNAVAILABLE_SINCE_KEY
-                    },
-                    run_at,
-                    report,
-                    locked=True,
-                    infra_state=live,
-                )
-                report.recovered.append(fresh)
-                report.skipped_at_action.append(action)
-                return False
-            if action.kind == DELETE:
-                if live_desired > 0 and fresh.status != ModelEndpointStatus.UPDATE_FAILED:
-                    # Something woke or scaled the parked endpoint since the listing. (A failed
-                    # scale-to-zero leaves the Deployment up by definition and still ends in
-                    # the delete.)
-                    report.skipped_at_action.append(action)
-                    return False
-                if live_desired == 0 and gc_parked and GC_PARKED_AT_KEY not in metadata:
-                    # First sighting at zero after our request, during the final read rather
-                    # than the listing: the parked period the schedule promises starts now, so
-                    # the delete is not due today.
-                    await self._write_gc_state(
-                        fresh,
-                        {
-                            **{
-                                k: v
-                                for k, v in metadata.items()
-                                if k in GC_STATE_KEYS and k not in GC_BOOKKEEPING_KEYS
-                            },
-                            GC_PARKED_AT_KEY: run_at.isoformat(),
-                        },
-                        run_at,
-                        report,
-                        locked=True,
-                        infra_state=live,
-                    )
-                    report.skipped_at_action.append(action)
-                    return False
-            if action.kind == SCALE_TO_ZERO and live_desired == 0:
-                report.skipped_at_action.append(action)
-                return False
+                return
+            live = await self._live_state_allows(action, fresh, run_at, report)
+            if live is None:
+                return
             # Traffic was collected before bookkeeping; anything since must count. Asked right
             # before this endpoint's action, not once for the batch.
             activity = await self._activity_now(action, fresh, live, run_at, report)
             if activity is None:
                 report.check_failed.append(action)
-                return False
+                return
             if activity:
+                metadata = fresh.metadata or {}
                 await self._write_gc_state(
                     fresh,
                     {
@@ -934,17 +883,23 @@ class EndpointGarbageCollectionService:
                 )
                 report.recovered.append(fresh)
                 report.skipped_at_action.append(action)
-                return False
+                return
+            # The telemetry calls took time; restarts and scale-ups do not go through the
+            # record lock, so look at the Deployment once more right before touching it.
+            live = await self._live_state_allows(action, fresh, run_at, report)
+            if live is None:
+                return
             if fresh.endpoint_type == ModelEndpointType.ASYNC:
                 # Scaling to zero stops workers mid-task; deleting removes the queue with
                 # whatever is in it. Either way the queue must be empty right now.
                 queued = await self._queued_messages(fresh.id)
                 if queued is None:
                     report.check_failed.append(action)
-                    return False
+                    return
                 if queued > 0:
                     report.skipped_at_action.append(action)
-                    return False
+                    return
+            attempt.made = True  # counts against the cap whatever happens from here
             try:
                 if action.kind == DELETE:
                     await self.model_endpoint_service.delete_model_endpoint(fresh.id)
@@ -954,8 +909,85 @@ class EndpointGarbageCollectionService:
             except Exception:
                 logger.exception(f"GC {action.kind} failed for {fresh.id} ({fresh.name})")
                 report.action_failed.append(action)
-            return True
-        return False  # unreachable: the lock context does not swallow exceptions
+
+    async def _live_state_allows(
+        self,
+        action: PlannedAction,
+        fresh: ModelEndpointRecord,
+        run_at: datetime,
+        report: EndpointGcReport,
+    ) -> Optional[ModelEndpointInfraState]:
+        """Read the Deployment now; None (after reporting) when it says not to act."""
+        metadata = fresh.metadata or {}
+        live = await self.resource_gateway.get_resources(
+            endpoint_id=fresh.id,
+            deployment_name=action.infra_state.deployment_name,
+            endpoint_type=fresh.endpoint_type,
+        )
+        if self._owner_restarted(live, metadata):
+            report.skipped_at_action.append(action)
+            return None
+        live_desired, live_available = _worker_counts(live)
+        gc_parked = GC_SCALE_TO_ZERO_REQUESTED_AT_KEY in metadata
+        if (
+            live.deployment_state.min_workers > 0
+            and gc_parked
+            and fresh.status != ModelEndpointStatus.UPDATE_FAILED
+        ):
+            # The owner raised min_workers since the listing: revived, not ours.
+            report.skipped_at_action.append(action)
+            return None
+        if action.reason == BROKEN and live_available > 0:
+            # Recovered since the listing: drop the broken clock, take no action.
+            await self._write_gc_state(
+                fresh,
+                {
+                    k: v
+                    for k, v in metadata.items()
+                    if k in GC_STATE_KEYS
+                    and k not in GC_BOOKKEEPING_KEYS
+                    and k != GC_UNAVAILABLE_SINCE_KEY
+                },
+                run_at,
+                report,
+                locked=True,
+                infra_state=live,
+            )
+            report.recovered.append(fresh)
+            report.skipped_at_action.append(action)
+            return None
+        if action.kind == DELETE:
+            if live_desired > 0 and fresh.status != ModelEndpointStatus.UPDATE_FAILED:
+                # Something woke or scaled the parked endpoint since the listing. (A failed
+                # scale-to-zero leaves the Deployment up by definition and still ends in
+                # the delete.)
+                report.skipped_at_action.append(action)
+                return None
+            if live_desired == 0 and gc_parked and GC_PARKED_AT_KEY not in metadata:
+                # First sighting at zero after our request, during the final read rather
+                # than the listing: the parked period the schedule promises starts now, so
+                # the delete is not due today.
+                await self._write_gc_state(
+                    fresh,
+                    {
+                        **{
+                            k: v
+                            for k, v in metadata.items()
+                            if k in GC_STATE_KEYS and k not in GC_BOOKKEEPING_KEYS
+                        },
+                        GC_PARKED_AT_KEY: run_at.isoformat(),
+                    },
+                    run_at,
+                    report,
+                    locked=True,
+                    infra_state=live,
+                )
+                report.skipped_at_action.append(action)
+                return None
+        if action.kind == SCALE_TO_ZERO and live_desired == 0:
+            report.skipped_at_action.append(action)
+            return None
+        return live
 
     async def _activity_now(
         self,

@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta, timezone
-from typing import Dict, List, Optional, Set
+from typing import Callable, Dict, List, Optional, Set
 
 import pytest
 from model_engine_server.domain.entities import (
@@ -77,14 +77,19 @@ class FakeTraffic(EndpointTrafficGateway):
         covered: Optional[Set[str]] = None,
         reports_coverage: bool = False,
         covered_sequence: Optional[List[Optional[Set[str]]]] = None,
+        on_query: Optional[Callable[[int], None]] = None,
     ):
         self.active, self.history = active, history
+        self.on_query, self.queries = on_query, 0
         self.active_sequence = list(active_sequence or [])
         self.reports_coverage = reports_coverage
         self.covered = covered
         self.covered_sequence = list(covered_sequence or [])
 
     async def active_keys(self, since: datetime) -> Optional[Set[str]]:
+        self.queries += 1
+        if self.on_query:
+            self.on_query(self.queries)
         if self.active_sequence:
             answer = self.active_sequence.pop(0)
             return None if answer is None else set(answer)
@@ -171,6 +176,7 @@ class Harness:
         covered_names: Optional[Set[str]] = None,
         reports_coverage: bool = False,
         covered_sequence: Optional[List[Optional[Set[str]]]] = None,
+        on_traffic_query: Optional[Callable[[int], None]] = None,
         config: EndpointGcConfig = ACTING,
     ):
         self.clock = NOW
@@ -184,6 +190,7 @@ class Harness:
             covered_names,
             reports_coverage,
             covered_sequence,
+            on_traffic_query,
         )
         gc = EndpointGarbageCollectionService(
             model_endpoint_record_repository=self.repo,
@@ -2274,3 +2281,64 @@ async def test_coverage_lost_before_the_action_blocks_it(harness, model_endpoint
 
     assert report.scaled_to_zero == []
     assert [a.record.id for a in report.check_failed] == [endpoint.record.id]
+
+
+# ---- owner changes while the final telemetry calls run --------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        pytest.param({"restarted_at": NOW + timedelta(seconds=10)}, id="restart"),
+        pytest.param({"desired_workers": 1}, id="scale-up"),
+    ],
+)
+@pytest.mark.asyncio
+async def test_owner_change_during_final_telemetry_blocks_the_delete(
+    harness, model_endpoint_1, change
+):
+    endpoint = harness.add(_parked(model_endpoint_1))
+
+    def owner_acts_during_query(call: int):
+        if call == 2:  # the per-action traffic query, after the first live read
+            harness.resources.db[endpoint.record.id] = endpoint.infra_state.model_copy(
+                update=change
+            )
+            harness.clock = NOW + timedelta(seconds=20)
+
+    report = await harness.run(on_traffic_query=owner_acts_during_query)
+
+    assert report.deleted == []
+    assert [a.record.id for a in report.skipped_at_action] == [endpoint.record.id]
+
+
+@pytest.mark.asyncio
+async def test_lock_release_failure_after_a_delete_still_counts_against_the_cap(
+    harness, model_endpoint_1
+):
+    endpoints = [
+        harness.add(_parked(model_endpoint_1, record_id=f"test_{i}", name=f"e{i}"))
+        for i in range(3)
+    ]
+    original_lock = harness.repo.get_lock_context
+
+    def failing_release(record):
+        context = original_lock(record)
+        original_exit = context.__aexit__
+
+        async def exit_then_fail(exc_type, exc, tb):
+            await original_exit(exc_type, exc, tb)
+            raise RuntimeError("lock release failed")
+
+        context.__aexit__ = exit_then_fail  # type: ignore[method-assign]
+        return context
+
+    harness.repo.get_lock_context = failing_release
+    report = await harness.run(config=EndpointGcConfig(actions_enabled=True, action_cap=1))
+
+    assert len(report.deleted) == 1
+    assert len(report.deferred) == 2
+    assert report.check_failed == []
+    assert {a.record.id for a in report.deleted + report.deferred} == {
+        e.record.id for e in endpoints
+    }

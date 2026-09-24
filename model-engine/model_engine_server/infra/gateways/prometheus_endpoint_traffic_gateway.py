@@ -1,6 +1,7 @@
 import asyncio
 from datetime import datetime, timezone
-from typing import Optional, Set
+from typing import Dict, Optional, Set
+from urllib.parse import urlparse
 
 import requests
 from model_engine_server.core.loggers import logger_name, make_logger
@@ -14,6 +15,8 @@ _QUERY = (
     "sum by (destination_workload) (increase(istio_request_duration_milliseconds_count"
     '{reporter="destination", destination_workload=~"%s.*"}[%ds]))'
 )
+# Envoy's Prometheus endpoint, on the sidecar (15090) or merged through the agent (15020).
+_ISTIO_STATS_PATH = "/stats/prometheus"
 # Coverage probe: with no series at all for the prefix, the metric or the scrape is gone and an
 # empty answer means "unknown", not "idle".
 _COVERAGE_QUERY = (
@@ -50,22 +53,34 @@ class PrometheusEndpointTrafficGateway(EndpointTrafficGateway):
         return None if data is None else data["result"]
 
     async def covered_keys(self) -> Optional[Set[str]]:
-        """Deployments with at least one pod whose Istio sidecar is scraped and healthy.
+        """Deployments whose every ready pod has a healthy, scraped Istio sidecar target.
 
         Read from the discovered (pre-relabeling) pod labels of the active scrape targets, so
         it does not depend on which labels the scrape config keeps. Endpoint pods carry
-        ``app=<deployment name>``.
+        ``app=<deployment name>``. Only sidecar targets (Envoy's ``/stats/prometheus``) carry the
+        request metric; an application's own ``/metrics`` target proves nothing, and one scraped
+        pod says nothing about a sibling whose sidecar is not.
         """
         data = await self._get("/api/v1/targets", {"state": "active"})
         if data is None:
             return None
-        covered: Set[str] = set()
+        ready_pods: Dict[str, Set[str]] = {}
+        observed_pods: Dict[str, Set[str]] = {}
         for target in data.get("activeTargets", []):
-            app = (target.get("discoveredLabels") or {}).get("__meta_kubernetes_pod_label_app", "")
-            if target.get("health") == "up" and app.startswith(self.workload_prefix):
-                covered.add(app)
+            labels = target.get("discoveredLabels") or {}
+            app = labels.get("__meta_kubernetes_pod_label_app", "")
+            pod = labels.get("__meta_kubernetes_pod_name", "")
+            if not pod or not app.startswith(self.workload_prefix):
+                continue
+            if labels.get("__meta_kubernetes_pod_ready") != "true":
+                continue  # not serving: gets no requests, needs no coverage
+            ready_pods.setdefault(app, set()).add(pod)
+            scrape_path = urlparse(target.get("scrapeUrl", "")).path
+            if target.get("health") == "up" and scrape_path.endswith(_ISTIO_STATS_PATH):
+                observed_pods.setdefault(app, set()).add(pod)
+        covered = {app for app, pods in ready_pods.items() if pods <= observed_pods.get(app, set())}
         if not covered:
-            logger.error("Prometheus scrapes no healthy endpoint pod: coverage unknown")
+            logger.error("Prometheus scrapes no healthy endpoint sidecar: coverage unknown")
             return None
         return covered
 
