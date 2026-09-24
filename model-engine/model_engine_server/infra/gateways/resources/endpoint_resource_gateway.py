@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Generic, Sequence, Tuple, TypeVar
+from typing import Dict, Generic, Optional, Sequence, Tuple, TypeVar
 
 from model_engine_server.common.dtos.resource_manager import CreateOrUpdateResourcesRequest
 from model_engine_server.common.pydantic_types import BaseModel
@@ -68,7 +68,11 @@ class EndpointResourceGateway(ABC, Generic[Q]):
 
     @abstractmethod
     async def delete_resources(
-        self, endpoint_id: str, deployment_name: str, endpoint_type: ModelEndpointType
+        self,
+        endpoint_id: str,
+        deployment_name: str,
+        endpoint_type: ModelEndpointType,
+        expected_resource_version: Optional[str] = None,
     ) -> bool:
         """
         Deletes the infrastructure state for the given endpoint.
@@ -77,6 +81,9 @@ class EndpointResourceGateway(ABC, Generic[Q]):
             endpoint_id: The ID of the endpoint.
             deployment_name: (deprecated) The name of the deployment.
             endpoint_type: The type of the endpoint (sync or async).
+            expected_resource_version: When given, the Deployment is deleted only if its
+                resourceVersion still matches; otherwise EndpointResourceConflictException is
+                raised before anything is deleted.
 
         Returns: Whether the resources were successfully deleted.
         """

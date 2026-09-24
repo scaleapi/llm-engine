@@ -44,6 +44,7 @@ from model_engine_server.domain.entities import (
     ModelEndpointStatus,
     ModelEndpointType,
 )
+from model_engine_server.domain.exceptions import EndpointResourceConflictException
 from model_engine_server.domain.gateways import DigestGateway, EndpointTrafficGateway, TrafficKey
 from model_engine_server.domain.services import ModelEndpointService
 from model_engine_server.infra.gateways.resources.endpoint_resource_gateway import (
@@ -942,10 +943,16 @@ class EndpointGarbageCollectionService:
             attempt.made = True  # counts against the cap whatever happens from here
             try:
                 if action.kind == DELETE:
-                    await self.model_endpoint_service.delete_model_endpoint(fresh.id)
+                    # The Deployment is deleted only if it still has the resourceVersion of the
+                    # read above: a restart or scale-up in between makes the apiserver refuse.
+                    await self.model_endpoint_service.delete_model_endpoint(
+                        fresh.id, expected_resource_version=live.resource_version
+                    )
                     report.deleted.append(action)
                 else:
                     await self._scale_to_zero(action, fresh, run_at, report)
+            except EndpointResourceConflictException:
+                report.skipped_at_action.append(action)
             except Exception:
                 logger.exception(f"GC {action.kind} failed for {fresh.id} ({fresh.name})")
                 report.action_failed.append(action)

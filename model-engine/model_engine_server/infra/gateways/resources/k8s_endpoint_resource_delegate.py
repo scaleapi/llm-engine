@@ -11,8 +11,10 @@ from kubernetes import client as kube_client_sync
 from kubernetes import config as kube_config_sync
 from kubernetes_asyncio import config as kube_config_async
 from kubernetes_asyncio.client.models.v1_container import V1Container
+from kubernetes_asyncio.client.models.v1_delete_options import V1DeleteOptions
 from kubernetes_asyncio.client.models.v1_deployment import V1Deployment
 from kubernetes_asyncio.client.models.v1_env_var import V1EnvVar
+from kubernetes_asyncio.client.models.v1_preconditions import V1Preconditions
 from kubernetes_asyncio.client.models.v2beta2_horizontal_pod_autoscaler import (
     V2beta2HorizontalPodAutoscaler,
 )
@@ -44,7 +46,10 @@ from model_engine_server.domain.entities import (
     RunnableImageLike,
     TritonEnhancedRunnableImageFlavor,
 )
-from model_engine_server.domain.exceptions import EndpointResourceInfraException
+from model_engine_server.domain.exceptions import (
+    EndpointResourceConflictException,
+    EndpointResourceInfraException,
+)
 from model_engine_server.domain.use_cases.model_endpoint_use_cases import MODEL_BUNDLE_CHANGED_KEY
 from model_engine_server.infra.gateways.k8s_resource_parser import (
     get_per_worker_value_from_target_concurrency,
@@ -575,16 +580,24 @@ class K8SEndpointResourceDelegate:
             raise EndpointResourceInfraException from e
 
     async def delete_resources(
-        self, endpoint_id: str, deployment_name: str, endpoint_type: ModelEndpointType
+        self,
+        endpoint_id: str,
+        deployment_name: str,
+        endpoint_type: ModelEndpointType,
+        expected_resource_version: Optional[str] = None,
     ) -> bool:
         await maybe_load_kube_config()
         if endpoint_type in {ModelEndpointType.SYNC, ModelEndpointType.STREAMING}:
             return await self._delete_resources_sync(
-                endpoint_id=endpoint_id, deployment_name=deployment_name
+                endpoint_id=endpoint_id,
+                deployment_name=deployment_name,
+                expected_resource_version=expected_resource_version,
             )
         elif endpoint_type == ModelEndpointType.ASYNC:
             return await self._delete_resources_async(
-                endpoint_id=endpoint_id, deployment_name=deployment_name
+                endpoint_id=endpoint_id,
+                deployment_name=deployment_name,
+                expected_resource_version=expected_resource_version,
             )
         return False
 
@@ -1436,14 +1449,28 @@ class K8SEndpointResourceDelegate:
         return True
 
     @staticmethod
-    async def _delete_deployment(endpoint_id: str, deployment_name: str) -> bool:
+    async def _delete_deployment(
+        endpoint_id: str, deployment_name: str, expected_resource_version: Optional[str] = None
+    ) -> bool:
         apps_client = get_kubernetes_apps_client()
         k8s_resource_group_name = _endpoint_id_to_k8s_resource_group_name(endpoint_id)
+        # With a precondition the apiserver refuses the delete (409) if the Deployment changed
+        # since it was read: a restart or scale-up racing an automated delete keeps the endpoint.
+        body = (
+            V1DeleteOptions(
+                preconditions=V1Preconditions(resource_version=expected_resource_version)
+            )
+            if expected_resource_version is not None
+            else None
+        )
         try:
             await apps_client.delete_namespaced_deployment(
-                name=k8s_resource_group_name, namespace=hmi_config.endpoint_namespace
+                name=k8s_resource_group_name, namespace=hmi_config.endpoint_namespace, body=body
             )
         except ApiException as e:
+            if e.status == 409 and expected_resource_version is not None:
+                logger.info(f"Deployment {k8s_resource_group_name} changed since it was read")
+                raise EndpointResourceConflictException from e
             if e.status == 404:
                 # Try the legacy deployment_name
                 logger.warning(
@@ -2359,6 +2386,7 @@ class K8SEndpointResourceDelegate:
             num_queued_items=None,
             restarted_at=self._get_restarted_at(deployment_config),
             desired_workers=deployment_config.spec.replicas,
+            resource_version=deployment_config.metadata.resource_version,
         )
 
         return infra_state
@@ -2569,6 +2597,7 @@ class K8SEndpointResourceDelegate:
                     num_queued_items=None,
                     restarted_at=self._get_restarted_at(deployment_config),
                     desired_workers=deployment_config.spec.replicas,
+                    resource_version=deployment_config.metadata.resource_version,
                 )
                 if name.startswith("launch-endpoint-id-"):
                     key = _k8s_resource_group_name_to_endpoint_id(name)
@@ -2601,12 +2630,19 @@ class K8SEndpointResourceDelegate:
             )
         return infra_states
 
-    async def _delete_resources_async(self, endpoint_id: str, deployment_name: str) -> bool:
+    async def _delete_resources_async(
+        self,
+        endpoint_id: str,
+        deployment_name: str,
+        expected_resource_version: Optional[str] = None,
+    ) -> bool:
 
         # TODO check that this implementation actually works for multinode if/when we decide to support that
         lws_delete_succeeded = await self._delete_lws(endpoint_id=endpoint_id)
         deployment_delete_succeeded = await self._delete_deployment(
-            endpoint_id=endpoint_id, deployment_name=deployment_name
+            endpoint_id=endpoint_id,
+            deployment_name=deployment_name,
+            expected_resource_version=expected_resource_version,
         )
         config_map_delete_succeeded = await self._delete_config_maps(
             endpoint_id=endpoint_id, deployment_name=deployment_name
@@ -2616,12 +2652,18 @@ class K8SEndpointResourceDelegate:
         await self._delete_persistent_volume_claim(endpoint_id=endpoint_id)
         return (deployment_delete_succeeded or lws_delete_succeeded) and config_map_delete_succeeded
 
-    async def _delete_resources_sync(self, endpoint_id: str, deployment_name: str) -> bool:
+    async def _delete_resources_sync(
+        self,
+        endpoint_id: str,
+        deployment_name: str,
+        expected_resource_version: Optional[str] = None,
+    ) -> bool:
         lws_delete_succeeded = await self._delete_lws(endpoint_id=endpoint_id)
 
         deployment_delete_succeeded = await self._delete_deployment(
             endpoint_id=endpoint_id,
             deployment_name=deployment_name,
+            expected_resource_version=expected_resource_version,
         )
         config_map_delete_succeeded = await self._delete_config_maps(
             endpoint_id=endpoint_id, deployment_name=deployment_name

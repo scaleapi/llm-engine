@@ -156,7 +156,11 @@ class ModelEndpointInfraGateway(ABC):
         """
 
     @abstractmethod
-    async def delete_model_endpoint_infra(self, model_endpoint_record: ModelEndpointRecord) -> bool:
+    async def delete_model_endpoint_infra(
+        self,
+        model_endpoint_record: ModelEndpointRecord,
+        expected_resource_version: Optional[str] = None,
+    ) -> bool:
         """
         Deletes the model endpoint infrastructure for a given deployment_name.
 

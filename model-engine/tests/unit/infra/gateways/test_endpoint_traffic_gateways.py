@@ -4,7 +4,6 @@ from typing import List
 import pytest
 from model_engine_server.infra.gateways.prometheus_endpoint_traffic_gateway import (
     PrometheusEndpointTrafficGateway,
-    _parse_duration,
 )
 from model_engine_server.infra.gateways.slack_digest_gateway import (
     _SLACK_TEXT_LIMIT,
@@ -139,57 +138,12 @@ async def test_prometheus_observed_pod_counts(data, expected):
     assert await gateway.observed_pod_counts() == expected
 
 
-@pytest.mark.parametrize(
-    "retention,results,expected_keys",
-    [
-        pytest.param("2d", [], None, id="retention-too-short-is-unknown"),
-        pytest.param("", [], None, id="size-based-retention-is-unknown"),
-        pytest.param(None, [], None, id="runtimeinfo-failed-is-unknown"),
-        pytest.param("1y", None, None, id="query-failed-is-unknown"),
-        pytest.param("200d", [], set(), id="covered-and-nothing-seen"),
-        pytest.param(
-            "1y",
-            [
-                {"metric": {"destination_workload": "launch-endpoint-id-end-a"}, "value": [0, "3"]},
-                {"metric": {"destination_workload": "launch-endpoint-id-end-b"}, "value": [0, "0"]},
-            ],
-            {"launch-endpoint-id-end-a"},
-            id="seen-in-retention-reported-as-now",
-        ),
-    ],
-)
 @pytest.mark.asyncio
-async def test_prometheus_last_active_at(retention, results, expected_keys):
+async def test_prometheus_never_vouches_for_history():
     gateway = PrometheusEndpointTrafficGateway("http://prom")
 
-    async def fake_get(path: str, params: dict):
-        assert path == "/api/v1/status/runtimeinfo"
-        return None if retention is None else {"storageRetention": retention}
+    async def fail(*args, **kwargs):  # pragma: no cover - must not be called
+        raise AssertionError("no request expected")
 
-    async def fake_query(query: str):
-        return results
-
-    gateway._get = fake_get  # type: ignore[method-assign]
-    gateway._query = fake_query  # type: ignore[method-assign]
-    history = await gateway.last_active_at(datetime.now(timezone.utc) - timedelta(days=180))
-    if expected_keys is None:
-        assert history is None
-    else:
-        assert set(history) == expected_keys
-        assert all(
-            datetime.now(timezone.utc) - seen < timedelta(minutes=1) for seen in history.values()
-        )
-
-
-@pytest.mark.parametrize(
-    "value,expected",
-    [
-        pytest.param("15d", timedelta(days=15), id="days"),
-        pytest.param("1h30m", timedelta(hours=1, minutes=30), id="compound"),
-        pytest.param("0s", timedelta(), id="zero"),
-        pytest.param("", None, id="empty"),
-        pytest.param("15GB", None, id="size"),
-    ],
-)
-def test_parse_prometheus_duration(value, expected):
-    assert _parse_duration(value) == expected
+    gateway._get = fail  # type: ignore[method-assign]
+    assert await gateway.last_active_at(datetime.now(timezone.utc) - timedelta(days=180)) is None

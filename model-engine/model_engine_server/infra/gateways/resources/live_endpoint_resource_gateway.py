@@ -118,12 +118,17 @@ class LiveEndpointResourceGateway(EndpointResourceGateway[QueueInfo]):
         return await self.k8s_delegate.get_all_resources()
 
     async def delete_resources(
-        self, endpoint_id: str, deployment_name: str, endpoint_type: ModelEndpointType
+        self,
+        endpoint_id: str,
+        deployment_name: str,
+        endpoint_type: ModelEndpointType,
+        expected_resource_version: Optional[str] = None,
     ) -> bool:
         k8s_result = await self.k8s_delegate.delete_resources(
             endpoint_id=endpoint_id,
             deployment_name=deployment_name,
             endpoint_type=endpoint_type,
+            expected_resource_version=expected_resource_version,
         )
         sqs_result = True
         try:

@@ -161,6 +161,8 @@ class ModelEndpointInfraState(BaseModel):
     restarted_at: Optional[datetime.datetime] = None
     # Deployment spec.replicas (or LWS replicas): what the autoscaler currently asks for.
     desired_workers: Optional[int] = None
+    # metadata.resourceVersion of the Deployment as read; a conditional delete precondition.
+    resource_version: Optional[str] = None
 
 
 class ModelEndpoint(BaseModel):

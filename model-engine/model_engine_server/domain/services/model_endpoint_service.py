@@ -139,15 +139,21 @@ class ModelEndpointService(ABC):
         """
 
     @abstractmethod
-    async def delete_model_endpoint(self, model_endpoint_id: str) -> None:
+    async def delete_model_endpoint(
+        self, model_endpoint_id: str, expected_resource_version: Optional[str] = None
+    ) -> None:
         """
         Deletes the endpoint.
         Args:
             model_endpoint_id: The unique ID of the model endpoint to delete.
+            expected_resource_version: When given, the endpoint's Deployment must still have
+                this resourceVersion; otherwise nothing is deleted and
+                EndpointResourceConflictException is raised.
         Returns:
             None.
         Raises:
             EndpointDeleteFailedException: if the server couldn't delete resources for some reason
+            EndpointResourceConflictException: if the Deployment changed since it was read
                 (corresponds to an HTTP 500)
             ObjectNotFoundException: if the endpoint does not exist
                 (corresponds to an HTTP 404)

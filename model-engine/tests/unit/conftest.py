@@ -89,6 +89,7 @@ from model_engine_server.domain.entities.docker_image_batch_job_bundle_entity im
 )
 from model_engine_server.domain.entities.llm_fine_tune_entity import LLMFineTuneTemplate
 from model_engine_server.domain.exceptions import (
+    EndpointResourceConflictException,
     EndpointResourceInfraException,
     ObjectNotFoundException,
 )
@@ -1280,7 +1281,11 @@ class FakeModelEndpointInfraGateway(ModelEndpointInfraGateway):
         model_endpoint_records[0].status = ModelEndpointStatus.READY
         del self.in_flight_infra[deployment_name]
 
-    async def delete_model_endpoint_infra(self, model_endpoint_record: ModelEndpointRecord) -> bool:
+    async def delete_model_endpoint_infra(
+        self,
+        model_endpoint_record: ModelEndpointRecord,
+        expected_resource_version: Optional[str] = None,
+    ) -> bool:
         deployment_name = self._get_deployment_name(
             model_endpoint_record.created_by, model_endpoint_record.name
         )
@@ -1378,10 +1383,19 @@ class FakeEndpointResourceGateway(EndpointResourceGateway[QueueInfo]):
         return result
 
     async def delete_resources(
-        self, endpoint_id: str, deployment_name: str, endpoint_type: ModelEndpointType
+        self,
+        endpoint_id: str,
+        deployment_name: str,
+        endpoint_type: ModelEndpointType,
+        expected_resource_version: Optional[str] = None,
     ) -> bool:
         if endpoint_id not in self.db:
             return False
+        if (
+            expected_resource_version is not None
+            and self.db[endpoint_id].resource_version != expected_resource_version
+        ):
+            raise EndpointResourceConflictException
         del self.db[endpoint_id]
         return True
 
@@ -2016,9 +2030,17 @@ class FakeModelEndpointService(ModelEndpointService):
 
         return model_endpoints
 
-    async def delete_model_endpoint(self, model_endpoint_id: str) -> None:
+    async def delete_model_endpoint(
+        self, model_endpoint_id: str, expected_resource_version: Optional[str] = None
+    ) -> None:
         if model_endpoint_id not in self.db:
             raise ObjectNotFoundException
+        if (
+            expected_resource_version is not None
+            and self.db[model_endpoint_id].infra_state is not None
+            and self.db[model_endpoint_id].infra_state.resource_version != expected_resource_version
+        ):
+            raise EndpointResourceConflictException
         del self.db[model_endpoint_id]
 
     async def restart_model_endpoint(self, model_endpoint_id: str) -> None:
@@ -2096,7 +2118,9 @@ class FakeLLMModelEndpointService(LLMModelEndpointService):
         else:
             return model_endpoints[0]
 
-    async def delete_model_endpoint(self, model_endpoint_id: str) -> None:
+    async def delete_model_endpoint(
+        self, model_endpoint_id: str, expected_resource_version: Optional[str] = None
+    ) -> None:
         if model_endpoint_id not in self.db:
             raise ObjectNotFoundException
         del self.db[model_endpoint_id]

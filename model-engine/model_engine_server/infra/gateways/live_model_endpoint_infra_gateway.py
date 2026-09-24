@@ -256,7 +256,11 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
         except EndpointResourceInfraException:
             return None
 
-    async def delete_model_endpoint_infra(self, model_endpoint_record: ModelEndpointRecord) -> bool:
+    async def delete_model_endpoint_infra(
+        self,
+        model_endpoint_record: ModelEndpointRecord,
+        expected_resource_version: Optional[str] = None,
+    ) -> bool:
         deployment_name = generate_deployment_name(
             model_endpoint_record.created_by, model_endpoint_record.name
         )
@@ -265,6 +269,7 @@ class LiveModelEndpointInfraGateway(ModelEndpointInfraGateway):
             endpoint_id=model_endpoint_record.id,
             deployment_name=deployment_name,
             endpoint_type=endpoint_type,
+            expected_resource_version=expected_resource_version,
         )
 
     async def restart_model_endpoint_infra(

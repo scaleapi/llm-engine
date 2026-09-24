@@ -59,6 +59,8 @@ def mock_get_kubernetes_cluster_version():
 @pytest.fixture
 def mock_apps_client():
     mock_client = AsyncMock()
+    # A real apiserver always returns a string here; a bare mock attribute is not one.
+    mock_client.read_namespaced_deployment.return_value.metadata.resource_version = "1"
     with patch(
         f"{MODULE_PATH}.get_kubernetes_apps_client",
         return_value=mock_client,

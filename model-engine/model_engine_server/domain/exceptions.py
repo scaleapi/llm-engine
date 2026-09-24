@@ -111,6 +111,13 @@ class EndpointResourceInfraException(DomainException):
     """
 
 
+class EndpointResourceConflictException(DomainException):
+    """
+    Thrown when a conditional delete finds the endpoint's Deployment changed since it was read
+    (resourceVersion precondition failed). Nothing was deleted.
+    """
+
+
 class EndpointLabelsException(DomainException):
     """
     Thrown if the endpoint required labels are missing or wrong.

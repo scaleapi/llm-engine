@@ -2380,9 +2380,9 @@ async def test_lock_release_failure_after_a_delete_still_counts_against_the_cap(
     deleted: Set[str] = set()
     releases: List[str] = []
 
-    async def delete_and_remember(model_endpoint_id: str):
+    async def delete_and_remember(model_endpoint_id: str, **kwargs):
         deleted.add(model_endpoint_id)
-        return await original_delete(model_endpoint_id)
+        return await original_delete(model_endpoint_id, **kwargs)
 
     class FailingReleaseAfterDelete:
         def __init__(self, record):
@@ -2570,3 +2570,41 @@ async def test_owner_update_during_final_deployment_read_blocks_the_delete(
 
     assert report.deleted == []
     assert [a.record.id for a in report.skipped_at_action] == [endpoint.record.id]
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        pytest.param({"restarted_at": NOW + timedelta(seconds=10)}, id="restart"),
+        pytest.param({"desired_workers": 1}, id="scale-up"),
+    ],
+)
+@pytest.mark.asyncio
+async def test_deployment_change_during_final_record_read_is_refused_by_the_precondition(
+    harness, model_endpoint_1, change
+):
+    endpoint = _parked(model_endpoint_1)
+    endpoint.infra_state = endpoint.infra_state.model_copy(update={"resource_version": "100"})
+    harness.add(endpoint)
+    original_get = harness.repo.get_model_endpoint_record
+    refreshes = {"n": 0}
+
+    async def get_then_deployment_changes(model_endpoint_id: str, refresh: bool = False):
+        record = await original_get(model_endpoint_id, refresh=refresh)
+        if refresh:
+            refreshes["n"] += 1
+            if refreshes["n"] == 3:  # the last record read before the delete
+                harness.resources.db[endpoint.record.id] = endpoint.infra_state.model_copy(
+                    update={**change, "resource_version": "101"}
+                )
+                harness.service.db[endpoint.record.id].infra_state = harness.resources.db[
+                    endpoint.record.id
+                ]
+        return record
+
+    harness.repo.get_model_endpoint_record = get_then_deployment_changes
+    report = await harness.run()
+
+    assert report.deleted == [] and report.action_failed == []
+    assert [a.record.id for a in report.skipped_at_action] == [endpoint.record.id]
+    assert endpoint.record.id in harness.repo.db

@@ -19,6 +19,7 @@ from model_engine_server.domain.entities import (
 )
 from model_engine_server.domain.exceptions import (
     EndpointDeleteFailedException,
+    EndpointResourceConflictException,
     ObjectAlreadyExistsException,
     ObjectNotFoundException,
 )
@@ -413,7 +414,9 @@ class LiveModelEndpointService(ModelEndpointService):
             raise ObjectNotFoundException
         return record
 
-    async def delete_model_endpoint(self, model_endpoint_id: str) -> None:
+    async def delete_model_endpoint(
+        self, model_endpoint_id: str, expected_resource_version: Optional[str] = None
+    ) -> None:
         record = await self.model_endpoint_record_repository.get_model_endpoint_record(
             model_endpoint_id=model_endpoint_id
         )
@@ -433,9 +436,18 @@ class LiveModelEndpointService(ModelEndpointService):
                 status=ModelEndpointStatus.DELETE_IN_PROGRESS,
             )
 
-            infra_deleted = await self.model_endpoint_infra_gateway.delete_model_endpoint_infra(
-                model_endpoint_record=record
-            )
+            try:
+                infra_deleted = await self.model_endpoint_infra_gateway.delete_model_endpoint_infra(
+                    model_endpoint_record=record,
+                    expected_resource_version=expected_resource_version,
+                )
+            except EndpointResourceConflictException:
+                # The Deployment changed under the precondition; nothing was deleted. Put the
+                # status back as it was.
+                await self.model_endpoint_record_repository.update_model_endpoint_record(
+                    model_endpoint_id=model_endpoint_id, status=record.status
+                )
+                raise
             if not infra_deleted:
                 await self.model_endpoint_record_repository.update_model_endpoint_record(
                     model_endpoint_id=model_endpoint_id,
