@@ -106,7 +106,12 @@ async def main(config: EndpointGcConfig) -> None:
         f"deferred={len(report.deferred)} tracking={len(report.tracking)} "
         f"sources_unknown={sorted(set(report.sources_unknown))}"
     )
-    if report.action_failed or report.sources_unknown or not report.digest_delivered:
+    if (
+        report.action_failed
+        or report.check_failed
+        or report.sources_unknown
+        or not report.digest_delivered
+    ):
         # A failed job is the only signal besides the digest; make outages and lost notices show.
         raise SystemExit(1)
 

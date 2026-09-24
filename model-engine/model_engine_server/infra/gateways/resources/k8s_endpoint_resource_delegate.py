@@ -2358,6 +2358,7 @@ class K8SEndpointResourceDelegate:
             image=common_params["image"],
             num_queued_items=None,
             restarted_at=self._get_restarted_at(deployment_config),
+            desired_workers=deployment_config.spec.replicas,
         )
 
         return infra_state
@@ -2415,6 +2416,7 @@ class K8SEndpointResourceDelegate:
             ),
             image=common_params["image"],
             num_queued_items=None,
+            desired_workers=replicas,
         )
 
         return infra_state
@@ -2566,6 +2568,7 @@ class K8SEndpointResourceDelegate:
                     image=common_params["image"],
                     num_queued_items=None,
                     restarted_at=self._get_restarted_at(deployment_config),
+                    desired_workers=deployment_config.spec.replicas,
                 )
                 if name.startswith("launch-endpoint-id-"):
                     key = _k8s_resource_group_name_to_endpoint_id(name)

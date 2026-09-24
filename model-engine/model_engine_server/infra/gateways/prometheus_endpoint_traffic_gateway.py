@@ -16,7 +16,10 @@ _QUERY = (
 )
 # Coverage probe: with no series at all for the prefix, the metric or the scrape is gone and an
 # empty answer means "unknown", not "idle".
-_COVERAGE_QUERY = 'count(istio_request_duration_milliseconds_count{destination_workload=~"%s.*"})'
+_COVERAGE_QUERY = (
+    "count(istio_request_duration_milliseconds_count"
+    '{reporter="destination", destination_workload=~"%s.*"})'
+)
 
 
 class PrometheusEndpointTrafficGateway(EndpointTrafficGateway):

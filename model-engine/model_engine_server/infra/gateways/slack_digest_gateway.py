@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 import requests
 from model_engine_server.core.loggers import logger_name, make_logger
@@ -24,10 +24,25 @@ class SlackDigestGateway(DigestGateway):
         self.channel = channel
 
     def send_digest(self, text: str) -> bool:
-        # The full digest always goes to the log; Slack gets it too, truncated if needed.
+        # The full digest always goes to the log; Slack gets it in as many messages as needed,
+        # split on line boundaries so every notice arrives.
         LogDigestGateway().send_digest(text)
-        if len(text) > _SLACK_TEXT_LIMIT:
-            text = text[:_SLACK_TEXT_LIMIT] + "\n... truncated, see pod logs for the full digest"
+        chunks: List[str] = []
+        current = ""
+        for line in text.split("\n"):
+            if current and len(current) + len(line) + 1 > _SLACK_TEXT_LIMIT:
+                chunks.append(current)
+                current = ""
+            current = f"{current}\n{line}" if current else line
+        if current:
+            chunks.append(current)
+        delivered = True
+        for index, chunk in enumerate(chunks):
+            prefix = f"(part {index + 1}/{len(chunks)})\n" if len(chunks) > 1 else ""
+            delivered = self._post(prefix + chunk) and delivered
+        return delivered
+
+    def _post(self, text: str) -> bool:
         try:
             response = requests.post(
                 _SLACK_POST_MESSAGE_URL,

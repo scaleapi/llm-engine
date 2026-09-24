@@ -159,6 +159,8 @@ class ModelEndpointInfraState(BaseModel):
     image: str
     # Pod template annotation kubectl.kubernetes.io/restartedAt, set by an owner restart.
     restarted_at: Optional[datetime.datetime] = None
+    # Deployment spec.replicas (or LWS replicas): what the autoscaler currently asks for.
+    desired_workers: Optional[int] = None
 
 
 class ModelEndpoint(BaseModel):
