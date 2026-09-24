@@ -172,6 +172,12 @@ class _Traffic:
 
 
 @dataclass
+class _Activity:
+    active: Optional[bool]  # None: a source could not answer, or a serving pod is unobserved
+    observed_pods: Optional[int] = None  # serving pods the coverage sources see, when asked
+
+
+@dataclass
 class _Attempt:
     made: bool = False  # set right before the destructive call, so cleanup failures still count
 
@@ -872,10 +878,10 @@ class EndpointGarbageCollectionService:
             # Traffic was collected before bookkeeping; anything since must count. Asked right
             # before this endpoint's action, not once for the batch.
             activity = await self._activity_now(action, fresh, live, run_at, report)
-            if activity is None:
+            if activity.active is None:
                 report.check_failed.append(action)
                 return
-            if activity:
+            if activity.active:
                 metadata = fresh.metadata or {}
                 await self._write_gc_state(
                     fresh,
@@ -905,6 +911,13 @@ class EndpointGarbageCollectionService:
             # record lock, so look at the Deployment once more right before touching it.
             live = await self._live_state_allows(action, fresh, run_at, report)
             if live is None:
+                return
+            if activity.observed_pods is not None and not self._covered(
+                live, activity.observed_pods
+            ):
+                # A pod came up while the sources were being asked; its requests were never
+                # observed.
+                report.check_failed.append(action)
                 return
             if fresh.endpoint_type == ModelEndpointType.ASYNC:
                 # Scaling to zero stops workers mid-task; deleting removes the queue with
@@ -1013,7 +1026,7 @@ class EndpointGarbageCollectionService:
         live: ModelEndpointInfraState,
         run_at: datetime,
         report: EndpointGcReport,
-    ) -> Optional[bool]:
+    ) -> "_Activity":
         """Whether the endpoint was used in the lookback, asked of every source right now.
 
         HTTP evidence only revives endpoints GC parked or judged idle; a dead sync endpoint
@@ -1029,12 +1042,13 @@ class EndpointGarbageCollectionService:
             if sent is None:
                 unknown = True
             elif sent > 0:
-                return True
+                return _Activity(active=True)
         if action.reason == IDLE or GC_SCALE_TO_ZERO_REQUESTED_AT_KEY in (fresh.metadata or {}):
             by_deployment = {action.infra_state.deployment_name: fresh.id}
             by_name = {fresh.name: [fresh.id]}
-            _, live_available = _worker_counts(live)
-            needs_coverage = not is_async and live_available > 0
+            # Coverage is asked for whenever pods could be serving: the count is checked again
+            # against the Deployment read that follows the telemetry calls.
+            needs_coverage = not is_async
             coverage_known = False
             observed_pods: Dict[str, int] = {}
             for gateway in self.traffic_gateways:
@@ -1044,7 +1058,7 @@ class EndpointGarbageCollectionService:
                     unknown = True
                     continue
                 if fresh.id in self._resolve(keys, gateway.key, by_deployment, by_name):
-                    return True
+                    return _Activity(active=True)
                 if needs_coverage and gateway.reports_coverage:
                     counts = await gateway.observed_pod_counts()
                     if counts is None:
@@ -1052,13 +1066,12 @@ class EndpointGarbageCollectionService:
                         continue
                     coverage_known = True
                     self._merge_counts(observed_pods, counts, gateway.key, by_deployment, by_name)
-            if (
-                needs_coverage
-                and coverage_known
-                and not self._covered(live, observed_pods.get(fresh.id, 0))
-            ):
-                unknown = True
-        return None if unknown else False
+            if needs_coverage and coverage_known:
+                observed = observed_pods.get(fresh.id, 0)
+                if not self._covered(live, observed):
+                    unknown = True
+                return _Activity(active=None if unknown else False, observed_pods=observed)
+        return _Activity(active=None if unknown else False)
 
     def _scale_to_zero_supported(self, action: PlannedAction) -> bool:
         if action.record.endpoint_type == ModelEndpointType.ASYNC:

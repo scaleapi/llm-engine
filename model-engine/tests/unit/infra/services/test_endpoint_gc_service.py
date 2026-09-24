@@ -2364,3 +2364,60 @@ async def test_lock_release_failure_after_a_delete_still_counts_against_the_cap(
     assert {a.record.id for a in report.deleted + report.deferred} == {
         e.record.id for e in endpoints
     }
+
+
+@pytest.mark.parametrize(
+    "status,kind",
+    [
+        pytest.param(ModelEndpointStatus.READY, SCALE_TO_ZERO, id="scale-to-zero"),
+        pytest.param(ModelEndpointStatus.UPDATE_FAILED, DELETE, id="delete-after-failed-park"),
+    ],
+)
+@pytest.mark.asyncio
+async def test_pod_appearing_during_final_telemetry_is_unobserved_and_blocks(
+    harness, model_endpoint_1, status, kind
+):
+    metadata = {
+        GC_LAST_TRAFFIC_AT_KEY: _days_ago(200),
+        GC_OBSERVED_AT_KEY: _days_ago(1),
+        GC_TOUCHED_AT_KEY: _days_ago(1),
+        GC_SEEN_TASK_ID_KEY: "gc-task",
+    }
+    if kind == DELETE:
+        metadata.update(
+            {
+                GC_SCALE_TO_ZERO_REQUESTED_AT_KEY: _days_ago(100),
+                GC_SCALE_TO_ZERO_TASK_ID_KEY: "gc-task",
+            }
+        )
+    endpoint = harness.add(
+        _endpoint(
+            model_endpoint_1,
+            available=1,
+            unavailable=0,
+            min_workers=1,
+            status=status,
+            metadata=metadata,
+        )
+    )
+    endpoint.record.creation_task_id = "gc-task"
+
+    def second_pod_comes_up(call: int):
+        if call == 2:  # the per-action traffic query, between the two Deployment reads
+            harness.resources.db[endpoint.record.id] = endpoint.infra_state.model_copy(
+                update={
+                    "desired_workers": 2,
+                    "deployment_state": endpoint.infra_state.deployment_state.model_copy(
+                        update={"available_workers": 2}
+                    ),
+                }
+            )
+
+    report = await harness.run(
+        reports_coverage=True,
+        covered_names={endpoint.record.name: 1},
+        on_traffic_query=second_pod_comes_up,
+    )
+
+    assert report.scaled_to_zero == [] and report.deleted == []
+    assert [(a.record.id, a.kind) for a in report.check_failed] == [(endpoint.record.id, kind)]
