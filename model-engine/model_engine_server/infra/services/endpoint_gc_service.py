@@ -94,6 +94,7 @@ GC_TIMESTAMP_KEYS = (
 OWNER_UPDATE_SLACK = timedelta(minutes=5)
 QUEUE_LOOKUP_CONCURRENCY = 10
 TASK_ID_WRITE_RETRIES = 5
+STUCK_REQUEST_AFTER = timedelta(days=3)  # a GC scale-to-zero still in flight after this is stuck
 TRAFFIC_LOOKBACK = timedelta(hours=36)  # covers a missed daily run
 IN_FLIGHT_STATUSES = {
     ModelEndpointStatus.UPDATE_PENDING,
@@ -144,6 +145,7 @@ class EndpointGcReport:
     recovered: List[ModelEndpointRecord] = field(default_factory=list)
     no_deployment: List[ModelEndpointRecord] = field(default_factory=list)
     in_flight: List[ModelEndpointRecord] = field(default_factory=list)
+    stuck: List[ModelEndpointRecord] = field(default_factory=list)  # GC request in flight too long
     exempt: List[ModelEndpointRecord] = field(default_factory=list)
     queue_unknown: List[ModelEndpointRecord] = field(default_factory=list)
     state_invalid: List[ModelEndpointRecord] = field(default_factory=list)
@@ -249,6 +251,9 @@ class EndpointGarbageCollectionService:
         if record.status in IN_FLIGHT_STATUSES:
             if has_state:
                 report.in_flight.append(record)
+                requested = _parse_ts(metadata.get(GC_SCALE_TO_ZERO_REQUESTED_AT_KEY))
+                if requested is not None and run_at - requested > STUCK_REQUEST_AFTER:
+                    report.stuck.append(record)
             return
         if _is_exempt(metadata):
             report.exempt.append(record)
@@ -456,18 +461,30 @@ class EndpointGarbageCollectionService:
                     run_at=run_at,
                     due=due,
                     report=report,
+                    requested_at=requested_at,
                 )
             return
 
         if broken or (gc_parked and desired == 0 and unavailable_since):
             # Broken, or parked by GC because it was broken.
-            if unavailable_since is None:
-                if traffic.frozen:
+            if traffic.frozen:
+                if unavailable_since is None:
                     return
-                unavailable_since = run_at
+            else:
+                observed_at = _parse_ts(metadata.get(GC_OBSERVED_AT_KEY))
+                if unavailable_since is None:
+                    unavailable_since = run_at
+                elif is_async and (observed_at is None or run_at - observed_at > TRAFFIC_LOOKBACK):
+                    # Queue activity during an unobserved stretch would have been missed;
+                    # silence is only known since the start of the current lookback.
+                    unavailable_since = max(unavailable_since, run_at - TRAFFIC_LOOKBACK)
                 if not await self._write_gc_state(
                     record,
-                    {GC_UNAVAILABLE_SINCE_KEY: run_at.isoformat(), **keep_request},
+                    {
+                        GC_UNAVAILABLE_SINCE_KEY: unavailable_since.isoformat(),
+                        GC_OBSERVED_AT_KEY: run_at.isoformat(),
+                        **keep_request,
+                    },
                     run_at,
                     report,
                 ):
@@ -484,6 +501,7 @@ class EndpointGarbageCollectionService:
                 run_at=run_at,
                 due=due,
                 report=report,
+                requested_at=requested_at,
             )
             return
 
@@ -551,6 +569,7 @@ class EndpointGarbageCollectionService:
             run_at=run_at,
             due=due,
             report=report,
+            requested_at=_parse_ts((record.metadata or {}).get(GC_SCALE_TO_ZERO_REQUESTED_AT_KEY)),
         )
 
     # ---- traffic -------------------------------------------------------------------------
@@ -631,6 +650,10 @@ class EndpointGarbageCollectionService:
             elif sent > 0:
                 queue_active.add(endpoint_id)
                 active.add(endpoint_id)
+        if async_ids and len(queue_unknown) == len(async_ids):
+            # Not one queue could be read: the source is down, not the endpoints.
+            frozen = True
+            report.sources_unknown.append("queue")
         return _Traffic(
             active=active,
             queue_active=queue_active,
@@ -670,13 +693,17 @@ class EndpointGarbageCollectionService:
         run_at: datetime,
         due: List[PlannedAction],
         report: EndpointGcReport,
+        requested_at: Optional[datetime] = None,
     ) -> None:
         # ``parked`` also covers a scale-to-zero that was requested but failed in the endpoint
         # builder: the next and last step is the delete, on the same schedule.
         if parked:
-            action = PlannedAction(
-                record, infra_state, DELETE, reason, clock_start + timedelta(days=delete_days)
-            )
+            due_at = clock_start + timedelta(days=delete_days)
+            if requested_at is not None:
+                # Whatever delayed the scale-to-zero, the endpoint stays parked for the full
+                # gap the schedule promises before it is deleted, notices included.
+                due_at = max(due_at, requested_at + timedelta(days=delete_days - scale_days))
+            action = PlannedAction(record, infra_state, DELETE, reason, due_at)
         else:
             action = PlannedAction(
                 record,
@@ -745,6 +772,14 @@ class EndpointGarbageCollectionService:
                     report.skipped_at_action.append(action)
                     continue
                 live_desired, live_available = _worker_counts(live)
+                if (
+                    live.deployment_state.min_workers > 0
+                    and GC_SCALE_TO_ZERO_REQUESTED_AT_KEY in (fresh.metadata or {})
+                    and fresh.status != ModelEndpointStatus.UPDATE_FAILED
+                ):
+                    # The owner raised min_workers since the listing: revived, not ours.
+                    report.skipped_at_action.append(action)
+                    continue
                 if action.reason == BROKEN and live_available > 0:
                     # Recovered since the listing: drop the broken clock, take no action.
                     await self._write_gc_state(
@@ -764,6 +799,16 @@ class EndpointGarbageCollectionService:
                     report.recovered.append(fresh)
                     report.skipped_at_action.append(action)
                     continue
+                if (
+                    action.kind == DELETE
+                    and live_desired > 0
+                    and fresh.status != ModelEndpointStatus.UPDATE_FAILED
+                ):
+                    # Something woke or scaled the parked endpoint since the listing. (A failed
+                    # scale-to-zero leaves the Deployment up by definition and still ends in
+                    # the delete.)
+                    report.skipped_at_action.append(action)
+                    continue
                 if action.kind == SCALE_TO_ZERO and live_desired == 0:
                     report.skipped_at_action.append(action)
                     continue
@@ -780,7 +825,7 @@ class EndpointGarbageCollectionService:
                         await self.model_endpoint_service.delete_model_endpoint(action.record.id)
                         report.deleted.append(action)
                     else:
-                        await self._scale_to_zero(action, run_at, report)
+                        await self._scale_to_zero(action, fresh, run_at, report)
                 except Exception:
                     logger.exception(
                         f"GC {action.kind} failed for {action.record.id} ({action.record.name})"
@@ -815,7 +860,11 @@ class EndpointGarbageCollectionService:
             return None
 
     async def _scale_to_zero(
-        self, action: PlannedAction, run_at: datetime, report: EndpointGcReport
+        self,
+        action: PlannedAction,
+        fresh: ModelEndpointRecord,
+        run_at: datetime,
+        report: EndpointGcReport,
     ) -> None:
         # Stamp first so the builder's record writes are attributed to GC, then record the
         # builder task id the update returns; owner updates get a different task id.
@@ -833,9 +882,10 @@ class EndpointGarbageCollectionService:
         try:
             # Passing the current bundle id keeps this a resource patch; without it the service
             # marks the bundle as changed and the delegate replaces the Deployment with 0 replicas.
+            # The bundle id comes from the record re-read under the lock, never the listing.
             updated = await self.model_endpoint_service.update_model_endpoint(
                 model_endpoint_id=action.record.id,
-                model_bundle_id=action.record.current_model_bundle.id,
+                model_bundle_id=fresh.current_model_bundle.id,
                 min_workers=0,
             )
         except Exception:
@@ -878,7 +928,7 @@ class EndpointGarbageCollectionService:
             # GC acknowledged what it saw before: a timestamp, or "" for no annotation. Anything
             # newer than that is an owner restart.
             seen = _parse_ts(metadata.get(GC_SEEN_RESTART_AT_KEY))
-            return seen is None or restarted_at > seen
+            return seen is None or restarted_at != seen
         touched = _parse_ts(metadata.get(GC_TOUCHED_AT_KEY))
         return touched is not None and restarted_at > touched
 
@@ -1007,7 +1057,7 @@ def format_digest(
         f"failed {len(report.action_failed)}, deferred {len(report.deferred)}, "
         f"tracking {len(report.tracking)}, recovered {len(report.recovered)}, "
         f"owner reset {len(report.owner_reset)}, no deployment {len(report.no_deployment)}, "
-        f"in flight {len(report.in_flight)}, exempt {len(report.exempt)}, "
+        f"in flight {len(report.in_flight)}, stuck {len(report.stuck)}, exempt {len(report.exempt)}, "
         f"queue unknown {len(report.queue_unknown)}, unsupported {len(report.unsupported)}, "
         f"skipped at action {len(report.skipped_at_action)}, "
         f"state invalid {len(report.state_invalid)}, write skipped {len(report.write_skipped)}",
@@ -1055,6 +1105,7 @@ def format_digest(
         ("Recovered, clock dropped", report.recovered),
         ("No Deployment in the listing, state kept", report.no_deployment),
         ("Update or delete in flight, skipped", report.in_flight),
+        ("GC scale-to-zero stuck in flight for days (builder needs a look)", report.stuck),
         ("Queue activity unknown, skipped", report.queue_unknown),
         ("GC state unreadable, skipped (fix the metadata)", report.state_invalid),
         ("Metadata write skipped, endpoint locked", report.write_skipped),

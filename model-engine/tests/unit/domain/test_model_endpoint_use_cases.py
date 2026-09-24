@@ -131,6 +131,7 @@ async def test_create_model_endpoint_use_case_raises_invalid_value_exception(
     [
         pytest.param({"_gc_unavailable_since": "2026-01-01T00:00:00+00:00"}, id="clock-key"),
         pytest.param({"_gc_seen_task_id": "x"}, id="bookkeeping-key"),
+        pytest.param({"_gc_anything_else": "x"}, id="any-gc-prefixed-key"),
         pytest.param({"_gc_exempt": "true"}, id="exempt-not-a-boolean"),
     ],
 )

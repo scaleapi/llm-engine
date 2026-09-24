@@ -55,6 +55,11 @@ class DatadogEndpointTrafficGateway(EndpointTrafficGateway):
         if response.status != "ok":
             logger.error(f"Datadog traffic query returned status {response.status}")
             return None
+        if not response.series:
+            # No traced endpoint at all: the tracing pipeline or the metric is gone, not the
+            # traffic. Read as unknown.
+            logger.error("Datadog returned no request series for any endpoint service")
+            return None
         last_seen: Dict[str, datetime] = {}
         for series in response.series or []:
             service = self._service_of(series)

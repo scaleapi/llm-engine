@@ -116,8 +116,10 @@ def validate_gc_metadata(metadata: Optional[Dict[str, Any]]) -> None:
     """Endpoint GC keeps its clocks in metadata; users may only set the opt-out, as a boolean."""
     if not metadata:
         return
-    for key in ENDPOINT_GC_METADATA_KEYS:
-        if key in metadata and key != ENDPOINT_GC_EXEMPT_KEY:
+    for key in metadata:
+        if (key in ENDPOINT_GC_METADATA_KEYS or str(key).startswith("_gc_")) and (
+            key != ENDPOINT_GC_EXEMPT_KEY
+        ):
             raise ObjectHasInvalidValueException(
                 f"{key} is a reserved metadata key and cannot be used by user."
             )
