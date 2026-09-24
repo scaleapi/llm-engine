@@ -2649,6 +2649,10 @@ class K8SEndpointResourceDelegate:
                 deployment_name=deployment_name,
                 expected_resource_version=expected_resource_version,
             )
+            if not deployment_deleted:
+                # Rejected for another reason (403, 500...): the Deployment is still there and
+                # nothing else may go.
+                raise EndpointResourceConflictException
             return await self._delete_lws(endpoint_id=endpoint_id), deployment_deleted
         lws_deleted = await self._delete_lws(endpoint_id=endpoint_id)
         return lws_deleted, await self._delete_deployment(

@@ -113,8 +113,9 @@ class EndpointResourceInfraException(DomainException):
 
 class EndpointResourceConflictException(DomainException):
     """
-    Thrown when a conditional delete finds the endpoint's Deployment changed since it was read
-    (resourceVersion precondition failed). Nothing was deleted.
+    Thrown when a conditional delete did not remove the endpoint's Deployment: it changed since
+    it was read (resourceVersion precondition failed), disappeared, or the delete was rejected.
+    Nothing was deleted.
     """
 
 

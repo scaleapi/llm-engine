@@ -424,7 +424,7 @@ async def test_create_delete_model_endpoint_infra_not_deleted_raises_endpoint_de
 
 @pytest.mark.parametrize("owner_moved_on", [False, True])
 @pytest.mark.asyncio
-async def test_delete_precondition_conflict_restores_status_unless_a_writer_moved_on(
+async def test_guarded_delete_conflict_leaves_the_record_untouched(
     fake_live_model_endpoint_service: LiveModelEndpointService,
     model_endpoint_1: ModelEndpoint,
     owner_moved_on: bool,
@@ -433,9 +433,11 @@ async def test_delete_precondition_conflict_restores_status_unless_a_writer_move
         model_endpoint=model_endpoint_1, service=fake_live_model_endpoint_service
     )
     repo: Any = fake_live_model_endpoint_service.model_endpoint_record_repository
-    previous_status = repo.db[record.id].status
+    previous = (repo.db[record.id].status, repo.db[record.id].creation_task_id)
+    seen_during_infra_call = []
 
     async def conflict_during_infra_delete(**kwargs):
+        seen_during_infra_call.append(repo.db[record.id].status)
         if owner_moved_on:
             # An API update accepted while the delete was in flight.
             repo.db[record.id].status = ModelEndpointStatus.UPDATE_PENDING
@@ -451,12 +453,16 @@ async def test_delete_precondition_conflict_restores_status_unless_a_writer_move
             model_endpoint_id=record.id, expected_resource_version="100"
         )
 
+    # No DELETE_IN_PROGRESS was written ahead of the guarded delete, so nothing was restored.
+    assert seen_during_infra_call == [previous[0]]
     stored = repo.db[record.id]
     if owner_moved_on:
-        assert stored.status == ModelEndpointStatus.UPDATE_PENDING
-        assert stored.creation_task_id == "owner-task"
+        assert (stored.status, stored.creation_task_id) == (
+            ModelEndpointStatus.UPDATE_PENDING,
+            "owner-task",
+        )
     else:
-        assert stored.status == previous_status
+        assert (stored.status, stored.creation_task_id) == previous
 
 
 @pytest.mark.asyncio

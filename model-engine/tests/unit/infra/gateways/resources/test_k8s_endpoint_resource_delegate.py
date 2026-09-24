@@ -1274,6 +1274,7 @@ async def test_delete_resources_sync_success(
     assert deleted
 
 
+@pytest.mark.parametrize("status", [409, 403, 500])
 @pytest.mark.parametrize("endpoint_type", [ModelEndpointType.SYNC, ModelEndpointType.ASYNC])
 @pytest.mark.asyncio
 async def test_guarded_delete_conflict_removes_nothing(
@@ -1284,8 +1285,9 @@ async def test_guarded_delete_conflict_removes_nothing(
     mock_policy_client,
     mock_custom_objects_client,
     endpoint_type,
+    status,
 ):
-    mock_apps_client.delete_namespaced_deployment.side_effect = ApiException(status=409)
+    mock_apps_client.delete_namespaced_deployment.side_effect = ApiException(status=status)
 
     with pytest.raises(EndpointResourceConflictException):
         await k8s_endpoint_resource_delegate.delete_resources(

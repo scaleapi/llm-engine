@@ -19,7 +19,6 @@ from model_engine_server.domain.entities import (
 )
 from model_engine_server.domain.exceptions import (
     EndpointDeleteFailedException,
-    EndpointResourceConflictException,
     ObjectAlreadyExistsException,
     ObjectNotFoundException,
 )
@@ -431,32 +430,18 @@ class LiveModelEndpointService(ModelEndpointService):
             else:
                 logger.info(f"Endpoint delete acquired lock for {created_by}, {name}")
 
-            previous_status, previous_task_id = record.status, record.creation_task_id
-            await self.model_endpoint_record_repository.update_model_endpoint_record(
-                model_endpoint_id=model_endpoint_id,
-                status=ModelEndpointStatus.DELETE_IN_PROGRESS,
+            if expected_resource_version is None:
+                await self.model_endpoint_record_repository.update_model_endpoint_record(
+                    model_endpoint_id=model_endpoint_id,
+                    status=ModelEndpointStatus.DELETE_IN_PROGRESS,
+                )
+            # A guarded delete writes nothing to the record until its Deployment is gone: if the
+            # precondition fails (EndpointResourceConflictException) the record is untouched and
+            # there is no status to restore, so no writer's newer state can be overwritten.
+            infra_deleted = await self.model_endpoint_infra_gateway.delete_model_endpoint_infra(
+                model_endpoint_record=record,
+                expected_resource_version=expected_resource_version,
             )
-
-            try:
-                infra_deleted = await self.model_endpoint_infra_gateway.delete_model_endpoint_infra(
-                    model_endpoint_record=record,
-                    expected_resource_version=expected_resource_version,
-                )
-            except EndpointResourceConflictException:
-                # The Deployment changed under the precondition; nothing was deleted. Put the
-                # status back as it was, unless a writer already moved the record on.
-                current = await self.model_endpoint_record_repository.get_model_endpoint_record(
-                    model_endpoint_id=model_endpoint_id, refresh=True
-                )
-                if (
-                    current is not None
-                    and current.status == ModelEndpointStatus.DELETE_IN_PROGRESS
-                    and current.creation_task_id == previous_task_id
-                ):
-                    await self.model_endpoint_record_repository.update_model_endpoint_record(
-                        model_endpoint_id=model_endpoint_id, status=previous_status
-                    )
-                raise
             if not infra_deleted:
                 await self.model_endpoint_record_repository.update_model_endpoint_record(
                     model_endpoint_id=model_endpoint_id,
