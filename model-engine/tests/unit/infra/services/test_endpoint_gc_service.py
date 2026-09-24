@@ -19,6 +19,7 @@ from model_engine_server.infra.services.endpoint_gc_service import (
     GC_OBSERVED_AT_KEY,
     GC_SCALE_TO_ZERO_REQUESTED_AT_KEY,
     GC_SCALE_TO_ZERO_TASK_ID_KEY,
+    GC_SEEN_RESTART_AT_KEY,
     GC_SEEN_TASK_ID_KEY,
     GC_TOUCHED_AT_KEY,
     GC_UNAVAILABLE_SINCE_KEY,
@@ -165,7 +166,7 @@ def harness(
     )
 
 
-BOOKKEEPING = {GC_TOUCHED_AT_KEY, GC_SEEN_TASK_ID_KEY, GC_OBSERVED_AT_KEY}
+BOOKKEEPING = {GC_TOUCHED_AT_KEY, GC_SEEN_TASK_ID_KEY, GC_SEEN_RESTART_AT_KEY, GC_OBSERVED_AT_KEY}
 
 
 def _keys(metadata: Dict) -> Set[str]:
@@ -1449,3 +1450,101 @@ async def test_async_scale_to_zero_requires_an_empty_queue(harness, model_endpoi
 
     assert report.scaled_to_zero == []
     assert [a.record.id for a in report.skipped_at_action] == [endpoint.record.id]
+
+
+@pytest.mark.asyncio
+async def test_restart_between_listing_and_bookkeeping_still_blocks_the_action(
+    harness, model_endpoint_1
+):
+    # Idle bookkeeping writes touched_at after the restart lands; the restart must still count.
+    endpoint = harness.add(
+        _endpoint(
+            model_endpoint_1,
+            available=1,
+            unavailable=0,
+            metadata={
+                GC_LAST_TRAFFIC_AT_KEY: _days_ago(90),
+                GC_OBSERVED_AT_KEY: _days_ago(1),
+                GC_TOUCHED_AT_KEY: _days_ago(1),
+                GC_SEEN_TASK_ID_KEY: "test_creation_task_id",
+            },
+        )
+    )
+    original_list = harness.repo.list_model_endpoint_records
+
+    async def list_then_restart(**kwargs):
+        records = await original_list(**kwargs)
+        harness.resources.db[endpoint.record.id] = endpoint.infra_state.model_copy(
+            update={"restarted_at": NOW + timedelta(seconds=10)}
+        )
+        return records
+
+    harness.repo.list_model_endpoint_records = list_then_restart
+    report = await harness.run()
+
+    assert report.scaled_to_zero == []
+    assert [a.record.id for a in report.skipped_at_action] == [endpoint.record.id]
+
+
+@pytest.mark.asyncio
+async def test_acknowledged_restart_is_not_an_owner_edit(harness, model_endpoint_1):
+    endpoint = _endpoint(
+        model_endpoint_1,
+        available=0,
+        unavailable=1,
+        metadata={
+            GC_UNAVAILABLE_SINCE_KEY: _days_ago(10),
+            GC_TOUCHED_AT_KEY: _days_ago(1),
+            GC_SEEN_TASK_ID_KEY: "test_creation_task_id",
+            GC_SEEN_RESTART_AT_KEY: _days_ago(5),
+        },
+    )
+    endpoint = ModelEndpoint(
+        record=endpoint.record,
+        infra_state=endpoint.infra_state.model_copy(
+            update={"restarted_at": NOW - timedelta(days=5)}
+        ),
+    )
+    harness.add(endpoint)
+    report = await harness.run()
+
+    assert report.owner_reset == []
+    assert [r.id for r in report.tracking] == [endpoint.record.id]
+
+
+@pytest.mark.asyncio
+async def test_recovery_between_listing_and_action_cancels_the_delete(harness, model_endpoint_1):
+    endpoint = harness.add(
+        _endpoint(
+            model_endpoint_1,
+            available=0,
+            unavailable=0,
+            min_workers=0,
+            metadata={
+                GC_UNAVAILABLE_SINCE_KEY: _days_ago(90),
+                GC_SCALE_TO_ZERO_REQUESTED_AT_KEY: _days_ago(60),
+                GC_SCALE_TO_ZERO_TASK_ID_KEY: "gc-task",
+                GC_SEEN_TASK_ID_KEY: "gc-task",
+                GC_TOUCHED_AT_KEY: _days_ago(60),
+            },
+        )
+    )
+    endpoint.record.creation_task_id = "gc-task"
+    original_list = harness.repo.list_model_endpoint_records
+
+    async def list_then_recover(**kwargs):
+        records = await original_list(**kwargs)
+        state = endpoint.infra_state.deployment_state.model_copy(
+            update={"available_workers": 1, "unavailable_workers": 0}
+        )
+        harness.resources.db[endpoint.record.id] = endpoint.infra_state.model_copy(
+            update={"deployment_state": state}
+        )
+        return records
+
+    harness.repo.list_model_endpoint_records = list_then_recover
+    report = await harness.run()
+
+    assert report.deleted == []
+    assert [a.record.id for a in report.skipped_at_action] == [endpoint.record.id]
+    assert GC_UNAVAILABLE_SINCE_KEY not in await harness.stored(endpoint)

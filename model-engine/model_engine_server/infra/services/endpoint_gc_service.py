@@ -31,6 +31,7 @@ from model_engine_server.common.constants import (
     ENDPOINT_GC_OBSERVED_AT_KEY,
     ENDPOINT_GC_SCALE_TO_ZERO_REQUESTED_AT_KEY,
     ENDPOINT_GC_SCALE_TO_ZERO_TASK_ID_KEY,
+    ENDPOINT_GC_SEEN_RESTART_AT_KEY,
     ENDPOINT_GC_SEEN_TASK_ID_KEY,
     ENDPOINT_GC_TOUCHED_AT_KEY,
     ENDPOINT_GC_UNAVAILABLE_SINCE_KEY,
@@ -61,11 +62,12 @@ GC_LAST_TRAFFIC_AT_KEY = ENDPOINT_GC_LAST_TRAFFIC_AT_KEY
 GC_SCALE_TO_ZERO_REQUESTED_AT_KEY = ENDPOINT_GC_SCALE_TO_ZERO_REQUESTED_AT_KEY
 GC_SCALE_TO_ZERO_TASK_ID_KEY = ENDPOINT_GC_SCALE_TO_ZERO_TASK_ID_KEY
 GC_SEEN_TASK_ID_KEY = ENDPOINT_GC_SEEN_TASK_ID_KEY
+GC_SEEN_RESTART_AT_KEY = ENDPOINT_GC_SEEN_RESTART_AT_KEY
 GC_OBSERVED_AT_KEY = ENDPOINT_GC_OBSERVED_AT_KEY
 GC_TOUCHED_AT_KEY = ENDPOINT_GC_TOUCHED_AT_KEY
 GC_EXEMPT_KEY = ENDPOINT_GC_EXEMPT_KEY
 # Bookkeeping GC rewrites on every write; not clocks.
-GC_BOOKKEEPING_KEYS = (GC_TOUCHED_AT_KEY, GC_SEEN_TASK_ID_KEY)
+GC_BOOKKEEPING_KEYS = (GC_TOUCHED_AT_KEY, GC_SEEN_TASK_ID_KEY, GC_SEEN_RESTART_AT_KEY)
 GC_STATE_KEYS = (
     GC_UNAVAILABLE_SINCE_KEY,
     GC_LAST_TRAFFIC_AT_KEY,
@@ -73,6 +75,7 @@ GC_STATE_KEYS = (
     GC_SCALE_TO_ZERO_REQUESTED_AT_KEY,
     GC_SCALE_TO_ZERO_TASK_ID_KEY,
     GC_SEEN_TASK_ID_KEY,
+    GC_SEEN_RESTART_AT_KEY,
     GC_TOUCHED_AT_KEY,
 )
 GC_TIMESTAMP_KEYS = (
@@ -80,6 +83,7 @@ GC_TIMESTAMP_KEYS = (
     GC_LAST_TRAFFIC_AT_KEY,
     GC_OBSERVED_AT_KEY,
     GC_SCALE_TO_ZERO_REQUESTED_AT_KEY,
+    GC_SEEN_RESTART_AT_KEY,
     GC_TOUCHED_AT_KEY,
 )
 
@@ -200,6 +204,8 @@ class EndpointGarbageCollectionService:
         self.digest_gateway = digest_gateway
         self.config = config
         self.now = now
+        # Infra state of the endpoint being judged; writes record its restart annotation.
+        self._infra_for_writes: Optional[ModelEndpointInfraState] = None
 
     async def execute(self) -> EndpointGcReport:
         run_at = self.now()
@@ -237,6 +243,7 @@ class EndpointGarbageCollectionService:
         due: List[PlannedAction],
         report: EndpointGcReport,
     ) -> None:
+        self._infra_for_writes = None
         metadata = record.metadata or {}
         has_state = any(key in metadata for key in GC_STATE_KEYS)
         if record.status in IN_FLIGHT_STATUSES:
@@ -275,6 +282,8 @@ class EndpointGarbageCollectionService:
                 report.no_deployment.append(record)
             return
 
+        # Writes from here on acknowledge the restart annotation seen in this listing.
+        self._infra_for_writes = infra_state
         if has_state and self._owner_restarted(infra_state, metadata):
             # `restart_model_endpoint` only touches kubernetes; the annotation it writes is the
             # owner's activity signal.
@@ -382,7 +391,9 @@ class EndpointGarbageCollectionService:
             for key in (GC_SCALE_TO_ZERO_REQUESTED_AT_KEY, GC_SCALE_TO_ZERO_TASK_ID_KEY)
             if key in metadata
         }
-        if has_state and not all(key in metadata for key in GC_BOOKKEEPING_KEYS):
+        if has_state and not all(
+            key in metadata for key in (GC_TOUCHED_AT_KEY, GC_SEEN_TASK_ID_KEY)
+        ):
             # Seeded state: record our write time and the task id we saw, so owner edits
             # become detectable from here on.
             if not await self._write_gc_state(
@@ -688,6 +699,7 @@ class EndpointGarbageCollectionService:
         report: EndpointGcReport,
     ) -> None:
         due.sort(key=lambda action: action.due_at)
+        self._infra_for_writes = None
         attempted = 0
         for action in due:
             if (
@@ -728,6 +740,29 @@ class EndpointGarbageCollectionService:
                     report.skipped_at_action.append(action)
                     continue
                 if self._owner_restarted(live, fresh.metadata or {}):
+                    report.skipped_at_action.append(action)
+                    continue
+                live_desired, live_available = _worker_counts(live)
+                if action.reason == BROKEN and live_available > 0:
+                    # Recovered since the listing: drop the broken clock, take no action.
+                    await self._write_gc_state(
+                        fresh,
+                        {
+                            k: v
+                            for k, v in (fresh.metadata or {}).items()
+                            if k in GC_STATE_KEYS
+                            and k not in GC_BOOKKEEPING_KEYS
+                            and k != GC_UNAVAILABLE_SINCE_KEY
+                        },
+                        run_at,
+                        report,
+                        locked=True,
+                        infra_state=live,
+                    )
+                    report.recovered.append(fresh)
+                    report.skipped_at_action.append(action)
+                    continue
+                if action.kind == SCALE_TO_ZERO and live_desired == 0:
                     report.skipped_at_action.append(action)
                     continue
                 if action.record.endpoint_type == ModelEndpointType.ASYNC:
@@ -788,7 +823,9 @@ class EndpointGarbageCollectionService:
             if key in GC_STATE_KEYS and key not in GC_BOOKKEEPING_KEYS
         }
         requested = {**base, GC_SCALE_TO_ZERO_REQUESTED_AT_KEY: run_at.isoformat()}
-        if not await self._write_gc_state(action.record, requested, run_at, report, locked=True):
+        if not await self._write_gc_state(
+            action.record, requested, run_at, report, locked=True, infra_state=action.infra_state
+        ):
             report.deferred.append(action)
             return
         try:
@@ -831,12 +868,16 @@ class EndpointGarbageCollectionService:
     @staticmethod
     def _owner_restarted(infra_state: ModelEndpointInfraState, metadata: Dict) -> bool:
         restarted_at = infra_state.restarted_at
-        touched = _parse_ts(metadata.get(GC_TOUCHED_AT_KEY))
-        if restarted_at is None or touched is None:
+        if restarted_at is None:
             return False
         if restarted_at.tzinfo is None:
             restarted_at = restarted_at.replace(tzinfo=timezone.utc)
-        return restarted_at > touched
+        seen = _parse_ts(metadata.get(GC_SEEN_RESTART_AT_KEY))
+        if seen is not None:
+            # GC acknowledged a restart annotation before; a newer one is an owner restart.
+            return restarted_at > seen
+        touched = _parse_ts(metadata.get(GC_TOUCHED_AT_KEY))
+        return touched is not None and restarted_at > touched
 
     @staticmethod
     def _owner_touched(record: ModelEndpointRecord, metadata: Dict) -> bool:
@@ -867,6 +908,7 @@ class EndpointGarbageCollectionService:
         *,
         locked: bool = False,
         resetting: bool = False,
+        infra_state: Optional[ModelEndpointInfraState] = None,
     ) -> bool:
         """Replace the GC keys in the endpoint's metadata, leaving every other key as stored.
 
@@ -924,6 +966,15 @@ class EndpointGarbageCollectionService:
                 merged[GC_SEEN_TASK_ID_KEY] = (
                     gc_state.get(GC_SCALE_TO_ZERO_TASK_ID_KEY) or current.creation_task_id or ""
                 )
+                if infra_state is None:
+                    infra_state = self._infra_for_writes
+                if infra_state is not None and infra_state.restarted_at is not None:
+                    restarted_at = infra_state.restarted_at
+                    if restarted_at.tzinfo is None:
+                        restarted_at = restarted_at.replace(tzinfo=timezone.utc)
+                    merged[GC_SEEN_RESTART_AT_KEY] = restarted_at.isoformat()
+                elif GC_SEEN_RESTART_AT_KEY in current_metadata and infra_state is None:
+                    merged[GC_SEEN_RESTART_AT_KEY] = current_metadata[GC_SEEN_RESTART_AT_KEY]
             # Bookkeeping, not an owner edit: last_updated_at stays as the owner left it.
             await self.record_repository.update_model_endpoint_metadata(
                 model_endpoint_id=record.id, metadata=merged
