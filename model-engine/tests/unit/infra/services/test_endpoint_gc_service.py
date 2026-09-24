@@ -2524,3 +2524,49 @@ async def test_observation_gap_resets_broken_clock_of_unparked_http_endpoint(
     assert (await harness.stored(endpoint))[GC_UNAVAILABLE_SINCE_KEY] == (
         NOW - timedelta(hours=36)
     ).isoformat()
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        pytest.param("last_updated_at", NOW - timedelta(days=1), id="owner-update-yesterday"),
+        pytest.param("restarted_at", NOW - timedelta(days=1), id="owner-restart-yesterday"),
+    ],
+)
+@pytest.mark.asyncio
+async def test_enrollment_clock_never_predates_known_owner_activity(
+    harness, model_endpoint_1, field, value
+):
+    endpoint = _endpoint(model_endpoint_1, available=1, unavailable=0)
+    if field == "last_updated_at":
+        endpoint.record.last_updated_at = value
+    else:
+        endpoint.infra_state = endpoint.infra_state.model_copy(update={"restarted_at": value})
+    harness.add(endpoint)
+    report = await harness.run(history={endpoint.record.name: NOW - timedelta(days=150)})
+
+    assert (await harness.stored(endpoint))[GC_LAST_TRAFFIC_AT_KEY] == value.isoformat()
+    assert report.scaled_to_zero == [] and all(not v for v in report.upcoming.values())
+
+
+@pytest.mark.asyncio
+async def test_owner_update_during_final_deployment_read_blocks_the_delete(
+    harness, model_endpoint_1
+):
+    endpoint = harness.add(_parked(model_endpoint_1))
+    original_get = harness.resources.get_resources
+    reads = {"n": 0}
+
+    async def get_resources_then_owner_updates(**kwargs):
+        reads["n"] += 1
+        if reads["n"] == 2:  # the Deployment read after telemetry
+            record = harness.repo.db[endpoint.record.id]
+            record.creation_task_id = "owner-task"
+            record.status = ModelEndpointStatus.UPDATE_PENDING
+        return await original_get(**kwargs)
+
+    harness.resources.get_resources = get_resources_then_owner_updates
+    report = await harness.run()
+
+    assert report.deleted == []
+    assert [a.record.id for a in report.skipped_at_action] == [endpoint.record.id]

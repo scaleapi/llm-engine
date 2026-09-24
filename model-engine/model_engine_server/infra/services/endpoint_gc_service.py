@@ -182,6 +182,10 @@ class _Attempt:
     made: bool = False  # set right before the destructive call, so cleanup failures still count
 
 
+def _utc(ts: datetime) -> datetime:
+    return ts if ts.tzinfo else ts.replace(tzinfo=timezone.utc)
+
+
 def _parse_ts(value: object) -> Optional[datetime]:
     if not isinstance(value, str):
         return None
@@ -569,11 +573,11 @@ class EndpointGarbageCollectionService:
             # existed, never so far that the first action lands before the first notice, and
             # only for endpoints the history covers.
             floor = run_at - timedelta(days=self.config.idle_scale_to_zero_days - NOTICE_DAYS[0])
-            created_at = record.created_at
-            if created_at.tzinfo is None:
-                created_at = created_at.replace(tzinfo=timezone.utc)
             seen = traffic.last_seen.get(record.id, run_at) if not is_async else run_at
-            last_traffic_at = max(seen, floor, created_at)
+            # Owner activity before enrollment is not yet attributable (no bookkeeping to
+            # compare against), so it bounds the clock the same way traffic does.
+            owner_activity = [record.created_at, record.last_updated_at, infra_state.restarted_at]
+            last_traffic_at = max(seen, floor, *(_utc(ts) for ts in owner_activity if ts))
         elif observed_at is None or run_at - observed_at > TRAFFIC_LOOKBACK:
             # Requests during a gap in observation (or before observation started, for a clock
             # with no boundary) would have been missed. Silence is only known since the start of
@@ -907,11 +911,7 @@ class EndpointGarbageCollectionService:
                 report.skipped_at_action.append(action)
                 return
             # The telemetry calls took time. Restarts and scale-ups do not go through the record
-            # lock, and API writers proceed when they fail to take it, so read the record and the
-            # Deployment once more right before touching either.
-            fresh = await self._record_allows(action, report)
-            if fresh is None:
-                return
+            # lock, so read the Deployment once more before touching it.
             live = await self._live_state_allows(action, fresh, run_at, report)
             if live is None:
                 return
@@ -932,6 +932,13 @@ class EndpointGarbageCollectionService:
                 if queued > 0:
                     report.skipped_at_action.append(action)
                     return
+            # API writers proceed when they fail to take the endpoint lock, so the record is
+            # read one last time right before the call. An update that arrives between this
+            # read and the call is still lost: the API's lock is advisory and this path cannot
+            # fence it (documented residual).
+            fresh = await self._record_allows(action, report)
+            if fresh is None:
+                return
             attempt.made = True  # counts against the cap whatever happens from here
             try:
                 if action.kind == DELETE:

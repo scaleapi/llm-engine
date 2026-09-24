@@ -1,5 +1,6 @@
 import asyncio
-from datetime import datetime, timezone
+import re
+from datetime import datetime, timedelta, timezone
 from typing import Dict, Optional, Set
 from urllib.parse import urlparse
 
@@ -98,17 +99,49 @@ class PrometheusEndpointTrafficGateway(EndpointTrafficGateway):
                 active.add(workload)
         return active
 
+    async def retention(self) -> Optional[timedelta]:
+        """Time-based retention of the server, None when unknown or size-based only."""
+        data = await self._get("/api/v1/status/runtimeinfo", {})
+        if data is None:
+            return None
+        return _parse_duration(data.get("storageRetention", ""))
+
     async def last_active_at(self, since: datetime) -> Optional[Dict[str, datetime]]:
-        """Workloads with any request in the window, as far back as this server's retention
-        reaches. The exact time is not recovered: a workload seen at all is reported as seen
-        now, which only ever starts a clock later, never earlier."""
-        window = int((datetime.now(timezone.utc) - since).total_seconds())
-        results = await self._query(_QUERY % (self.workload_prefix, window))
+        """Workloads with any request since ``since``, or None when this server's retention does
+        not reach back that far: silence it cannot see is not history. The exact time is not
+        recovered; a workload seen at all is reported as seen now, which only ever starts a
+        clock later, never earlier."""
+        now = datetime.now(timezone.utc)
+        retention = await self.retention()
+        if retention is None or now - since > retention:
+            logger.info("Prometheus retention does not cover the requested history window")
+            return None
+        results = await self._query(
+            _QUERY % (self.workload_prefix, int((now - since).total_seconds()))
+        )
         if results is None:
             return None
-        now = datetime.now(timezone.utc)
         return {
             result["metric"]["destination_workload"]: now
             for result in results
             if result["metric"].get("destination_workload") and float(result["value"][1]) > 0
         }
+
+
+_DURATION_UNITS = {
+    "y": timedelta(days=365),
+    "w": timedelta(weeks=1),
+    "d": timedelta(days=1),
+    "h": timedelta(hours=1),
+    "m": timedelta(minutes=1),
+    "s": timedelta(seconds=1),
+    "ms": timedelta(milliseconds=1),
+}
+
+
+def _parse_duration(value: str) -> Optional[timedelta]:
+    """Prometheus duration strings such as ``15d`` or ``1h30m``; None for anything else."""
+    parts = re.findall(r"(\d+)(ms|[ywdhms])", value)
+    if not parts or "".join(n + u for n, u in parts) != value:
+        return None
+    return sum((int(n) * _DURATION_UNITS[u] for n, u in parts), timedelta())
