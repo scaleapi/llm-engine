@@ -11,6 +11,7 @@ from model_engine_server.domain.entities import (
 )
 from model_engine_server.domain.exceptions import (
     EndpointDeleteFailedException,
+    EndpointResourceConflictException,
     ExistingEndpointOperationInProgressException,
     ObjectAlreadyExistsException,
     ObjectNotFoundException,
@@ -419,6 +420,43 @@ async def test_create_delete_model_endpoint_infra_not_deleted_raises_endpoint_de
         await fake_live_model_endpoint_service.delete_model_endpoint(
             model_endpoint_id=model_endpoint_record.id,
         )
+
+
+@pytest.mark.parametrize("owner_moved_on", [False, True])
+@pytest.mark.asyncio
+async def test_delete_precondition_conflict_restores_status_unless_a_writer_moved_on(
+    fake_live_model_endpoint_service: LiveModelEndpointService,
+    model_endpoint_1: ModelEndpoint,
+    owner_moved_on: bool,
+):
+    record = await _create_model_endpoint_helper(
+        model_endpoint=model_endpoint_1, service=fake_live_model_endpoint_service
+    )
+    repo: Any = fake_live_model_endpoint_service.model_endpoint_record_repository
+    previous_status = repo.db[record.id].status
+
+    async def conflict_during_infra_delete(**kwargs):
+        if owner_moved_on:
+            # An API update accepted while the delete was in flight.
+            repo.db[record.id].status = ModelEndpointStatus.UPDATE_PENDING
+            repo.db[record.id].creation_task_id = "owner-task"
+        raise EndpointResourceConflictException
+
+    fake_live_model_endpoint_service.model_endpoint_infra_gateway.__setattr__(
+        "delete_model_endpoint_infra", AsyncMock(side_effect=conflict_during_infra_delete)
+    )
+
+    with pytest.raises(EndpointResourceConflictException):
+        await fake_live_model_endpoint_service.delete_model_endpoint(
+            model_endpoint_id=record.id, expected_resource_version="100"
+        )
+
+    stored = repo.db[record.id]
+    if owner_moved_on:
+        assert stored.status == ModelEndpointStatus.UPDATE_PENDING
+        assert stored.creation_task_id == "owner-task"
+    else:
+        assert stored.status == previous_status
 
 
 @pytest.mark.asyncio

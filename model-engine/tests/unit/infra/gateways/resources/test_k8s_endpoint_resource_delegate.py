@@ -18,7 +18,10 @@ from model_engine_server.domain.entities import (
     ModelEndpointType,
     ModelEndpointUserConfigState,
 )
-from model_engine_server.domain.exceptions import EndpointResourceInfraException
+from model_engine_server.domain.exceptions import (
+    EndpointResourceConflictException,
+    EndpointResourceInfraException,
+)
 from model_engine_server.infra.gateways.resources.k8s_endpoint_resource_delegate import (
     DATADOG_ENV_VAR,
     MODEL_CACHE_VOLUME_NAME,
@@ -1269,6 +1272,100 @@ async def test_delete_resources_sync_success(
         endpoint_id="", deployment_name="", endpoint_type=ModelEndpointType.SYNC
     )
     assert deleted
+
+
+@pytest.mark.parametrize("endpoint_type", [ModelEndpointType.SYNC, ModelEndpointType.ASYNC])
+@pytest.mark.asyncio
+async def test_guarded_delete_conflict_removes_nothing(
+    k8s_endpoint_resource_delegate,
+    mock_apps_client,
+    mock_core_client,
+    mock_autoscaling_client,
+    mock_policy_client,
+    mock_custom_objects_client,
+    endpoint_type,
+):
+    mock_apps_client.delete_namespaced_deployment.side_effect = ApiException(status=409)
+
+    with pytest.raises(EndpointResourceConflictException):
+        await k8s_endpoint_resource_delegate.delete_resources(
+            endpoint_id="e",
+            deployment_name="d",
+            endpoint_type=endpoint_type,
+            expected_resource_version="100",
+        )
+
+    call = mock_apps_client.delete_namespaced_deployment.call_args
+    assert call.kwargs["body"].preconditions.resource_version == "100"
+    mock_custom_objects_client.delete_namespaced_custom_object.assert_not_called()
+    mock_core_client.delete_namespaced_config_map.assert_not_called()
+    mock_core_client.delete_namespaced_service.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    "statuses,expect_conflict",
+    [
+        pytest.param([404, None], False, id="legacy-name-carries-precondition"),
+        pytest.param([404, 409], True, id="legacy-name-changed"),
+        pytest.param([404, 404], True, id="observed-deployment-gone"),
+    ],
+)
+@pytest.mark.asyncio
+async def test_guarded_delete_legacy_fallback(
+    k8s_endpoint_resource_delegate,
+    mock_apps_client,
+    mock_core_client,
+    mock_autoscaling_client,
+    mock_policy_client,
+    mock_custom_objects_client,
+    statuses,
+    expect_conflict,
+):
+    mock_apps_client.delete_namespaced_deployment.side_effect = [
+        ApiException(status=s) if s else None for s in statuses
+    ]
+
+    if expect_conflict:
+        with pytest.raises(EndpointResourceConflictException):
+            await k8s_endpoint_resource_delegate.delete_resources(
+                endpoint_id="e",
+                deployment_name="legacy",
+                endpoint_type=ModelEndpointType.SYNC,
+                expected_resource_version="100",
+            )
+        mock_core_client.delete_namespaced_config_map.assert_not_called()
+    else:
+        assert await k8s_endpoint_resource_delegate.delete_resources(
+            endpoint_id="e",
+            deployment_name="legacy",
+            endpoint_type=ModelEndpointType.SYNC,
+            expected_resource_version="100",
+        )
+    for call in mock_apps_client.delete_namespaced_deployment.call_args_list:
+        assert call.kwargs["body"].preconditions.resource_version == "100"
+    assert (
+        mock_apps_client.delete_namespaced_deployment.call_args_list[-1].kwargs["name"] == "legacy"
+    )
+
+
+@pytest.mark.asyncio
+async def test_unguarded_delete_keeps_legacy_fallback_without_precondition(
+    k8s_endpoint_resource_delegate,
+    mock_apps_client,
+    mock_core_client,
+    mock_autoscaling_client,
+    mock_policy_client,
+    mock_custom_objects_client,
+):
+    mock_apps_client.delete_namespaced_deployment.side_effect = [
+        ApiException(status=404),
+        ApiException(status=404),
+    ]
+    assert await k8s_endpoint_resource_delegate.delete_resources(
+        endpoint_id="e", deployment_name="legacy", endpoint_type=ModelEndpointType.SYNC
+    )
+    for call in mock_apps_client.delete_namespaced_deployment.call_args_list:
+        assert call.kwargs["body"] is None
 
 
 @pytest.mark.asyncio

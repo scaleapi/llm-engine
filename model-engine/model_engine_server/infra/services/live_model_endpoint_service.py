@@ -431,6 +431,7 @@ class LiveModelEndpointService(ModelEndpointService):
             else:
                 logger.info(f"Endpoint delete acquired lock for {created_by}, {name}")
 
+            previous_status, previous_task_id = record.status, record.creation_task_id
             await self.model_endpoint_record_repository.update_model_endpoint_record(
                 model_endpoint_id=model_endpoint_id,
                 status=ModelEndpointStatus.DELETE_IN_PROGRESS,
@@ -443,10 +444,18 @@ class LiveModelEndpointService(ModelEndpointService):
                 )
             except EndpointResourceConflictException:
                 # The Deployment changed under the precondition; nothing was deleted. Put the
-                # status back as it was.
-                await self.model_endpoint_record_repository.update_model_endpoint_record(
-                    model_endpoint_id=model_endpoint_id, status=record.status
+                # status back as it was, unless a writer already moved the record on.
+                current = await self.model_endpoint_record_repository.get_model_endpoint_record(
+                    model_endpoint_id=model_endpoint_id, refresh=True
                 )
+                if (
+                    current is not None
+                    and current.status == ModelEndpointStatus.DELETE_IN_PROGRESS
+                    and current.creation_task_id == previous_task_id
+                ):
+                    await self.model_endpoint_record_repository.update_model_endpoint_record(
+                        model_endpoint_id=model_endpoint_id, status=previous_status
+                    )
                 raise
             if not infra_deleted:
                 await self.model_endpoint_record_repository.update_model_endpoint_record(

@@ -1472,7 +1472,8 @@ class K8SEndpointResourceDelegate:
                 logger.info(f"Deployment {k8s_resource_group_name} changed since it was read")
                 raise EndpointResourceConflictException from e
             if e.status == 404:
-                # Try the legacy deployment_name
+                # Try the legacy deployment_name (reads fall back the same way, so the observed
+                # resourceVersion may belong to the legacy object; the precondition travels).
                 logger.warning(
                     f"Could not find resource, falling back to legacy deployment_name: "
                     f"k8s_resource_group_name={k8s_resource_group_name}, endpoint_id={endpoint_id}, "
@@ -1483,8 +1484,15 @@ class K8SEndpointResourceDelegate:
                     await apps_client.delete_namespaced_deployment(
                         name=k8s_resource_group_name,
                         namespace=hmi_config.endpoint_namespace,
+                        body=body,
                     )
                 except ApiException as e2:
+                    if e2.status == 409 and expected_resource_version is not None:
+                        logger.info(f"Deployment {k8s_resource_group_name} changed since read")
+                        raise EndpointResourceConflictException from e2
+                    if e2.status == 404 and expected_resource_version is not None:
+                        # The observed Deployment is gone under either name: not what was read.
+                        raise EndpointResourceConflictException from e2
                     if e2.status == 404:
                         # Deployment doesn't exist, might as well continue to delete the db entry
                         logger.warning(
@@ -2630,6 +2638,23 @@ class K8SEndpointResourceDelegate:
             )
         return infra_states
 
+    async def _delete_workloads(
+        self, endpoint_id: str, deployment_name: str, expected_resource_version: Optional[str]
+    ) -> Tuple[bool, bool]:
+        """(lws deleted, deployment deleted). A guarded delete checks the observed Deployment
+        first, so a failed precondition removes nothing at all."""
+        if expected_resource_version is not None:
+            deployment_deleted = await self._delete_deployment(
+                endpoint_id=endpoint_id,
+                deployment_name=deployment_name,
+                expected_resource_version=expected_resource_version,
+            )
+            return await self._delete_lws(endpoint_id=endpoint_id), deployment_deleted
+        lws_deleted = await self._delete_lws(endpoint_id=endpoint_id)
+        return lws_deleted, await self._delete_deployment(
+            endpoint_id=endpoint_id, deployment_name=deployment_name
+        )
+
     async def _delete_resources_async(
         self,
         endpoint_id: str,
@@ -2638,8 +2663,7 @@ class K8SEndpointResourceDelegate:
     ) -> bool:
 
         # TODO check that this implementation actually works for multinode if/when we decide to support that
-        lws_delete_succeeded = await self._delete_lws(endpoint_id=endpoint_id)
-        deployment_delete_succeeded = await self._delete_deployment(
+        lws_delete_succeeded, deployment_delete_succeeded = await self._delete_workloads(
             endpoint_id=endpoint_id,
             deployment_name=deployment_name,
             expected_resource_version=expected_resource_version,
@@ -2658,9 +2682,7 @@ class K8SEndpointResourceDelegate:
         deployment_name: str,
         expected_resource_version: Optional[str] = None,
     ) -> bool:
-        lws_delete_succeeded = await self._delete_lws(endpoint_id=endpoint_id)
-
-        deployment_delete_succeeded = await self._delete_deployment(
+        lws_delete_succeeded, deployment_delete_succeeded = await self._delete_workloads(
             endpoint_id=endpoint_id,
             deployment_name=deployment_name,
             expected_resource_version=expected_resource_version,
