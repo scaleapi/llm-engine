@@ -592,6 +592,21 @@ class K8SEndpointResourceDelegate:
         await maybe_load_kube_config()
         await self._restart_deployment(deployment_name=deployment_name)
 
+    @staticmethod
+    def _get_restarted_at(deployment_config: V1Deployment) -> Optional[datetime.datetime]:
+        template = deployment_config.spec.template if deployment_config.spec else None
+        annotations = (
+            (template.metadata.annotations or {}) if template and template.metadata else {}
+        )
+        value = annotations.get("kubectl.kubernetes.io/restartedAt")
+        if not isinstance(value, str) or not value:
+            return None
+        try:
+            parsed = datetime.datetime.fromisoformat(value)
+        except ValueError:
+            return None
+        return parsed if parsed.tzinfo else parsed.replace(tzinfo=datetime.timezone.utc)
+
     # --- Private helper functions
     @staticmethod
     def _get_env_value_from_envlist(
@@ -2342,6 +2357,7 @@ class K8SEndpointResourceDelegate:
             ),
             image=common_params["image"],
             num_queued_items=None,
+            restarted_at=self._get_restarted_at(deployment_config),
         )
 
         return infra_state
@@ -2549,6 +2565,7 @@ class K8SEndpointResourceDelegate:
                     ),
                     image=common_params["image"],
                     num_queued_items=None,
+                    restarted_at=self._get_restarted_at(deployment_config),
                 )
                 if name.startswith("launch-endpoint-id-"):
                     key = _k8s_resource_group_name_to_endpoint_id(name)

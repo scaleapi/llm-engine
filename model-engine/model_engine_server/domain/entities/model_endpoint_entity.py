@@ -157,6 +157,8 @@ class ModelEndpointInfraState(BaseModel):
     high_priority: Optional[bool] = None
     num_queued_items: Optional[int] = None
     image: str
+    # Pod template annotation kubectl.kubernetes.io/restartedAt, set by an owner restart.
+    restarted_at: Optional[datetime.datetime] = None
 
 
 class ModelEndpoint(BaseModel):

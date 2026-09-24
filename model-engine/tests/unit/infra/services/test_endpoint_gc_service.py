@@ -121,6 +121,7 @@ class Harness:
     def add(self, endpoint: ModelEndpoint, with_resources: bool = True) -> ModelEndpoint:
         self.repo.add_model_endpoint_record(endpoint.record)
         self.service.add_model_endpoint(endpoint)
+        self.service.model_bundle_repository.add_model_bundle(endpoint.record.current_model_bundle)
         if with_resources:
             self.resources.add_resource(endpoint.record.id, endpoint.infra_state)
         return endpoint
@@ -658,7 +659,13 @@ async def test_scale_to_zero_calls_update_with_min_workers_zero(harness, model_e
     harness.service.update_model_endpoint = spy
     await harness.run()
 
-    assert calls == [{"model_endpoint_id": endpoint.record.id, "min_workers": 0}]
+    assert calls == [
+        {
+            "model_endpoint_id": endpoint.record.id,
+            "model_bundle_id": endpoint.record.current_model_bundle.id,
+            "min_workers": 0,
+        }
+    ]
 
 
 @pytest.mark.asyncio
@@ -1369,3 +1376,76 @@ async def test_multinode_endpoint_is_never_scaled_to_zero(harness, model_endpoin
 
     assert report.scaled_to_zero == []
     assert [a.record.id for a in report.unsupported] == [endpoint.record.id]
+
+
+@pytest.mark.asyncio
+async def test_owner_restart_resets_the_clock(harness, model_endpoint_1):
+    endpoint = _endpoint(
+        model_endpoint_1,
+        available=0,
+        unavailable=1,
+        metadata={
+            GC_UNAVAILABLE_SINCE_KEY: _days_ago(31),
+            GC_TOUCHED_AT_KEY: _days_ago(1),
+            GC_SEEN_TASK_ID_KEY: "test_creation_task_id",
+        },
+    )
+    endpoint = ModelEndpoint(
+        record=endpoint.record,
+        infra_state=endpoint.infra_state.model_copy(
+            update={"restarted_at": NOW - timedelta(hours=6)}
+        ),
+    )
+    harness.add(endpoint)
+    report = await harness.run()
+
+    assert report.scaled_to_zero == [] and report.deferred == []
+    assert [r.id for r in report.owner_reset] == [endpoint.record.id]
+    assert GC_UNAVAILABLE_SINCE_KEY not in await harness.stored(endpoint)
+
+
+@pytest.mark.asyncio
+async def test_owner_restart_after_listing_blocks_the_action(harness, model_endpoint_1):
+    endpoint = harness.add(
+        _endpoint(
+            model_endpoint_1,
+            available=0,
+            unavailable=1,
+            metadata={
+                GC_UNAVAILABLE_SINCE_KEY: _days_ago(31),
+                GC_TOUCHED_AT_KEY: _days_ago(1),
+                GC_SEEN_TASK_ID_KEY: "test_creation_task_id",
+            },
+        )
+    )
+    original_list = harness.repo.list_model_endpoint_records
+
+    async def list_then_restart(**kwargs):
+        records = await original_list(**kwargs)
+        harness.resources.db[endpoint.record.id] = endpoint.infra_state.model_copy(
+            update={"restarted_at": NOW - timedelta(minutes=1)}
+        )
+        return records
+
+    harness.repo.list_model_endpoint_records = list_then_restart
+    report = await harness.run()
+
+    assert report.scaled_to_zero == []
+    assert [a.record.id for a in report.skipped_at_action] == [endpoint.record.id]
+
+
+@pytest.mark.asyncio
+async def test_async_scale_to_zero_requires_an_empty_queue(harness, model_endpoint_1):
+    endpoint = harness.add(
+        _endpoint(
+            model_endpoint_1,
+            available=1,
+            unavailable=0,
+            endpoint_type=ModelEndpointType.ASYNC,
+            metadata={GC_LAST_TRAFFIC_AT_KEY: _days_ago(90), GC_OBSERVED_AT_KEY: _days_ago(1)},
+        )
+    )
+    report = await harness.run(queue_in_flight=2)
+
+    assert report.scaled_to_zero == []
+    assert [a.record.id for a in report.skipped_at_action] == [endpoint.record.id]

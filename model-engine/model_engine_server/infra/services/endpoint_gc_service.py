@@ -275,6 +275,22 @@ class EndpointGarbageCollectionService:
                 report.no_deployment.append(record)
             return
 
+        if has_state and self._owner_restarted(infra_state, metadata):
+            # `restart_model_endpoint` only touches kubernetes; the annotation it writes is the
+            # owner's activity signal.
+            await self._write_gc_state(
+                record,
+                {
+                    GC_LAST_TRAFFIC_AT_KEY: run_at.isoformat(),
+                    GC_OBSERVED_AT_KEY: run_at.isoformat(),
+                },
+                run_at,
+                report,
+                resetting=True,
+            )
+            report.owner_reset.append(record)
+            return
+
         desired, available = _worker_counts(infra_state)
         unavailable_since = _parse_ts(metadata.get(GC_UNAVAILABLE_SINCE_KEY))
         last_traffic_at = _parse_ts(metadata.get(GC_LAST_TRAFFIC_AT_KEY))
@@ -701,8 +717,22 @@ class EndpointGarbageCollectionService:
                 ):
                     report.skipped_at_action.append(action)
                     continue
-                if action.kind == DELETE and action.record.endpoint_type == ModelEndpointType.ASYNC:
-                    # Deleting an async endpoint deletes its queue with whatever is in it.
+                try:
+                    live = await self.resource_gateway.get_resources(
+                        endpoint_id=fresh.id,
+                        deployment_name=action.infra_state.deployment_name,
+                        endpoint_type=fresh.endpoint_type,
+                    )
+                except Exception:
+                    logger.exception(f"could not re-read resources for {fresh.id}; not acting")
+                    report.skipped_at_action.append(action)
+                    continue
+                if self._owner_restarted(live, fresh.metadata or {}):
+                    report.skipped_at_action.append(action)
+                    continue
+                if action.record.endpoint_type == ModelEndpointType.ASYNC:
+                    # Scaling to zero stops workers mid-task; deleting removes the queue with
+                    # whatever is in it. Either way the queue must be empty right now.
                     queued = await self._queued_messages(action.record.id)
                     if queued is None or queued > 0:
                         report.skipped_at_action.append(action)
@@ -762,8 +792,12 @@ class EndpointGarbageCollectionService:
             report.deferred.append(action)
             return
         try:
+            # Passing the current bundle id keeps this a resource patch; without it the service
+            # marks the bundle as changed and the delegate replaces the Deployment with 0 replicas.
             updated = await self.model_endpoint_service.update_model_endpoint(
-                model_endpoint_id=action.record.id, min_workers=0
+                model_endpoint_id=action.record.id,
+                model_bundle_id=action.record.current_model_bundle.id,
+                min_workers=0,
             )
         except Exception:
             # The build may or may not have been enqueued. Keep the intent without a task id;
@@ -793,6 +827,16 @@ class EndpointGarbageCollectionService:
         raise RuntimeError(f"could not record the scale-to-zero task id for {action.record.id}")
 
     # ---- state -----------------------------------------------------------------------------
+
+    @staticmethod
+    def _owner_restarted(infra_state: ModelEndpointInfraState, metadata: Dict) -> bool:
+        restarted_at = infra_state.restarted_at
+        touched = _parse_ts(metadata.get(GC_TOUCHED_AT_KEY))
+        if restarted_at is None or touched is None:
+            return False
+        if restarted_at.tzinfo is None:
+            restarted_at = restarted_at.replace(tzinfo=timezone.utc)
+        return restarted_at > touched
 
     @staticmethod
     def _owner_touched(record: ModelEndpointRecord, metadata: Dict) -> bool:
