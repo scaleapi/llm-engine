@@ -37,8 +37,12 @@ def _days_ago(days: float) -> str:
 
 
 class FakeQueue(FakeQueueEndpointResourceDelegate):
-    def __init__(self, sent: Optional[int] = 0):
+    def __init__(self, sent: Optional[int] = 0, depth: int = 0):
         self.sent = sent
+        self.depth = depth
+
+    async def get_queue_attributes(self, endpoint_id: str) -> Dict:
+        return {"Attributes": {"ApproximateNumberOfMessages": str(self.depth)}}
 
     async def messages_sent_since(self, endpoint_id: str, since: datetime) -> Optional[int]:
         return self.sent
@@ -119,12 +123,13 @@ class Harness:
         traffic_names: Optional[Set[str]] = frozenset(),
         history: Optional[Dict[str, datetime]] = None,
         queue_sent: Optional[int] = 0,
+        queue_depth: int = 0,
         config: EndpointGcConfig = ACTING,
     ):
         gc = EndpointGarbageCollectionService(
             model_endpoint_record_repository=self.repo,
             resource_gateway=self.resources,
-            queue_delegate=FakeQueue(queue_sent),
+            queue_delegate=FakeQueue(queue_sent, queue_depth),
             traffic_gateways=[
                 FakeTraffic(None if traffic_names is None else set(traffic_names), history)
             ],
@@ -1299,3 +1304,28 @@ async def test_owner_update_after_listing_during_pending_reconciliation_resets(
     assert (
         GC_UNAVAILABLE_SINCE_KEY not in stored and GC_SCALE_TO_ZERO_REQUESTED_AT_KEY not in stored
     )
+
+
+@pytest.mark.parametrize("depth,deleted", [(0, True), (3, False)])
+@pytest.mark.asyncio
+async def test_async_delete_requires_an_empty_queue(harness, model_endpoint_1, depth, deleted):
+    endpoint = harness.add(
+        _endpoint(
+            model_endpoint_1,
+            available=0,
+            unavailable=0,
+            endpoint_type=ModelEndpointType.ASYNC,
+            metadata={
+                GC_UNAVAILABLE_SINCE_KEY: _days_ago(90),
+                GC_SCALE_TO_ZERO_REQUESTED_AT_KEY: _days_ago(60),
+                GC_SCALE_TO_ZERO_TASK_ID_KEY: "gc-task",
+                GC_SEEN_TASK_ID_KEY: "gc-task",
+                GC_TOUCHED_AT_KEY: _days_ago(60),
+            },
+        )
+    )
+    endpoint.record.creation_task_id = "gc-task"
+    report = await harness.run(queue_depth=depth)
+
+    assert ([a.record.id for a in report.deleted] == [endpoint.record.id]) is deleted
+    assert ([a.record.id for a in report.skipped_at_action] == [endpoint.record.id]) is not deleted

@@ -78,6 +78,17 @@ class ModelEndpointRecordRepository(ABC):
             A Model Endpoint Record domain entity.
         """
 
+    async def update_model_endpoint_metadata(
+        self, model_endpoint_id: str, metadata: Dict[str, Any]
+    ) -> Optional[ModelEndpointRecord]:
+        """
+        Replaces the endpoint's metadata without touching last_updated_at. For bookkeeping that
+        is not an edit by the endpoint's owner.
+        """
+        return await self.update_model_endpoint_record(
+            model_endpoint_id=model_endpoint_id, metadata=metadata
+        )
+
     @abstractmethod
     async def update_model_endpoint_record(
         self,

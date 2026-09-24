@@ -693,6 +693,12 @@ class EndpointGarbageCollectionService:
                 ):
                     report.skipped_at_action.append(action)
                     continue
+                if action.kind == DELETE and action.record.endpoint_type == ModelEndpointType.ASYNC:
+                    # Deleting an async endpoint deletes its queue with whatever is in it.
+                    queued = await self._queued_messages(action.record.id)
+                    if queued is None or queued > 0:
+                        report.skipped_at_action.append(action)
+                        continue
                 attempted += 1
                 try:
                     if action.kind == DELETE:
@@ -705,6 +711,14 @@ class EndpointGarbageCollectionService:
                         f"GC {action.kind} failed for {action.record.id} ({action.record.name})"
                     )
                     report.action_failed.append(action)
+
+    async def _queued_messages(self, endpoint_id: str) -> Optional[int]:
+        try:
+            attributes = await self.queue_delegate.get_queue_attributes(endpoint_id=endpoint_id)
+            return int(attributes["Attributes"]["ApproximateNumberOfMessages"])
+        except Exception:
+            logger.exception(f"could not read queue depth for {endpoint_id}")
+            return None
 
     async def _scale_to_zero(
         self, action: PlannedAction, run_at: datetime, report: EndpointGcReport
@@ -839,7 +853,8 @@ class EndpointGarbageCollectionService:
                 merged[GC_SEEN_TASK_ID_KEY] = (
                     gc_state.get(GC_SCALE_TO_ZERO_TASK_ID_KEY) or current.creation_task_id or ""
                 )
-            await self.record_repository.update_model_endpoint_record(
+            # Bookkeeping, not an owner edit: last_updated_at stays as the owner left it.
+            await self.record_repository.update_model_endpoint_metadata(
                 model_endpoint_id=record.id, metadata=merged
             )
             record.metadata = merged  # keep the in-memory record coherent for later steps
@@ -883,12 +898,18 @@ def format_digest(
         )
 
     action_sections: List[Tuple[str, List[PlannedAction]]] = [
-        ("Scaled to zero today", report.scaled_to_zero),
+        (
+            "Scaled to zero today (min_workers set to 0; an owner update restores it)",
+            report.scaled_to_zero,
+        ),
         ("Deleted today", report.deleted),
         ("Action failed", report.action_failed),
         ("Due, deferred (cap, actions disabled, or a source was unavailable)", report.deferred),
         ("Due, unsupported (cluster cannot scale http endpoints to zero)", report.unsupported),
-        ("Due, skipped: endpoint changed since it was judged", report.skipped_at_action),
+        (
+            "Due, skipped: endpoint changed since it was judged, or its queue is not empty",
+            report.skipped_at_action,
+        ),
     ]
     for days in NOTICE_DAYS:
         action_sections.append((f"In {days} day{'s' if days != 1 else ''}", report.upcoming[days]))

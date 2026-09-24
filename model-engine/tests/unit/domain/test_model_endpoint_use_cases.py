@@ -126,6 +126,59 @@ async def test_create_model_endpoint_use_case_raises_invalid_value_exception(
         await use_case.execute(user=user, request=request)
 
 
+@pytest.mark.parametrize(
+    "metadata",
+    [
+        pytest.param({"_gc_unavailable_since": "2026-01-01T00:00:00+00:00"}, id="clock-key"),
+        pytest.param({"_gc_seen_task_id": "x"}, id="bookkeeping-key"),
+        pytest.param({"_gc_exempt": "true"}, id="exempt-not-a-boolean"),
+    ],
+)
+@pytest.mark.asyncio
+async def test_create_model_endpoint_rejects_gc_metadata(
+    fake_model_bundle_repository,
+    fake_model_endpoint_service,
+    model_bundle_1: ModelBundle,
+    create_model_endpoint_request_sync: CreateModelEndpointV1Request,
+    metadata,
+):
+    fake_model_bundle_repository.add_model_bundle(model_bundle_1)
+    fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
+    use_case = CreateModelEndpointV1UseCase(
+        model_bundle_repository=fake_model_bundle_repository,
+        model_endpoint_service=fake_model_endpoint_service,
+    )
+    request = create_model_endpoint_request_sync.copy()
+    request.model_bundle_id = model_bundle_1.id
+    request.metadata = metadata
+    user_id = model_bundle_1.created_by
+    user = User(user_id=user_id, team_id=user_id, is_privileged_user=True)
+    with pytest.raises(ObjectHasInvalidValueException):
+        await use_case.execute(user=user, request=request)
+
+
+@pytest.mark.asyncio
+async def test_create_model_endpoint_accepts_boolean_gc_exempt(
+    fake_model_bundle_repository,
+    fake_model_endpoint_service,
+    model_bundle_1: ModelBundle,
+    create_model_endpoint_request_sync: CreateModelEndpointV1Request,
+):
+    fake_model_bundle_repository.add_model_bundle(model_bundle_1)
+    fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
+    use_case = CreateModelEndpointV1UseCase(
+        model_bundle_repository=fake_model_bundle_repository,
+        model_endpoint_service=fake_model_endpoint_service,
+    )
+    request = create_model_endpoint_request_sync.copy()
+    request.model_bundle_id = model_bundle_1.id
+    request.metadata = {"_gc_exempt": True}
+    user_id = model_bundle_1.created_by
+    user = User(user_id=user_id, team_id=user_id, is_privileged_user=True)
+    response = await use_case.execute(user=user, request=request)
+    assert response.endpoint_creation_task_id
+
+
 @pytest.mark.asyncio
 async def test_create_model_endpoint_use_case_raises_per_worker_invalid_value_exception(
     fake_model_bundle_repository,
@@ -981,6 +1034,34 @@ async def test_update_model_endpoint_success(
     )
     assert response.endpoint_creation_task_id
     assert isinstance(response, UpdateModelEndpointV1Response)
+
+
+@pytest.mark.asyncio
+async def test_update_model_endpoint_rejects_gc_clock_keys(
+    fake_model_bundle_repository,
+    fake_model_endpoint_service,
+    model_bundle_1: ModelBundle,
+    model_bundle_2: ModelBundle,
+    model_endpoint_1: ModelEndpoint,
+    update_model_endpoint_request: UpdateModelEndpointV1Request,
+):
+    fake_model_bundle_repository.add_model_bundle(model_bundle_1)
+    fake_model_bundle_repository.add_model_bundle(model_bundle_2)
+    fake_model_endpoint_service.add_model_endpoint(model_endpoint_1)
+    fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
+    use_case = UpdateModelEndpointByIdV1UseCase(
+        model_bundle_repository=fake_model_bundle_repository,
+        model_endpoint_service=fake_model_endpoint_service,
+    )
+    user_id = model_endpoint_1.record.created_by
+    user = User(user_id=user_id, team_id=user_id, is_privileged_user=True)
+    update_model_endpoint_request.metadata = {"_gc_last_traffic_at": "2020-01-01T00:00:00+00:00"}
+    with pytest.raises(ObjectHasInvalidValueException):
+        await use_case.execute(
+            user=user,
+            model_endpoint_id=model_endpoint_1.record.id,
+            request=update_model_endpoint_request,
+        )
 
 
 @pytest.mark.parametrize(

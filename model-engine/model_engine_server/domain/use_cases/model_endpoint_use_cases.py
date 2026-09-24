@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
 from model_engine_server.common.constants import (
+    ENDPOINT_GC_EXEMPT_KEY,
     ENDPOINT_GC_METADATA_KEYS,
     SUPPORTED_POST_INFERENCE_HOOKS,
 )
@@ -109,6 +110,21 @@ def _handle_post_inference_hooks(
         return
     for hook in post_inference_hooks:
         hook = hook.lower()
+
+
+def validate_gc_metadata(metadata: Optional[Dict[str, Any]]) -> None:
+    """Endpoint GC keeps its clocks in metadata; users may only set the opt-out, as a boolean."""
+    if not metadata:
+        return
+    for key in ENDPOINT_GC_METADATA_KEYS:
+        if key in metadata and key != ENDPOINT_GC_EXEMPT_KEY:
+            raise ObjectHasInvalidValueException(
+                f"{key} is a reserved metadata key and cannot be used by user."
+            )
+    if ENDPOINT_GC_EXEMPT_KEY in metadata and not isinstance(
+        metadata[ENDPOINT_GC_EXEMPT_KEY], bool
+    ):
+        raise ObjectHasInvalidValueException(f"{ENDPOINT_GC_EXEMPT_KEY} must be a boolean.")
 
 
 def validate_deployment_resources(
@@ -347,6 +363,7 @@ class CreateModelEndpointV1UseCase:
             raise ObjectHasInvalidValueException(
                 f"{CONVERTED_FROM_ARTIFACT_LIKE_KEY} is a reserved metadata key and cannot be used by user."
             )
+        validate_gc_metadata(request.metadata)
         validate_resource_requests(
             bundle=bundle,
             cpus=request.cpus,
@@ -504,6 +521,7 @@ class UpdateModelEndpointByIdV1UseCase:
             raise ObjectHasInvalidValueException(
                 f"{CONVERTED_FROM_ARTIFACT_LIKE_KEY} is a reserved metadata key and cannot be used by user."
             )
+        validate_gc_metadata(request.metadata)
 
         metadata = request.metadata
         if metadata is not None:

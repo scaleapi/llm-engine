@@ -304,6 +304,35 @@ class DbModelEndpointRecordRepository(ModelEndpointRecordRepository, DbRepositor
         return True
 
     @raise_if_read_only
+    async def update_model_endpoint_metadata(
+        self, model_endpoint_id: str, metadata: Dict[str, Any]
+    ) -> Optional[ModelEndpointRecord]:
+        async with self.session() as session:
+            model_endpoint_orm = await OrmModelEndpoint.select_by_id(
+                session=session, endpoint_id=model_endpoint_id
+            )
+            if model_endpoint_orm is None:
+                return None
+            # The column has onupdate=now(); setting it explicitly keeps the owner's timestamp.
+            await OrmModelEndpoint.update_by_name_owner(
+                session=session,
+                name=model_endpoint_orm.name,
+                owner=model_endpoint_orm.owner,
+                kwargs={
+                    "endpoint_metadata": metadata,
+                    "last_updated_at": model_endpoint_orm.last_updated_at,
+                },
+            )
+            updated_model_endpoint_orm = await OrmModelEndpoint.select_by_id(
+                session=session, endpoint_id=model_endpoint_id
+            )
+        model_endpoint = translate_model_endpoint_orm_to_model_endpoint_record(
+            updated_model_endpoint_orm
+        )
+        cache[model_endpoint_id] = model_endpoint
+        return model_endpoint
+
+    @raise_if_read_only
     async def update_model_endpoint_record(
         self,
         *,
