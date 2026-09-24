@@ -152,8 +152,10 @@ class EndpointGcReport:
     stuck: List[ModelEndpointRecord] = field(default_factory=list)  # GC request in flight too long
     exempt: List[ModelEndpointRecord] = field(default_factory=list)
     queue_unknown: List[ModelEndpointRecord] = field(default_factory=list)
+    traffic_unknown: List[ModelEndpointRecord] = field(default_factory=list)  # pods not scraped
     state_invalid: List[ModelEndpointRecord] = field(default_factory=list)
     write_skipped: List[ModelEndpointRecord] = field(default_factory=list)
+    judge_failed: List[ModelEndpointRecord] = field(default_factory=list)  # bookkeeping raised
     check_failed: List[PlannedAction] = field(default_factory=list)  # live re-read failed
     sources_unknown: List[str] = field(default_factory=list)
     digest_delivered: bool = True
@@ -164,6 +166,7 @@ class _Traffic:
     active: Set[str]  # endpoint ids with a request in the lookback, from sources that answered
     queue_active: Set[str]  # async endpoint ids with messages in the lookback
     queue_unknown: Set[str]  # async endpoint ids whose queue could not be read: skipped
+    uncovered: Set[str]  # serving http endpoint ids no traffic source is observing: skipped
     last_seen: Dict[str, datetime]  # from history-capable sources, for first sightings
     frozen: bool  # a cluster-wide source could not answer: no clock starts, no action runs
 
@@ -234,7 +237,12 @@ class EndpointGarbageCollectionService:
 
         due: List[PlannedAction] = []
         for record in records:
-            await self._judge(record, states_by_id.get(record.id), traffic, run_at, due, report)
+            try:
+                await self._judge(record, states_by_id.get(record.id), traffic, run_at, due, report)
+            except Exception:
+                # One endpoint's bookkeeping must not take the run, or the digest, down.
+                logger.exception(f"GC bookkeeping failed for {record.id}; skipped this run")
+                report.judge_failed.append(record)
         await self._act(due, traffic, run_at, report)
         try:
             report.digest_delivered = self.digest_gateway.send_digest(
@@ -380,6 +388,9 @@ class EndpointGarbageCollectionService:
             return
         active = record.id in traffic.active
         queue_active = is_async and record.id in traffic.queue_active
+        if record.id in traffic.uncovered:
+            report.traffic_unknown.append(record)
+            return
 
         if requested_at and infra_state.deployment_state.min_workers > 0:
             if record.status == ModelEndpointStatus.UPDATE_FAILED:
@@ -499,9 +510,12 @@ class EndpointGarbageCollectionService:
                 observed_at = _parse_ts(metadata.get(GC_OBSERVED_AT_KEY))
                 if unavailable_since is None:
                     unavailable_since = run_at
-                elif is_async and (observed_at is None or run_at - observed_at > TRAFFIC_LOOKBACK):
-                    # Queue activity during an unobserved stretch would have been missed;
-                    # silence is only known since the start of the current lookback.
+                elif (is_async or gc_parked) and (
+                    observed_at is None or run_at - observed_at > TRAFFIC_LOOKBACK
+                ):
+                    # Queue activity, or a request that woke a GC-parked endpoint, during an
+                    # unobserved stretch would have been missed; silence is only known since
+                    # the start of the current lookback.
                     unavailable_since = max(unavailable_since, run_at - TRAFFIC_LOOKBACK)
                 if not await self._write_gc_state(
                     record,
@@ -628,6 +642,8 @@ class EndpointGarbageCollectionService:
 
         active: Set[str] = set()
         last_seen: Dict[str, datetime] = {}
+        covered: Set[str] = set()
+        coverage_known = False
         frozen = False
         for gateway in self.traffic_gateways:
             keys = await gateway.active_keys(since)
@@ -636,6 +652,14 @@ class EndpointGarbageCollectionService:
                 report.sources_unknown.append(type(gateway).__name__)
                 continue
             active.update(self._resolve(keys, gateway.key, by_deployment, by_name))
+            if gateway.reports_coverage:
+                covered_keys = await gateway.covered_keys()
+                if covered_keys is None:
+                    frozen = True
+                    report.sources_unknown.append(f"{type(gateway).__name__} coverage")
+                else:
+                    coverage_known = True
+                    covered.update(self._resolve(covered_keys, gateway.key, by_deployment, by_name))
             if not needs_history:
                 continue
             history = await gateway.last_active_at(
@@ -677,10 +701,24 @@ class EndpointGarbageCollectionService:
             # Not one queue could be read: the source is down, not the endpoints.
             frozen = True
             report.sources_unknown.append("queue")
+        uncovered: Set[str] = set()
+        if coverage_known:
+            # A serving http endpoint whose pods no source scrapes: its silence is not evidence.
+            # (Idle http series expire, so absence of a series alone says nothing.)
+            uncovered = {
+                record.id
+                for record in records
+                if record.endpoint_type != ModelEndpointType.ASYNC
+                and record.id in states_by_id
+                and (states_by_id[record.id].deployment_state.available_workers or 0) > 0
+                and record.id not in covered
+                and record.id not in active
+            }
         return _Traffic(
             active=active,
             queue_active=queue_active,
             queue_unknown=queue_unknown,
+            uncovered=uncovered,
             last_seen=last_seen,
             frozen=frozen,
         )
@@ -759,23 +797,128 @@ class EndpointGarbageCollectionService:
         if traffic.frozen or not self.config.actions_enabled:
             report.deferred.extend(due)
             return
-        # Traffic was collected before bookkeeping; anything that happened since must count.
-        recent = await self._recent_activity(due, run_at, report)
-        if recent is None:
-            report.deferred.extend(due)
-            return
         attempted = 0
         for action in due:
-            if action.record.id in recent:
-                # The endpoint was used after the run's traffic collection: not ours today.
+            if attempted >= self.config.action_cap:
+                report.deferred.append(action)
+                continue
+            if action.kind == SCALE_TO_ZERO and not self._scale_to_zero_supported(action):
+                report.unsupported.append(action)
+                continue
+            try:
+                if await self._act_one(action, run_at, report):
+                    attempted += 1
+            except Exception:
+                # A failed pre-action read must not take the rest of the run (or the digest)
+                # down with it.
+                logger.exception(f"GC pre-action checks failed for {action.record.id}; not acting")
+                report.check_failed.append(action)
+
+    async def _act_one(
+        self, action: PlannedAction, run_at: datetime, report: EndpointGcReport
+    ) -> bool:
+        """Re-check one due action against live state and perform it. True if attempted."""
+        # The judgement used the run's initial listing; re-check the record before acting,
+        # under the endpoint's advisory lock so well-behaved writers wait.
+        async with self.record_repository.get_lock_context(action.record) as lock:
+            if not lock.lock_acquired():
+                report.deferred.append(action)
+                return False
+            fresh = await self.record_repository.get_model_endpoint_record(
+                model_endpoint_id=action.record.id, refresh=True
+            )
+            if (
+                fresh is None
+                or fresh.status in IN_FLIGHT_STATUSES
+                or _is_exempt(fresh.metadata or {})
+                or self._owner_touched(fresh, fresh.metadata or {})
+            ):
+                report.skipped_at_action.append(action)
+                return False
+            metadata = fresh.metadata or {}
+            live = await self.resource_gateway.get_resources(
+                endpoint_id=fresh.id,
+                deployment_name=action.infra_state.deployment_name,
+                endpoint_type=fresh.endpoint_type,
+            )
+            if self._owner_restarted(live, metadata):
+                report.skipped_at_action.append(action)
+                return False
+            live_desired, live_available = _worker_counts(live)
+            gc_parked = GC_SCALE_TO_ZERO_REQUESTED_AT_KEY in metadata
+            if (
+                live.deployment_state.min_workers > 0
+                and gc_parked
+                and fresh.status != ModelEndpointStatus.UPDATE_FAILED
+            ):
+                # The owner raised min_workers since the listing: revived, not ours.
+                report.skipped_at_action.append(action)
+                return False
+            if action.reason == BROKEN and live_available > 0:
+                # Recovered since the listing: drop the broken clock, take no action.
                 await self._write_gc_state(
-                    action.record,
+                    fresh,
+                    {
+                        k: v
+                        for k, v in metadata.items()
+                        if k in GC_STATE_KEYS
+                        and k not in GC_BOOKKEEPING_KEYS
+                        and k != GC_UNAVAILABLE_SINCE_KEY
+                    },
+                    run_at,
+                    report,
+                    locked=True,
+                    infra_state=live,
+                )
+                report.recovered.append(fresh)
+                report.skipped_at_action.append(action)
+                return False
+            if action.kind == DELETE:
+                if live_desired > 0 and fresh.status != ModelEndpointStatus.UPDATE_FAILED:
+                    # Something woke or scaled the parked endpoint since the listing. (A failed
+                    # scale-to-zero leaves the Deployment up by definition and still ends in
+                    # the delete.)
+                    report.skipped_at_action.append(action)
+                    return False
+                if live_desired == 0 and gc_parked and GC_PARKED_AT_KEY not in metadata:
+                    # First sighting at zero after our request, during the final read rather
+                    # than the listing: the parked period the schedule promises starts now, so
+                    # the delete is not due today.
+                    await self._write_gc_state(
+                        fresh,
+                        {
+                            **{
+                                k: v
+                                for k, v in metadata.items()
+                                if k in GC_STATE_KEYS and k not in GC_BOOKKEEPING_KEYS
+                            },
+                            GC_PARKED_AT_KEY: run_at.isoformat(),
+                        },
+                        run_at,
+                        report,
+                        locked=True,
+                        infra_state=live,
+                    )
+                    report.skipped_at_action.append(action)
+                    return False
+            if action.kind == SCALE_TO_ZERO and live_desired == 0:
+                report.skipped_at_action.append(action)
+                return False
+            # Traffic was collected before bookkeeping; anything since must count. Asked right
+            # before this endpoint's action, not once for the batch.
+            activity = await self._activity_now(action, fresh, live, run_at, report)
+            if activity is None:
+                report.check_failed.append(action)
+                return False
+            if activity:
+                await self._write_gc_state(
+                    fresh,
                     {
                         GC_LAST_TRAFFIC_AT_KEY: run_at.isoformat(),
                         GC_OBSERVED_AT_KEY: run_at.isoformat(),
                         **{
                             k: v
-                            for k, v in (action.record.metadata or {}).items()
+                            for k, v in metadata.items()
                             if k
                             in (
                                 GC_SCALE_TO_ZERO_REQUESTED_AT_KEY,
@@ -786,149 +929,83 @@ class EndpointGarbageCollectionService:
                     },
                     run_at,
                     report,
-                    infra_state=action.infra_state,
+                    locked=True,
+                    infra_state=live,
                 )
-                report.recovered.append(action.record)
+                report.recovered.append(fresh)
                 report.skipped_at_action.append(action)
-                continue
-            if attempted >= self.config.action_cap:
-                report.deferred.append(action)
-                continue
-            if action.kind == SCALE_TO_ZERO and not self._scale_to_zero_supported(action):
-                report.unsupported.append(action)
-                continue
-            # The judgement used the run's initial listing; re-check the record before acting,
-            # under the endpoint's advisory lock so well-behaved writers wait.
-            async with self.record_repository.get_lock_context(action.record) as lock:
-                if not lock.lock_acquired():
-                    report.deferred.append(action)
-                    continue
-                fresh = await self.record_repository.get_model_endpoint_record(
-                    model_endpoint_id=action.record.id, refresh=True
-                )
-                if (
-                    fresh is None
-                    or fresh.status in IN_FLIGHT_STATUSES
-                    or _is_exempt(fresh.metadata or {})
-                    or self._owner_touched(fresh, fresh.metadata or {})
-                ):
-                    report.skipped_at_action.append(action)
-                    continue
-                try:
-                    live = await self.resource_gateway.get_resources(
-                        endpoint_id=fresh.id,
-                        deployment_name=action.infra_state.deployment_name,
-                        endpoint_type=fresh.endpoint_type,
-                    )
-                except Exception:
-                    logger.exception(f"could not re-read resources for {fresh.id}; not acting")
+                return False
+            if fresh.endpoint_type == ModelEndpointType.ASYNC:
+                # Scaling to zero stops workers mid-task; deleting removes the queue with
+                # whatever is in it. Either way the queue must be empty right now.
+                queued = await self._queued_messages(fresh.id)
+                if queued is None:
                     report.check_failed.append(action)
-                    continue
-                if self._owner_restarted(live, fresh.metadata or {}):
+                    return False
+                if queued > 0:
                     report.skipped_at_action.append(action)
-                    continue
-                live_desired, live_available = _worker_counts(live)
-                if (
-                    live.deployment_state.min_workers > 0
-                    and GC_SCALE_TO_ZERO_REQUESTED_AT_KEY in (fresh.metadata or {})
-                    and fresh.status != ModelEndpointStatus.UPDATE_FAILED
-                ):
-                    # The owner raised min_workers since the listing: revived, not ours.
-                    report.skipped_at_action.append(action)
-                    continue
-                if action.reason == BROKEN and live_available > 0:
-                    # Recovered since the listing: drop the broken clock, take no action.
-                    await self._write_gc_state(
-                        fresh,
-                        {
-                            k: v
-                            for k, v in (fresh.metadata or {}).items()
-                            if k in GC_STATE_KEYS
-                            and k not in GC_BOOKKEEPING_KEYS
-                            and k != GC_UNAVAILABLE_SINCE_KEY
-                        },
-                        run_at,
-                        report,
-                        locked=True,
-                        infra_state=live,
-                    )
-                    report.recovered.append(fresh)
-                    report.skipped_at_action.append(action)
-                    continue
-                if (
-                    action.kind == DELETE
-                    and live_desired > 0
-                    and fresh.status != ModelEndpointStatus.UPDATE_FAILED
-                ):
-                    # Something woke or scaled the parked endpoint since the listing. (A failed
-                    # scale-to-zero leaves the Deployment up by definition and still ends in
-                    # the delete.)
-                    report.skipped_at_action.append(action)
-                    continue
-                if action.kind == SCALE_TO_ZERO and live_desired == 0:
-                    report.skipped_at_action.append(action)
-                    continue
-                if action.record.endpoint_type == ModelEndpointType.ASYNC:
-                    # Scaling to zero stops workers mid-task; deleting removes the queue with
-                    # whatever is in it. Either way the queue must be empty right now.
-                    queued = await self._queued_messages(action.record.id)
-                    if queued is None:
-                        report.check_failed.append(action)
-                        continue
-                    if queued > 0:
-                        report.skipped_at_action.append(action)
-                        continue
-                attempted += 1
-                try:
-                    if action.kind == DELETE:
-                        await self.model_endpoint_service.delete_model_endpoint(action.record.id)
-                        report.deleted.append(action)
-                    else:
-                        await self._scale_to_zero(action, fresh, run_at, report)
-                except Exception:
-                    logger.exception(
-                        f"GC {action.kind} failed for {action.record.id} ({action.record.name})"
-                    )
-                    report.action_failed.append(action)
+                    return False
+            try:
+                if action.kind == DELETE:
+                    await self.model_endpoint_service.delete_model_endpoint(fresh.id)
+                    report.deleted.append(action)
+                else:
+                    await self._scale_to_zero(action, fresh, run_at, report)
+            except Exception:
+                logger.exception(f"GC {action.kind} failed for {fresh.id} ({fresh.name})")
+                report.action_failed.append(action)
+            return True
+        return False  # unreachable: the lock context does not swallow exceptions
 
-    async def _recent_activity(
-        self, due: List[PlannedAction], run_at: datetime, report: EndpointGcReport
-    ) -> Optional[Set[str]]:
-        """Endpoint ids among ``due`` with a request since the run's traffic collection.
+    async def _activity_now(
+        self,
+        action: PlannedAction,
+        fresh: ModelEndpointRecord,
+        live: ModelEndpointInfraState,
+        run_at: datetime,
+        report: EndpointGcReport,
+    ) -> Optional[bool]:
+        """Whether the endpoint was used in the lookback, asked of every source right now.
 
         HTTP evidence only revives endpoints GC parked or judged idle; a dead sync endpoint
         that GC has not parked is a caller's problem (design decision). Queue messages revive
-        async endpoints in every state. None when a source could not answer.
+        async endpoints in every state. None when any applicable source could not answer or
+        does not cover the endpoint's pods: unknown is not silence.
         """
         since = run_at - TRAFFIC_LOOKBACK
-        by_deployment = {a.infra_state.deployment_name: a.record.id for a in due}
-        by_name: Dict[str, List[str]] = {}
-        for action in due:
-            by_name.setdefault(action.record.name, []).append(action.record.id)
-        http_active: Set[str] = set()
-        for gateway in self.traffic_gateways:
-            keys = await gateway.active_keys(since)
-            if keys is None:
-                report.sources_unknown.append(type(gateway).__name__)
-                return None
-            http_active.update(self._resolve(keys, gateway.key, by_deployment, by_name))
-        recent: Set[str] = set()
-        for action in due:
-            record = action.record
-            metadata = record.metadata or {}
-            if record.endpoint_type == ModelEndpointType.ASYNC:
-                sent = await self.queue_delegate.messages_sent_since(record.id, since)
-                if sent is None:
-                    report.check_failed.append(action)
-                    recent.add(record.id)  # unknown: do not act on it
-                elif sent > 0:
-                    recent.add(record.id)
-                continue
-            if record.id in http_active and (
-                action.reason == IDLE or GC_SCALE_TO_ZERO_REQUESTED_AT_KEY in metadata
-            ):
-                recent.add(record.id)
-        return recent
+        is_async = fresh.endpoint_type == ModelEndpointType.ASYNC
+        unknown = False
+        if is_async:
+            sent = await self.queue_delegate.messages_sent_since(fresh.id, since)
+            if sent is None:
+                unknown = True
+            elif sent > 0:
+                return True
+        if action.reason == IDLE or GC_SCALE_TO_ZERO_REQUESTED_AT_KEY in (fresh.metadata or {}):
+            by_deployment = {action.infra_state.deployment_name: fresh.id}
+            by_name = {fresh.name: [fresh.id]}
+            _, live_available = _worker_counts(live)
+            needs_coverage = not is_async and live_available > 0
+            coverage_known = covered = False
+            for gateway in self.traffic_gateways:
+                keys = await gateway.active_keys(since)
+                if keys is None:
+                    report.sources_unknown.append(type(gateway).__name__)
+                    unknown = True
+                    continue
+                if fresh.id in self._resolve(keys, gateway.key, by_deployment, by_name):
+                    return True
+                if needs_coverage and gateway.reports_coverage:
+                    covered_keys = await gateway.covered_keys()
+                    if covered_keys is None:
+                        unknown = True
+                        continue
+                    coverage_known = True
+                    if fresh.id in self._resolve(covered_keys, gateway.key, by_deployment, by_name):
+                        covered = True
+            if needs_coverage and coverage_known and not covered:
+                unknown = True
+        return None if unknown else False
 
     def _scale_to_zero_supported(self, action: PlannedAction) -> bool:
         if action.record.endpoint_type == ModelEndpointType.ASYNC:
@@ -1165,9 +1242,11 @@ def format_digest(
         f"tracking {len(report.tracking)}, recovered {len(report.recovered)}, "
         f"owner reset {len(report.owner_reset)}, no deployment {len(report.no_deployment)}, "
         f"in flight {len(report.in_flight)}, stuck {len(report.stuck)}, exempt {len(report.exempt)}, "
-        f"queue unknown {len(report.queue_unknown)}, unsupported {len(report.unsupported)}, "
+        f"queue unknown {len(report.queue_unknown)}, traffic unknown {len(report.traffic_unknown)}, "
+        f"unsupported {len(report.unsupported)}, "
         f"skipped at action {len(report.skipped_at_action)}, "
-        f"state invalid {len(report.state_invalid)}, write skipped {len(report.write_skipped)}",
+        f"state invalid {len(report.state_invalid)}, write skipped {len(report.write_skipped)}, "
+        f"bookkeeping failed {len(report.judge_failed)}",
     ]
     if report.sources_unknown:
         lines.append(
@@ -1217,8 +1296,10 @@ def format_digest(
         ("Update or delete in flight, skipped", report.in_flight),
         ("GC scale-to-zero stuck in flight for days (builder needs a look)", report.stuck),
         ("Queue activity unknown, skipped", report.queue_unknown),
+        ("Pods not scraped by any traffic source, skipped", report.traffic_unknown),
         ("GC state unreadable, skipped (fix the metadata)", report.state_invalid),
         ("Metadata write skipped, endpoint locked", report.write_skipped),
+        ("Bookkeeping failed, skipped this run (see the job log)", report.judge_failed),
     ]
     for title, records in record_sections:
         if records:

@@ -70,12 +70,31 @@ class FakeTraffic(EndpointTrafficGateway):
     key = TrafficKey.ENDPOINT_NAME
 
     def __init__(
-        self, active: Optional[Set[str]] = None, history: Optional[Dict[str, datetime]] = None
+        self,
+        active: Optional[Set[str]] = None,
+        history: Optional[Dict[str, datetime]] = None,
+        active_sequence: Optional[List[Optional[Set[str]]]] = None,
+        covered: Optional[Set[str]] = None,
+        reports_coverage: bool = False,
+        covered_sequence: Optional[List[Optional[Set[str]]]] = None,
     ):
         self.active, self.history = active, history
+        self.active_sequence = list(active_sequence or [])
+        self.reports_coverage = reports_coverage
+        self.covered = covered
+        self.covered_sequence = list(covered_sequence or [])
 
     async def active_keys(self, since: datetime) -> Optional[Set[str]]:
+        if self.active_sequence:
+            answer = self.active_sequence.pop(0)
+            return None if answer is None else set(answer)
         return None if self.active is None else set(self.active)
+
+    async def covered_keys(self) -> Optional[Set[str]]:
+        if self.covered_sequence:
+            answer = self.covered_sequence.pop(0)
+            return None if answer is None else set(answer)
+        return None if self.covered is None else set(self.covered)
 
     async def last_active_at(self, since: datetime) -> Optional[Dict[str, datetime]]:
         return self.history
@@ -148,19 +167,29 @@ class Harness:
         queue_in_flight: int = 0,
         queue_delayed: int = 0,
         queue_sent_sequence: Optional[List[Optional[int]]] = None,
+        traffic_sequence: Optional[List[Optional[Set[str]]]] = None,
+        covered_names: Optional[Set[str]] = None,
+        reports_coverage: bool = False,
+        covered_sequence: Optional[List[Optional[Set[str]]]] = None,
         config: EndpointGcConfig = ACTING,
     ):
         self.clock = NOW
         self.queue = FakeQueue(
             queue_sent, queue_depth, queue_in_flight, queue_delayed, queue_sent_sequence
         )
+        self.traffic = FakeTraffic(
+            None if traffic_names is None else set(traffic_names),
+            history,
+            traffic_sequence,
+            covered_names,
+            reports_coverage,
+            covered_sequence,
+        )
         gc = EndpointGarbageCollectionService(
             model_endpoint_record_repository=self.repo,
             resource_gateway=self.resources,
             queue_delegate=self.queue,
-            traffic_gateways=[
-                FakeTraffic(None if traffic_names is None else set(traffic_names), history)
-            ],
+            traffic_gateways=[self.traffic],
             model_endpoint_service=self.service,
             digest_gateway=self.digest,
             config=config,
@@ -289,6 +318,7 @@ async def test_broken_update_failed_still_counts_down(harness, model_endpoint_1)
             status=ModelEndpointStatus.UPDATE_FAILED,
             metadata={
                 GC_UNAVAILABLE_SINCE_KEY: _days_ago(90),
+                GC_OBSERVED_AT_KEY: _days_ago(1),
                 GC_SCALE_TO_ZERO_REQUESTED_AT_KEY: _days_ago(60),
                 GC_PARKED_AT_KEY: _days_ago(60),
                 GC_SCALE_TO_ZERO_TASK_ID_KEY: "gc-task",
@@ -1876,7 +1906,6 @@ async def test_work_done_between_collection_and_action_blocks_the_delete(harness
         )
     )
     endpoint.record.creation_task_id = "gc-task"
-    original_list = harness.repo.list_model_endpoint_records
 
     # Collection sees a silent queue; the re-check right before acting sees the task that
     # arrived and completed in between.
@@ -1983,4 +2012,265 @@ async def test_live_resource_read_failure_is_a_check_failure(harness, model_endp
     report = await harness.run()
 
     assert report.scaled_to_zero == [] and report.skipped_at_action == []
+    assert [a.record.id for a in report.check_failed] == [endpoint.record.id]
+
+
+# ---- final checks run per action, against every source -----------------------------------------
+
+
+def _parked_idle_async(base, name_suffix: str = "") -> Dict:
+    return {
+        GC_LAST_TRAFFIC_AT_KEY: _days_ago(180),
+        GC_OBSERVED_AT_KEY: _days_ago(1),
+        GC_SCALE_TO_ZERO_REQUESTED_AT_KEY: _days_ago(90),
+        GC_PARKED_AT_KEY: _days_ago(90),
+        GC_SCALE_TO_ZERO_TASK_ID_KEY: "gc-task",
+        GC_SEEN_TASK_ID_KEY: "gc-task",
+        GC_TOUCHED_AT_KEY: _days_ago(1),
+    }
+
+
+def _parked(
+    base, *, endpoint_type=ModelEndpointType.ASYNC, metadata=None, record_id=None, name=None
+):
+    endpoint = _endpoint(
+        base,
+        available=0,
+        unavailable=0,
+        min_workers=0,
+        endpoint_type=endpoint_type,
+        metadata=metadata or _parked_idle_async(base),
+    )
+    if record_id is not None:
+        endpoint.record.id = record_id
+    if name is not None:
+        endpoint.record.name = name
+    endpoint.record.creation_task_id = "gc-task"
+    return endpoint
+
+
+@pytest.mark.asyncio
+async def test_activity_is_rechecked_right_before_each_action(harness, model_endpoint_1):
+    first = harness.add(_parked(model_endpoint_1))
+    second = harness.add(_parked(model_endpoint_1, record_id="test_second", name="second"))
+    # Collection reads both queues silent; the per-action check sees a task on the second
+    # endpoint that arrived while the first was being deleted.
+    report = await harness.run(queue_sent_sequence=[0, 0, 0, 1])
+
+    assert [a.record.id for a in report.deleted] == [first.record.id]
+    assert [a.record.id for a in report.skipped_at_action] == [second.record.id]
+    assert (await harness.stored(second))[GC_LAST_TRAFFIC_AT_KEY] == NOW.isoformat()
+
+
+@pytest.mark.asyncio
+async def test_http_activity_at_final_check_revives_parked_async_endpoint(
+    harness, model_endpoint_1
+):
+    endpoint = harness.add(_parked(model_endpoint_1))
+    # Queue silent throughout; the second traffic query (right before acting) shows a request.
+    report = await harness.run(traffic_sequence=[set(), {endpoint.record.name}])
+
+    assert report.deleted == []
+    assert [a.record.id for a in report.skipped_at_action] == [endpoint.record.id]
+    assert (await harness.stored(endpoint))[GC_LAST_TRAFFIC_AT_KEY] == NOW.isoformat()
+
+
+@pytest.mark.asyncio
+async def test_unknown_queue_history_at_final_check_blocks_without_touching_clocks(
+    harness, model_endpoint_1
+):
+    metadata = {
+        GC_UNAVAILABLE_SINCE_KEY: _days_ago(100),
+        GC_OBSERVED_AT_KEY: _days_ago(1),
+        GC_SCALE_TO_ZERO_REQUESTED_AT_KEY: _days_ago(70),
+        GC_PARKED_AT_KEY: _days_ago(70),
+        GC_SCALE_TO_ZERO_TASK_ID_KEY: "gc-task",
+        GC_SEEN_TASK_ID_KEY: "gc-task",
+        GC_TOUCHED_AT_KEY: _days_ago(1),
+    }
+    endpoint = harness.add(_parked(model_endpoint_1, metadata=metadata))
+    report = await harness.run(queue_sent_sequence=[0, None])
+
+    assert report.deleted == []
+    assert [a.record.id for a in report.check_failed] == [endpoint.record.id]
+    assert report.recovered == []
+    assert (await harness.stored(endpoint))[GC_UNAVAILABLE_SINCE_KEY] == _days_ago(100)
+
+
+@pytest.mark.asyncio
+async def test_unknown_traffic_source_at_final_check_blocks_the_action(harness, model_endpoint_1):
+    endpoint = harness.add(_parked(model_endpoint_1))
+    report = await harness.run(traffic_sequence=[set(), None])
+
+    assert report.deleted == []
+    assert [a.record.id for a in report.check_failed] == [endpoint.record.id]
+    assert "FakeTraffic" in report.sources_unknown
+
+
+@pytest.mark.asyncio
+async def test_record_read_failure_at_final_check_does_not_lose_the_digest(
+    harness, model_endpoint_1
+):
+    first = harness.add(_parked(model_endpoint_1))
+    second = harness.add(_parked(model_endpoint_1, record_id="test_second", name="second"))
+    original_get = harness.repo.get_model_endpoint_record
+    refreshes = {second.record.id: 0}
+
+    async def get_or_fail(model_endpoint_id: str, refresh: bool = False):
+        if model_endpoint_id == second.record.id and refresh:
+            refreshes[model_endpoint_id] += 1
+            if refreshes[model_endpoint_id] == 2:  # the pre-action re-read, after bookkeeping
+                raise RuntimeError("db gone")
+        return await original_get(model_endpoint_id, refresh=refresh)
+
+    harness.repo.get_model_endpoint_record = get_or_fail
+    report = await harness.run()
+
+    assert [a.record.id for a in report.deleted] == [first.record.id]
+    assert [a.record.id for a in report.check_failed] == [second.record.id]
+    assert report.digest_delivered and len(harness.digest.digests) == 1
+    assert "Deleted today (1)" in harness.digest.digests[0]
+
+
+@pytest.mark.asyncio
+async def test_bookkeeping_failure_on_one_endpoint_does_not_lose_the_run(harness, model_endpoint_1):
+    first = harness.add(_parked(model_endpoint_1))
+    second = harness.add(_parked(model_endpoint_1, record_id="test_second", name="second"))
+    original_get = harness.repo.get_model_endpoint_record
+
+    async def get_or_fail(model_endpoint_id: str, refresh: bool = False):
+        if model_endpoint_id == second.record.id and refresh:
+            raise RuntimeError("db gone")
+        return await original_get(model_endpoint_id, refresh=refresh)
+
+    harness.repo.get_model_endpoint_record = get_or_fail
+    report = await harness.run()
+
+    assert [a.record.id for a in report.deleted] == [first.record.id]
+    assert [r.id for r in report.judge_failed] == [second.record.id]
+    assert report.digest_delivered and "Bookkeeping failed" in harness.digest.digests[0]
+
+
+@pytest.mark.asyncio
+async def test_parking_first_seen_at_final_read_starts_the_parked_period(harness, model_endpoint_1):
+    # Listing: the request took but a pod is still counted; the final read shows zero.
+    endpoint = harness.add(
+        _endpoint(
+            model_endpoint_1,
+            available=0,
+            unavailable=1,
+            min_workers=0,
+            metadata={
+                GC_UNAVAILABLE_SINCE_KEY: _days_ago(200),
+                GC_OBSERVED_AT_KEY: _days_ago(1),
+                GC_SCALE_TO_ZERO_REQUESTED_AT_KEY: _days_ago(100),
+                GC_SCALE_TO_ZERO_TASK_ID_KEY: "gc-task",
+                GC_SEEN_TASK_ID_KEY: "gc-task",
+                GC_TOUCHED_AT_KEY: _days_ago(1),
+            },
+        )
+    )
+    endpoint.record.creation_task_id = "gc-task"
+    original_list = harness.repo.list_model_endpoint_records
+
+    async def list_then_pod_gone(**kwargs):
+        records = await original_list(**kwargs)
+        harness.resources.db[endpoint.record.id] = endpoint.infra_state.model_copy(
+            update={
+                "desired_workers": 0,
+                "deployment_state": endpoint.infra_state.deployment_state.model_copy(
+                    update={"unavailable_workers": 0}
+                ),
+            }
+        )
+        return records
+
+    harness.repo.list_model_endpoint_records = list_then_pod_gone
+    report = await harness.run()
+
+    assert report.deleted == []
+    assert [a.record.id for a in report.skipped_at_action] == [endpoint.record.id]
+    assert (await harness.stored(endpoint))[GC_PARKED_AT_KEY] == NOW.isoformat()
+
+
+@pytest.mark.asyncio
+async def test_observation_gap_resets_broken_clock_of_gc_parked_http_endpoint(
+    harness, model_endpoint_1
+):
+    endpoint = harness.add(
+        _parked(
+            model_endpoint_1,
+            endpoint_type=ModelEndpointType.STREAMING,
+            metadata={
+                GC_UNAVAILABLE_SINCE_KEY: _days_ago(100),
+                GC_OBSERVED_AT_KEY: _days_ago(5),
+                GC_SCALE_TO_ZERO_REQUESTED_AT_KEY: _days_ago(70),
+                GC_PARKED_AT_KEY: _days_ago(70),
+                GC_SCALE_TO_ZERO_TASK_ID_KEY: "gc-task",
+                GC_SEEN_TASK_ID_KEY: "gc-task",
+                GC_TOUCHED_AT_KEY: _days_ago(5),
+            },
+        )
+    )
+    report = await harness.run()
+
+    # A request during the unobserved days would have woken it and gone unseen.
+    assert report.deleted == []
+    assert (await harness.stored(endpoint))[GC_UNAVAILABLE_SINCE_KEY] == (
+        NOW - timedelta(hours=36)
+    ).isoformat()
+
+
+# ---- per-endpoint traffic coverage ---------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_serving_http_endpoint_not_scraped_is_not_judged(harness, model_endpoint_1):
+    endpoint = harness.add(_endpoint(model_endpoint_1, available=1, unavailable=0))
+    report = await harness.run(reports_coverage=True, covered_names={"someone-else"})
+
+    assert [r.id for r in report.traffic_unknown] == [endpoint.record.id]
+    assert report.tracking == []
+    assert await harness.stored(endpoint) == {}
+    assert report.sources_unknown == []
+
+
+@pytest.mark.asyncio
+async def test_serving_http_endpoint_scraped_is_judged(harness, model_endpoint_1):
+    endpoint = harness.add(_endpoint(model_endpoint_1, available=1, unavailable=0))
+    report = await harness.run(reports_coverage=True, covered_names={endpoint.record.name})
+
+    assert report.traffic_unknown == []
+    assert [r.id for r in report.tracking] == [endpoint.record.id]
+
+
+@pytest.mark.asyncio
+async def test_unknown_coverage_freezes_the_run(harness, model_endpoint_1):
+    endpoint = harness.add(_endpoint(model_endpoint_1, available=1, unavailable=0))
+    report = await harness.run(reports_coverage=True, covered_names=None)
+
+    assert report.sources_unknown == ["FakeTraffic coverage"]
+    assert await harness.stored(endpoint) == {}
+
+
+@pytest.mark.asyncio
+async def test_coverage_lost_before_the_action_blocks_it(harness, model_endpoint_1):
+    endpoint = harness.add(
+        _endpoint(
+            model_endpoint_1,
+            available=1,
+            unavailable=0,
+            metadata={
+                GC_LAST_TRAFFIC_AT_KEY: _days_ago(91),
+                GC_OBSERVED_AT_KEY: _days_ago(1),
+                GC_TOUCHED_AT_KEY: _days_ago(1),
+                GC_SEEN_TASK_ID_KEY: model_endpoint_1.record.creation_task_id or "",
+            },
+        )
+    )
+    report = await harness.run(
+        reports_coverage=True, covered_sequence=[{endpoint.record.name}, set()]
+    )
+
+    assert report.scaled_to_zero == []
     assert [a.record.id for a in report.check_failed] == [endpoint.record.id]

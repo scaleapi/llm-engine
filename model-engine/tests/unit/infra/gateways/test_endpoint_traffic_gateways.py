@@ -67,3 +67,44 @@ def test_slack_digest_is_split_and_every_part_must_deliver():
 
     gateway._post = lambda text: False  # type: ignore[method-assign]
     assert gateway.send_digest("short") is False
+
+
+@pytest.mark.parametrize(
+    "data,expected",
+    [
+        pytest.param(None, None, id="request-failed"),
+        pytest.param({"activeTargets": []}, None, id="no-healthy-endpoint-pod-is-unknown"),
+        pytest.param(
+            {
+                "activeTargets": [
+                    {
+                        "health": "up",
+                        "discoveredLabels": {
+                            "__meta_kubernetes_pod_label_app": "launch-endpoint-id-end-a"
+                        },
+                    },
+                    {
+                        "health": "down",
+                        "discoveredLabels": {
+                            "__meta_kubernetes_pod_label_app": "launch-endpoint-id-end-b"
+                        },
+                    },
+                    {"health": "up", "discoveredLabels": {"__meta_kubernetes_pod_label_app": "x"}},
+                    {"health": "up", "discoveredLabels": {}},
+                ]
+            },
+            {"launch-endpoint-id-end-a"},
+            id="healthy-endpoint-targets-only",
+        ),
+    ],
+)
+@pytest.mark.asyncio
+async def test_prometheus_covered_keys(data, expected):
+    gateway = PrometheusEndpointTrafficGateway("http://prom")
+
+    async def fake_get(path: str, params: dict):
+        assert path == "/api/v1/targets" and params == {"state": "active"}
+        return data
+
+    gateway._get = fake_get  # type: ignore[method-assign]
+    assert await gateway.covered_keys() == expected

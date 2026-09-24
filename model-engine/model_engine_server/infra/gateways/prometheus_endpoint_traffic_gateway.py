@@ -24,28 +24,50 @@ _COVERAGE_QUERY = (
 
 class PrometheusEndpointTrafficGateway(EndpointTrafficGateway):
     key = TrafficKey.DEPLOYMENT_NAME
+    reports_coverage = True
 
     def __init__(self, server_address: str, workload_prefix: str = "launch-endpoint-id-"):
         self.server_address = server_address.rstrip("/")
         self.workload_prefix = workload_prefix
 
-    async def _query(self, query: str) -> Optional[list]:
+    async def _get(self, path: str, params: dict) -> Optional[dict]:
         try:
             response = await asyncio.to_thread(
-                requests.get,
-                f"{self.server_address}/api/v1/query",
-                params={"query": query},
-                timeout=60,
+                requests.get, f"{self.server_address}{path}", params=params, timeout=60
             )
             response.raise_for_status()
             body = response.json()
         except (requests.RequestException, ValueError):
-            logger.exception("Prometheus traffic query failed")
+            logger.exception(f"Prometheus request {path} failed")
             return None
         if body.get("status") != "success":
-            logger.error(f"Prometheus traffic query returned {body.get('status')}: {body}")
+            logger.error(f"Prometheus request {path} returned {body.get('status')}: {body}")
             return None
-        return body["data"]["result"]
+        return body["data"]
+
+    async def _query(self, query: str) -> Optional[list]:
+        data = await self._get("/api/v1/query", {"query": query})
+        return None if data is None else data["result"]
+
+    async def covered_keys(self) -> Optional[Set[str]]:
+        """Deployments with at least one pod whose Istio sidecar is scraped and healthy.
+
+        Read from the discovered (pre-relabeling) pod labels of the active scrape targets, so
+        it does not depend on which labels the scrape config keeps. Endpoint pods carry
+        ``app=<deployment name>``.
+        """
+        data = await self._get("/api/v1/targets", {"state": "active"})
+        if data is None:
+            return None
+        covered: Set[str] = set()
+        for target in data.get("activeTargets", []):
+            app = (target.get("discoveredLabels") or {}).get("__meta_kubernetes_pod_label_app", "")
+            if target.get("health") == "up" and app.startswith(self.workload_prefix):
+                covered.add(app)
+        if not covered:
+            logger.error("Prometheus scrapes no healthy endpoint pod: coverage unknown")
+            return None
+        return covered
 
     async def active_keys(self, since: datetime) -> Optional[Set[str]]:
         coverage = await self._query(_COVERAGE_QUERY % self.workload_prefix)

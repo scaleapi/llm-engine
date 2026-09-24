@@ -109,6 +109,7 @@ async def main(config: EndpointGcConfig) -> None:
     if (
         report.action_failed
         or report.check_failed
+        or report.judge_failed
         or report.sources_unknown
         or not report.digest_delivered
     ):
