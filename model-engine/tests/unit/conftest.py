@@ -532,7 +532,7 @@ class FakeModelEndpointRecordRepository(ModelEndpointRecordRepository):
         return model_endpoint_record
 
     async def get_model_endpoint_record(
-        self, model_endpoint_id: str
+        self, model_endpoint_id: str, refresh: bool = False
     ) -> Optional[ModelEndpointRecord]:
         return self.db.get(model_endpoint_id)
 

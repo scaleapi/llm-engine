@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime, timezone
 from typing import Optional, Set
 
@@ -25,7 +26,8 @@ class PrometheusEndpointTrafficGateway(EndpointTrafficGateway):
     async def active_keys(self, since: datetime) -> Optional[Set[str]]:
         window = int((datetime.now(timezone.utc) - since).total_seconds())
         try:
-            response = requests.get(
+            response = await asyncio.to_thread(
+                requests.get,
                 f"{self.server_address}/api/v1/query",
                 params={"query": _QUERY % (self.workload_prefix, window)},
                 timeout=60,

@@ -158,13 +158,14 @@ class ModelEndpointRecordRepository(ABC):
 
     @abstractmethod
     async def get_model_endpoint_record(
-        self, model_endpoint_id: str
+        self, model_endpoint_id: str, refresh: bool = False
     ) -> Optional[ModelEndpointRecord]:
         """
         Gets a model endpoint record.
 
         Args:
             model_endpoint_id: The unique ID of the Model Endpoint Record to get.
+            refresh: Bypass any read cache and return the stored row.
 
         Returns:
             A Model Endpoint Record domain entity if found, else None.

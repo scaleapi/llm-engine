@@ -236,9 +236,9 @@ class DbModelEndpointRecordRepository(ModelEndpointRecordRepository, DbRepositor
         return model_endpoints
 
     async def get_model_endpoint_record(
-        self, model_endpoint_id: str
+        self, model_endpoint_id: str, refresh: bool = False
     ) -> Optional[ModelEndpointRecord]:
-        model_endpoint = cache.get(model_endpoint_id)
+        model_endpoint = None if refresh else cache.get(model_endpoint_id)
         if model_endpoint is None:
             self.monitoring_metrics_gateway.emit_database_cache_miss_metric()
             async with self.session() as session:

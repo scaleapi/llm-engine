@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime, timezone
 from typing import Dict, Optional, Set
 
@@ -47,7 +48,7 @@ class DatadogEndpointTrafficGateway(EndpointTrafficGateway):
 
     async def last_active_at(self, since: datetime) -> Optional[Dict[str, datetime]]:
         try:
-            response = self._query(since)
+            response = await asyncio.to_thread(self._query, since)
         except Exception:
             logger.exception("Datadog traffic query failed")
             return None

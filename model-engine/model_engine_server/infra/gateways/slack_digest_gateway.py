@@ -10,6 +10,12 @@ _SLACK_POST_MESSAGE_URL = "https://slack.com/api/chat.postMessage"
 _SLACK_TEXT_LIMIT = 39000  # chat.postMessage rejects text over 40,000 characters.
 
 
+class LogDigestGateway(DigestGateway):
+    def send_digest(self, text: str) -> bool:
+        logger.info(f"Endpoint GC digest:\n{text}")
+        return True
+
+
 class SlackDigestGateway(DigestGateway):
     """Posts the digest to a Slack channel with a bot token (chat.postMessage)."""
 
@@ -17,7 +23,9 @@ class SlackDigestGateway(DigestGateway):
         self.bot_token = bot_token
         self.channel = channel
 
-    def send_digest(self, text: str) -> None:
+    def send_digest(self, text: str) -> bool:
+        # The full digest always goes to the log; Slack gets it too, truncated if needed.
+        LogDigestGateway().send_digest(text)
         if len(text) > _SLACK_TEXT_LIMIT:
             text = text[:_SLACK_TEXT_LIMIT] + "\n... truncated, see pod logs for the full digest"
         try:
@@ -30,14 +38,11 @@ class SlackDigestGateway(DigestGateway):
             body = response.json()
         except (requests.RequestException, ValueError):
             logger.exception("Failed to post GC digest to Slack")
-            return
+            return False
         if not body.get("ok"):
             logger.error(f"Slack rejected GC digest: {body.get('error')}")
-
-
-class LogDigestGateway(DigestGateway):
-    def send_digest(self, text: str) -> None:
-        logger.info(f"Endpoint GC digest:\n{text}")
+            return False
+        return True
 
 
 def build_digest_gateway(bot_token: Optional[str], channel: Optional[str]) -> DigestGateway:
