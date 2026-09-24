@@ -52,20 +52,20 @@ class PrometheusEndpointTrafficGateway(EndpointTrafficGateway):
         data = await self._get("/api/v1/query", {"query": query})
         return None if data is None else data["result"]
 
-    async def covered_keys(self) -> Optional[Set[str]]:
-        """Deployments whose every ready pod has a healthy, scraped Istio sidecar target.
+    async def observed_pod_counts(self) -> Optional[Dict[str, int]]:
+        """Ready pods per deployment with a healthy, scraped Istio sidecar target.
 
         Read from the discovered (pre-relabeling) pod labels of the active scrape targets, so
         it does not depend on which labels the scrape config keeps. Endpoint pods carry
         ``app=<deployment name>``. Only sidecar targets (Envoy's ``/stats/prometheus``) carry the
-        request metric; an application's own ``/metrics`` target proves nothing, and one scraped
-        pod says nothing about a sibling whose sidecar is not.
+        request metric; an application's own ``/metrics`` target proves nothing. The caller
+        compares the count with the Deployment's available replicas, so a pod missing from
+        discovery altogether still leaves its deployment uncovered.
         """
         data = await self._get("/api/v1/targets", {"state": "active"})
         if data is None:
             return None
-        ready_pods: Dict[str, Set[str]] = {}
-        observed_pods: Dict[str, Set[str]] = {}
+        observed: Dict[str, Set[str]] = {}
         for target in data.get("activeTargets", []):
             labels = target.get("discoveredLabels") or {}
             app = labels.get("__meta_kubernetes_pod_label_app", "")
@@ -74,15 +74,13 @@ class PrometheusEndpointTrafficGateway(EndpointTrafficGateway):
                 continue
             if labels.get("__meta_kubernetes_pod_ready") != "true":
                 continue  # not serving: gets no requests, needs no coverage
-            ready_pods.setdefault(app, set()).add(pod)
             scrape_path = urlparse(target.get("scrapeUrl", "")).path
             if target.get("health") == "up" and scrape_path.endswith(_ISTIO_STATS_PATH):
-                observed_pods.setdefault(app, set()).add(pod)
-        covered = {app for app, pods in ready_pods.items() if pods <= observed_pods.get(app, set())}
-        if not covered:
+                observed.setdefault(app, set()).add(pod)
+        if not observed:
             logger.error("Prometheus scrapes no healthy endpoint sidecar: coverage unknown")
             return None
-        return covered
+        return {app: len(pods) for app, pods in observed.items()}
 
     async def active_keys(self, since: datetime) -> Optional[Set[str]]:
         coverage = await self._query(_COVERAGE_QUERY % self.workload_prefix)

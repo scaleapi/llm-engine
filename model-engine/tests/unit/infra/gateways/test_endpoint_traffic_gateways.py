@@ -95,33 +95,39 @@ A, B = "launch-endpoint-id-end-a", "launch-endpoint-id-end-b"
         pytest.param({"activeTargets": []}, None, id="no-endpoint-sidecar-is-unknown"),
         pytest.param(
             {"activeTargets": [_target(A, "a-1"), _target("other", "o-1"), {"health": "up"}]},
-            {A},
-            id="healthy-sidecar-on-every-ready-pod",
+            {A: 1},
+            id="healthy-sidecar-pods-counted-per-deployment",
+        ),
+        pytest.param(
+            {
+                "activeTargets": [
+                    _target(A, "a-1"),
+                    _target(A, "a-1", port=15090),
+                    _target(A, "a-2"),
+                ]
+            },
+            {A: 2},
+            id="pods-counted-once",
         ),
         pytest.param(
             {"activeTargets": [_target(A, "a-1"), _target(B, "b-1", health="down")]},
-            {A},
-            id="sidecar-down-is-not-covered",
+            {A: 1},
+            id="sidecar-down-is-not-observed",
         ),
         pytest.param(
             {"activeTargets": [_target(A, "a-1"), _target(B, "b-1", port=5000)]},
-            {A},
+            {A: 1},
             id="app-metrics-target-does-not-count",
         ),
         pytest.param(
-            {"activeTargets": [_target(A, "a-1"), _target(B, "b-1"), _target(B, "b-2", "down")]},
-            {A},
-            id="one-unscraped-sibling-pod-uncovers-the-deployment",
-        ),
-        pytest.param(
-            {"activeTargets": [_target(A, "a-1"), _target(A, "a-2", "down", ready="false")]},
-            {A},
-            id="not-ready-pod-needs-no-coverage",
+            {"activeTargets": [_target(A, "a-1"), _target(A, "a-2", ready="false")]},
+            {A: 1},
+            id="not-ready-pod-not-counted",
         ),
     ],
 )
 @pytest.mark.asyncio
-async def test_prometheus_covered_keys(data, expected):
+async def test_prometheus_observed_pod_counts(data, expected):
     gateway = PrometheusEndpointTrafficGateway("http://prom")
 
     async def fake_get(path: str, params: dict):
@@ -129,4 +135,4 @@ async def test_prometheus_covered_keys(data, expected):
         return data
 
     gateway._get = fake_get  # type: ignore[method-assign]
-    assert await gateway.covered_keys() == expected
+    assert await gateway.observed_pod_counts() == expected

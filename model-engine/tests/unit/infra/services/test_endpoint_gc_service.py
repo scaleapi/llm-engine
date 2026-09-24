@@ -74,9 +74,9 @@ class FakeTraffic(EndpointTrafficGateway):
         active: Optional[Set[str]] = None,
         history: Optional[Dict[str, datetime]] = None,
         active_sequence: Optional[List[Optional[Set[str]]]] = None,
-        covered: Optional[Set[str]] = None,
+        covered: Optional[Dict[str, int]] = None,
         reports_coverage: bool = False,
-        covered_sequence: Optional[List[Optional[Set[str]]]] = None,
+        covered_sequence: Optional[List[Optional[Dict[str, int]]]] = None,
         on_query: Optional[Callable[[int], None]] = None,
     ):
         self.active, self.history = active, history
@@ -95,11 +95,11 @@ class FakeTraffic(EndpointTrafficGateway):
             return None if answer is None else set(answer)
         return None if self.active is None else set(self.active)
 
-    async def covered_keys(self) -> Optional[Set[str]]:
+    async def observed_pod_counts(self) -> Optional[Dict[str, int]]:
         if self.covered_sequence:
             answer = self.covered_sequence.pop(0)
-            return None if answer is None else set(answer)
-        return None if self.covered is None else set(self.covered)
+            return None if answer is None else dict(answer)
+        return None if self.covered is None else dict(self.covered)
 
     async def last_active_at(self, since: datetime) -> Optional[Dict[str, datetime]]:
         return self.history
@@ -173,9 +173,9 @@ class Harness:
         queue_delayed: int = 0,
         queue_sent_sequence: Optional[List[Optional[int]]] = None,
         traffic_sequence: Optional[List[Optional[Set[str]]]] = None,
-        covered_names: Optional[Set[str]] = None,
+        covered_names: Optional[Dict[str, int]] = None,
         reports_coverage: bool = False,
-        covered_sequence: Optional[List[Optional[Set[str]]]] = None,
+        covered_sequence: Optional[List[Optional[Dict[str, int]]]] = None,
         on_traffic_query: Optional[Callable[[int], None]] = None,
         config: EndpointGcConfig = ACTING,
     ):
@@ -2234,7 +2234,7 @@ async def test_observation_gap_resets_broken_clock_of_gc_parked_http_endpoint(
 @pytest.mark.asyncio
 async def test_serving_http_endpoint_not_scraped_is_not_judged(harness, model_endpoint_1):
     endpoint = harness.add(_endpoint(model_endpoint_1, available=1, unavailable=0))
-    report = await harness.run(reports_coverage=True, covered_names={"someone-else"})
+    report = await harness.run(reports_coverage=True, covered_names={"someone-else": 1})
 
     assert [r.id for r in report.traffic_unknown] == [endpoint.record.id]
     assert report.tracking == []
@@ -2245,10 +2245,20 @@ async def test_serving_http_endpoint_not_scraped_is_not_judged(harness, model_en
 @pytest.mark.asyncio
 async def test_serving_http_endpoint_scraped_is_judged(harness, model_endpoint_1):
     endpoint = harness.add(_endpoint(model_endpoint_1, available=1, unavailable=0))
-    report = await harness.run(reports_coverage=True, covered_names={endpoint.record.name})
+    report = await harness.run(reports_coverage=True, covered_names={endpoint.record.name: 1})
 
     assert report.traffic_unknown == []
     assert [r.id for r in report.tracking] == [endpoint.record.id]
+
+
+@pytest.mark.asyncio
+async def test_pod_missing_from_discovery_leaves_the_endpoint_unjudged(harness, model_endpoint_1):
+    # Two serving pods per the Deployment; the source observes only one of them.
+    endpoint = harness.add(_endpoint(model_endpoint_1, available=2, unavailable=0))
+    report = await harness.run(reports_coverage=True, covered_names={endpoint.record.name: 1})
+
+    assert [r.id for r in report.traffic_unknown] == [endpoint.record.id]
+    assert await harness.stored(endpoint) == {}
 
 
 @pytest.mark.asyncio
@@ -2276,7 +2286,7 @@ async def test_coverage_lost_before_the_action_blocks_it(harness, model_endpoint
         )
     )
     report = await harness.run(
-        reports_coverage=True, covered_sequence=[{endpoint.record.name}, set()]
+        reports_coverage=True, covered_sequence=[{endpoint.record.name: 1}, {}]
     )
 
     assert report.scaled_to_zero == []
@@ -2321,21 +2331,33 @@ async def test_lock_release_failure_after_a_delete_still_counts_against_the_cap(
         for i in range(3)
     ]
     original_lock = harness.repo.get_lock_context
+    original_delete = harness.service.delete_model_endpoint
+    deleted: Set[str] = set()
+    releases: List[str] = []
 
-    def failing_release(record):
-        context = original_lock(record)
-        original_exit = context.__aexit__
+    async def delete_and_remember(model_endpoint_id: str):
+        deleted.add(model_endpoint_id)
+        return await original_delete(model_endpoint_id)
 
-        async def exit_then_fail(exc_type, exc, tb):
-            await original_exit(exc_type, exc, tb)
-            raise RuntimeError("lock release failed")
+    class FailingReleaseAfterDelete:
+        def __init__(self, record):
+            self.record, self.inner = record, original_lock(record)
 
-        context.__aexit__ = exit_then_fail  # type: ignore[method-assign]
-        return context
+        async def __aenter__(self):
+            await self.inner.__aenter__()
+            return self.inner
 
-    harness.repo.get_lock_context = failing_release
+        async def __aexit__(self, exc_type, exc, tb):
+            await self.inner.__aexit__(exc_type, exc, tb)
+            if self.record.id in deleted:  # the delete went through under this lock
+                releases.append("failed")
+                raise RuntimeError("lock release failed")
+
+    harness.service.delete_model_endpoint = delete_and_remember
+    harness.repo.get_lock_context = FailingReleaseAfterDelete
     report = await harness.run(config=EndpointGcConfig(actions_enabled=True, action_cap=1))
 
+    assert releases == ["failed"]  # only the one action reached the lock
     assert len(report.deleted) == 1
     assert len(report.deferred) == 2
     assert report.check_failed == []

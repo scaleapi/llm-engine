@@ -15,7 +15,7 @@ class EndpointTrafficGateway(ABC):
     """Reports which endpoints received requests. None means the source could not answer."""
 
     key: TrafficKey
-    # True when covered_keys() can say which endpoints this source is currently observing.
+    # True when observed_pod_counts() can say which pods this source is currently observing.
     reports_coverage: bool = False
 
     @abstractmethod
@@ -26,8 +26,10 @@ class EndpointTrafficGateway(ABC):
         """Most recent request time per key since ``since``; None when history is unavailable."""
         return None
 
-    async def covered_keys(self) -> Optional[Set[str]]:
-        """Keys of endpoints whose request path this source is observing right now.
+    async def observed_pod_counts(self) -> Optional[Dict[str, int]]:
+        """Per key, how many serving pods this source is observing the request path of right
+        now. Compared against the Deployment's available replicas, so a pod the source does not
+        even know about counts as unobserved.
 
         Only meaningful when ``reports_coverage`` is True; None then means the answer is
         unknown and silence from this source cannot be trusted for any endpoint.

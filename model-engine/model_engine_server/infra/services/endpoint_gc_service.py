@@ -647,7 +647,7 @@ class EndpointGarbageCollectionService:
 
         active: Set[str] = set()
         last_seen: Dict[str, datetime] = {}
-        covered: Set[str] = set()
+        observed_pods: Dict[str, int] = {}
         coverage_known = False
         frozen = False
         for gateway in self.traffic_gateways:
@@ -658,13 +658,13 @@ class EndpointGarbageCollectionService:
                 continue
             active.update(self._resolve(keys, gateway.key, by_deployment, by_name))
             if gateway.reports_coverage:
-                covered_keys = await gateway.covered_keys()
-                if covered_keys is None:
+                counts = await gateway.observed_pod_counts()
+                if counts is None:
                     frozen = True
                     report.sources_unknown.append(f"{type(gateway).__name__} coverage")
                 else:
                     coverage_known = True
-                    covered.update(self._resolve(covered_keys, gateway.key, by_deployment, by_name))
+                    self._merge_counts(observed_pods, counts, gateway.key, by_deployment, by_name)
             if not needs_history:
                 continue
             history = await gateway.last_active_at(
@@ -708,16 +708,16 @@ class EndpointGarbageCollectionService:
             report.sources_unknown.append("queue")
         uncovered: Set[str] = set()
         if coverage_known:
-            # A serving http endpoint whose pods no source scrapes: its silence is not evidence.
-            # (Idle http series expire, so absence of a series alone says nothing.)
+            # A serving http endpoint with a pod no source scrapes: its silence is not evidence.
+            # (Idle http series expire, so absence of a series alone says nothing.) The pod
+            # count comes from the Deployment, not from the source's own discovery.
             uncovered = {
                 record.id
                 for record in records
                 if record.endpoint_type != ModelEndpointType.ASYNC
                 and record.id in states_by_id
-                and (states_by_id[record.id].deployment_state.available_workers or 0) > 0
-                and record.id not in covered
                 and record.id not in active
+                and not self._covered(states_by_id[record.id], observed_pods.get(record.id, 0))
             }
         return _Traffic(
             active=active,
@@ -727,6 +727,23 @@ class EndpointGarbageCollectionService:
             last_seen=last_seen,
             frozen=frozen,
         )
+
+    @staticmethod
+    def _covered(infra_state: ModelEndpointInfraState, observed_pods: int) -> bool:
+        """Every serving pod of the Deployment is observed by a coverage-reporting source."""
+        return observed_pods >= (infra_state.deployment_state.available_workers or 0)
+
+    def _merge_counts(
+        self,
+        into: Dict[str, int],
+        counts: Dict[str, int],
+        kind: TrafficKey,
+        by_deployment: Dict[str, str],
+        by_name: Dict[str, List[str]],
+    ) -> None:
+        for key, count in counts.items():
+            for endpoint_id in self._resolve({key}, kind, by_deployment, by_name):
+                into[endpoint_id] = max(into.get(endpoint_id, 0), count)
 
     @staticmethod
     def _resolve(
@@ -1018,7 +1035,8 @@ class EndpointGarbageCollectionService:
             by_name = {fresh.name: [fresh.id]}
             _, live_available = _worker_counts(live)
             needs_coverage = not is_async and live_available > 0
-            coverage_known = covered = False
+            coverage_known = False
+            observed_pods: Dict[str, int] = {}
             for gateway in self.traffic_gateways:
                 keys = await gateway.active_keys(since)
                 if keys is None:
@@ -1028,14 +1046,17 @@ class EndpointGarbageCollectionService:
                 if fresh.id in self._resolve(keys, gateway.key, by_deployment, by_name):
                     return True
                 if needs_coverage and gateway.reports_coverage:
-                    covered_keys = await gateway.covered_keys()
-                    if covered_keys is None:
+                    counts = await gateway.observed_pod_counts()
+                    if counts is None:
                         unknown = True
                         continue
                     coverage_known = True
-                    if fresh.id in self._resolve(covered_keys, gateway.key, by_deployment, by_name):
-                        covered = True
-            if needs_coverage and coverage_known and not covered:
+                    self._merge_counts(observed_pods, counts, gateway.key, by_deployment, by_name)
+            if (
+                needs_coverage
+                and coverage_known
+                and not self._covered(live, observed_pods.get(fresh.id, 0))
+            ):
                 unknown = True
         return None if unknown else False
 
