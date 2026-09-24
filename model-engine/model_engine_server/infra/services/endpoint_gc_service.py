@@ -253,12 +253,14 @@ class EndpointGarbageCollectionService:
         if _is_exempt(metadata):
             report.exempt.append(record)
             return
-        if has_state and not all(
-            _parse_ts(metadata[key]) is not None for key in GC_TIMESTAMP_KEYS if key in metadata
-        ):
-            bad = [
-                key for key in GC_TIMESTAMP_KEYS if key in metadata and not _parse_ts(metadata[key])
-            ]
+        bad = [
+            key
+            for key in GC_TIMESTAMP_KEYS
+            if key in metadata
+            and not _parse_ts(metadata[key])
+            and not (key == GC_SEEN_RESTART_AT_KEY and metadata[key] == "")
+        ]
+        if has_state and bad:
             logger.warning(f"GC state on {record.id} is not ISO-8601: {bad}")
             report.state_invalid.append(record)
             return
@@ -872,10 +874,11 @@ class EndpointGarbageCollectionService:
             return False
         if restarted_at.tzinfo is None:
             restarted_at = restarted_at.replace(tzinfo=timezone.utc)
-        seen = _parse_ts(metadata.get(GC_SEEN_RESTART_AT_KEY))
-        if seen is not None:
-            # GC acknowledged a restart annotation before; a newer one is an owner restart.
-            return restarted_at > seen
+        if GC_SEEN_RESTART_AT_KEY in metadata:
+            # GC acknowledged what it saw before: a timestamp, or "" for no annotation. Anything
+            # newer than that is an owner restart.
+            seen = _parse_ts(metadata.get(GC_SEEN_RESTART_AT_KEY))
+            return seen is None or restarted_at > seen
         touched = _parse_ts(metadata.get(GC_TOUCHED_AT_KEY))
         return touched is not None and restarted_at > touched
 
@@ -968,12 +971,16 @@ class EndpointGarbageCollectionService:
                 )
                 if infra_state is None:
                     infra_state = self._infra_for_writes
-                if infra_state is not None and infra_state.restarted_at is not None:
+                if infra_state is not None:
+                    # Acknowledge exactly what was seen: a timestamp, or "" for no annotation, so
+                    # a restart that appears later is detected whatever GC's write times are.
                     restarted_at = infra_state.restarted_at
-                    if restarted_at.tzinfo is None:
+                    if restarted_at is not None and restarted_at.tzinfo is None:
                         restarted_at = restarted_at.replace(tzinfo=timezone.utc)
-                    merged[GC_SEEN_RESTART_AT_KEY] = restarted_at.isoformat()
-                elif GC_SEEN_RESTART_AT_KEY in current_metadata and infra_state is None:
+                    merged[GC_SEEN_RESTART_AT_KEY] = (
+                        restarted_at.isoformat() if restarted_at is not None else ""
+                    )
+                elif GC_SEEN_RESTART_AT_KEY in current_metadata:
                     merged[GC_SEEN_RESTART_AT_KEY] = current_metadata[GC_SEEN_RESTART_AT_KEY]
             # Bookkeeping, not an owner edit: last_updated_at stays as the owner left it.
             await self.record_repository.update_model_endpoint_metadata(

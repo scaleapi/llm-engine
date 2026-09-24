@@ -138,6 +138,7 @@ class Harness:
         queue_delayed: int = 0,
         config: EndpointGcConfig = ACTING,
     ):
+        self.clock = NOW
         gc = EndpointGarbageCollectionService(
             model_endpoint_record_repository=self.repo,
             resource_gateway=self.resources,
@@ -148,7 +149,7 @@ class Harness:
             model_endpoint_service=self.service,
             digest_gateway=self.digest,
             config=config,
-            now=lambda: NOW,
+            now=lambda: self.clock,
         )
         return await gc.execute()
 
@@ -1477,12 +1478,49 @@ async def test_restart_between_listing_and_bookkeeping_still_blocks_the_action(
         harness.resources.db[endpoint.record.id] = endpoint.infra_state.model_copy(
             update={"restarted_at": NOW + timedelta(seconds=10)}
         )
+        harness.clock = NOW + timedelta(seconds=20)  # bookkeeping writes land after the restart
         return records
 
     harness.repo.list_model_endpoint_records = list_then_restart
     report = await harness.run()
 
     assert report.scaled_to_zero == []
+    assert [a.record.id for a in report.skipped_at_action] == [endpoint.record.id]
+
+
+@pytest.mark.asyncio
+async def test_first_restart_after_bookkeeping_blocks_a_delete(harness, model_endpoint_1):
+    endpoint = harness.add(
+        _endpoint(
+            model_endpoint_1,
+            available=0,
+            unavailable=0,
+            min_workers=0,
+            metadata={
+                GC_LAST_TRAFFIC_AT_KEY: _days_ago(180),
+                GC_OBSERVED_AT_KEY: _days_ago(1),
+                GC_SCALE_TO_ZERO_REQUESTED_AT_KEY: _days_ago(90),
+                GC_SCALE_TO_ZERO_TASK_ID_KEY: "gc-task",
+                GC_SEEN_TASK_ID_KEY: "gc-task",
+                GC_TOUCHED_AT_KEY: _days_ago(1),
+            },
+        )
+    )
+    endpoint.record.creation_task_id = "gc-task"
+    original_list = harness.repo.list_model_endpoint_records
+
+    async def list_then_restart(**kwargs):
+        records = await original_list(**kwargs)
+        harness.resources.db[endpoint.record.id] = endpoint.infra_state.model_copy(
+            update={"restarted_at": NOW + timedelta(seconds=10)}
+        )
+        harness.clock = NOW + timedelta(seconds=20)
+        return records
+
+    harness.repo.list_model_endpoint_records = list_then_restart
+    report = await harness.run()
+
+    assert report.deleted == []
     assert [a.record.id for a in report.skipped_at_action] == [endpoint.record.id]
 
 
