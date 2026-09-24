@@ -3,7 +3,7 @@ import json
 import os
 import re
 from string import Template
-from typing import Any, Dict, List, Optional, Tuple, cast
+from typing import Any, Dict, List, Optional, Sequence, Tuple, cast
 
 import kubernetes_asyncio
 import yaml
@@ -632,6 +632,23 @@ class K8SEndpointResourceDelegate:
                     logger.info(f"Deployment {name} changed since it was read")
                 raise EndpointResourceConflictException from e
         raise EndpointResourceConflictException  # the observed Deployment is gone
+
+    @staticmethod
+    def _sidecar_restarted_at(pods: Sequence[Any]) -> Optional[datetime.datetime]:
+        """Latest istio-proxy container termination across the given pods, if any."""
+        latest: Optional[datetime.datetime] = None
+        for pod in pods:
+            statuses = (pod.status.container_statuses or []) if pod.status else []
+            for status in statuses:
+                terminated = status.last_state.terminated if status.last_state else None
+                if status.name != "istio-proxy" or terminated is None:
+                    continue
+                finished_at = terminated.finished_at
+                if isinstance(finished_at, datetime.datetime) and (
+                    latest is None or finished_at > latest
+                ):
+                    latest = finished_at
+        return latest
 
     @staticmethod
     def _get_restarted_at(deployment_config: V1Deployment) -> Optional[datetime.datetime]:
@@ -2324,6 +2341,12 @@ class K8SEndpointResourceDelegate:
         k8s_resource_group_name = _endpoint_id_to_k8s_resource_group_name(endpoint_id)
 
         deployment_config = await self._get_deployment(endpoint_id, deployment_name)
+        pods = (
+            await get_kubernetes_core_client().list_namespaced_pod(
+                namespace=hmi_config.endpoint_namespace,
+                label_selector=f"app={deployment_config.metadata.name}",
+            )
+        ).items
 
         common_params = self._get_common_endpoint_params(deployment_config)
         if endpoint_type == ModelEndpointType.ASYNC:
@@ -2423,6 +2446,7 @@ class K8SEndpointResourceDelegate:
             restarted_at=self._get_restarted_at(deployment_config),
             desired_workers=deployment_config.spec.replicas,
             resource_version=deployment_config.metadata.resource_version,
+            sidecar_restarted_at=self._sidecar_restarted_at(pods),
         )
 
         return infra_state
@@ -2499,6 +2523,15 @@ class K8SEndpointResourceDelegate:
                 namespace=hmi_config.endpoint_namespace, resource_version="0"
             )
         ).items
+        pods_by_app: Dict[str, List[Any]] = {}
+        for pod in (
+            await get_kubernetes_core_client().list_namespaced_pod(
+                namespace=hmi_config.endpoint_namespace, resource_version="0"
+            )
+        ).items:
+            app = (pod.metadata.labels or {}).get("app") if pod.metadata else None
+            if isinstance(app, str):
+                pods_by_app.setdefault(app, []).append(pod)
         hpas = (
             await autoscaling_client.list_namespaced_horizontal_pod_autoscaler(
                 namespace=hmi_config.endpoint_namespace, resource_version="0"
@@ -2634,6 +2667,7 @@ class K8SEndpointResourceDelegate:
                     restarted_at=self._get_restarted_at(deployment_config),
                     desired_workers=deployment_config.spec.replicas,
                     resource_version=deployment_config.metadata.resource_version,
+                    sidecar_restarted_at=self._sidecar_restarted_at(pods_by_app.get(name, [])),
                 )
                 if name.startswith("launch-endpoint-id-"):
                     key = _k8s_resource_group_name_to_endpoint_id(name)

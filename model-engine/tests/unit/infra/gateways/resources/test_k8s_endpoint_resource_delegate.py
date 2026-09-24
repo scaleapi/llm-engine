@@ -1,3 +1,4 @@
+import datetime
 import json
 import os
 import shutil
@@ -1673,3 +1674,34 @@ async def test_annotate_deployment_precondition(
         }
     if expect_calls == 2:
         assert calls[-1].kwargs["name"] == "legacy"
+
+
+def _pod(*containers):
+    pod = MagicMock()
+    pod.status.container_statuses = []
+    for name, finished_at in containers:
+        status = MagicMock()
+        status.name = name
+        status.last_state.terminated = (
+            None if finished_at is None else MagicMock(finished_at=finished_at)
+        )
+        pod.status.container_statuses.append(status)
+    return pod
+
+
+T1 = datetime.datetime(2026, 9, 24, 1, tzinfo=datetime.timezone.utc)
+T2 = datetime.datetime(2026, 9, 24, 2, tzinfo=datetime.timezone.utc)
+
+
+@pytest.mark.parametrize(
+    "pods,expected",
+    [
+        pytest.param([], None, id="no-pods"),
+        pytest.param([_pod(("istio-proxy", None), ("main", T2))], None, id="only-main-restarted"),
+        pytest.param(
+            [_pod(("istio-proxy", T1)), _pod(("istio-proxy", T2))], T2, id="latest-sidecar"
+        ),
+    ],
+)
+def test_sidecar_restarted_at(k8s_endpoint_resource_delegate, pods, expected):
+    assert k8s_endpoint_resource_delegate._sidecar_restarted_at(pods) == expected

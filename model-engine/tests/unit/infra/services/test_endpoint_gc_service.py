@@ -740,6 +740,7 @@ async def test_scale_to_zero_calls_update_with_min_workers_zero(harness, model_e
             "model_endpoint_id": endpoint.record.id,
             "model_bundle_id": endpoint.record.current_model_bundle.id,
             "min_workers": 0,
+            "expected_creation_task_id": endpoint.record.creation_task_id,
         }
     ]
 
@@ -2414,15 +2415,16 @@ async def test_lock_release_failure_after_a_delete_still_counts_against_the_cap(
 
 
 @pytest.mark.parametrize(
-    "status,kind",
+    "status,kind,bucket",
     [
-        pytest.param(ModelEndpointStatus.READY, SCALE_TO_ZERO, id="scale-to-zero"),
-        pytest.param(ModelEndpointStatus.UPDATE_FAILED, DELETE, id="delete-after-failed-park"),
+        # A second pod is more desired workers than judged: caught as a scale-up first.
+        pytest.param(ModelEndpointStatus.READY, SCALE_TO_ZERO, "skipped_at_action", id="scale"),
+        pytest.param(ModelEndpointStatus.UPDATE_FAILED, DELETE, "check_failed", id="delete"),
     ],
 )
 @pytest.mark.asyncio
 async def test_pod_appearing_during_final_telemetry_is_unobserved_and_blocks(
-    harness, model_endpoint_1, status, kind
+    harness, model_endpoint_1, status, kind, bucket
 ):
     metadata = {
         GC_LAST_TRAFFIC_AT_KEY: _days_ago(200),
@@ -2467,7 +2469,7 @@ async def test_pod_appearing_during_final_telemetry_is_unobserved_and_blocks(
     )
 
     assert report.scaled_to_zero == [] and report.deleted == []
-    assert [(a.record.id, a.kind) for a in report.check_failed] == [(endpoint.record.id, kind)]
+    assert [(a.record.id, a.kind) for a in getattr(report, bucket)] == [(endpoint.record.id, kind)]
 
 
 # ---- clean-slate adversary round 2 -----------------------------------------------------------------
@@ -2691,3 +2693,121 @@ async def test_deployment_change_during_final_record_read_blocks_the_scale_to_ze
     assert [a.record.id for a in report.skipped_at_action] == [endpoint.record.id]
     assert calls == []
     assert GC_SCALE_TO_ZERO_REQUESTED_AT_KEY not in await harness.stored(endpoint)
+
+
+# ---- clean-slate adversary round 4 -----------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_owner_update_between_request_stamp_and_scale_call_is_refused(
+    harness, model_endpoint_1
+):
+    endpoint = harness.add(
+        _endpoint(
+            model_endpoint_1,
+            available=1,
+            unavailable=0,
+            metadata={
+                GC_LAST_TRAFFIC_AT_KEY: _days_ago(91),
+                GC_OBSERVED_AT_KEY: _days_ago(1),
+                GC_TOUCHED_AT_KEY: _days_ago(1),
+                GC_SEEN_TASK_ID_KEY: model_endpoint_1.record.creation_task_id or "",
+            },
+        )
+    )
+    original_update = harness.service.update_model_endpoint
+
+    async def owner_update_lands_first(**kwargs):
+        # Accepted API update (new bundle, new task id) right before GC's own update call.
+        harness.repo.db[endpoint.record.id].creation_task_id = "owner-task"
+        return await original_update(**kwargs)
+
+    harness.service.update_model_endpoint = owner_update_lands_first
+    report = await harness.run()
+
+    assert report.scaled_to_zero == [] and report.action_failed == []
+    assert [a.record.id for a in report.skipped_at_action] == [endpoint.record.id]
+    assert harness.repo.db[endpoint.record.id].creation_task_id == "owner-task"
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        pytest.param({"min_workers": 5}, id="min-workers-raised"),
+        pytest.param({"desired_workers": 5}, id="desired-raised"),
+    ],
+)
+@pytest.mark.asyncio
+async def test_scale_up_during_final_telemetry_blocks_the_scale_to_zero(
+    harness, model_endpoint_1, change
+):
+    endpoint = harness.add(
+        _endpoint(
+            model_endpoint_1,
+            available=1,
+            unavailable=0,
+            metadata={
+                GC_LAST_TRAFFIC_AT_KEY: _days_ago(91),
+                GC_OBSERVED_AT_KEY: _days_ago(1),
+                GC_TOUCHED_AT_KEY: _days_ago(1),
+                GC_SEEN_TASK_ID_KEY: model_endpoint_1.record.creation_task_id or "",
+            },
+        )
+    )
+
+    def owner_scales_up(call: int):
+        if call == 2:
+            state = endpoint.infra_state
+            if "min_workers" in change:
+                state = state.model_copy(
+                    update={"deployment_state": state.deployment_state.model_copy(update=change)}
+                )
+            else:
+                state = state.model_copy(update=change)
+            harness.resources.db[endpoint.record.id] = state
+
+    report = await harness.run(on_traffic_query=owner_scales_up)
+
+    assert report.scaled_to_zero == []
+    assert [a.record.id for a in report.skipped_at_action] == [endpoint.record.id]
+
+
+@pytest.mark.asyncio
+async def test_sidecar_restart_in_lookback_leaves_the_endpoint_unjudged(harness, model_endpoint_1):
+    endpoint = _endpoint(model_endpoint_1, available=1, unavailable=0)
+    endpoint.infra_state = endpoint.infra_state.model_copy(
+        update={"sidecar_restarted_at": NOW - timedelta(hours=2)}
+    )
+    harness.add(endpoint)
+    report = await harness.run()
+
+    assert [r.id for r in report.traffic_unknown] == [endpoint.record.id]
+    assert await harness.stored(endpoint) == {}
+
+
+@pytest.mark.asyncio
+async def test_sidecar_restart_seen_at_final_check_blocks_the_action(harness, model_endpoint_1):
+    endpoint = harness.add(
+        _endpoint(
+            model_endpoint_1,
+            available=1,
+            unavailable=0,
+            metadata={
+                GC_LAST_TRAFFIC_AT_KEY: _days_ago(91),
+                GC_OBSERVED_AT_KEY: _days_ago(1),
+                GC_TOUCHED_AT_KEY: _days_ago(1),
+                GC_SEEN_TASK_ID_KEY: model_endpoint_1.record.creation_task_id or "",
+            },
+        )
+    )
+
+    def sidecar_restarts(call: int):
+        if call == 2:
+            harness.resources.db[endpoint.record.id] = endpoint.infra_state.model_copy(
+                update={"sidecar_restarted_at": NOW - timedelta(minutes=5)}
+            )
+
+    report = await harness.run(on_traffic_query=sidecar_restarts)
+
+    assert report.scaled_to_zero == []
+    assert [a.record.id for a in report.check_failed] == [endpoint.record.id]

@@ -405,7 +405,9 @@ class EndpointGarbageCollectionService:
             return
         active = record.id in traffic.active
         queue_active = is_async and record.id in traffic.queue_active
-        if record.id in traffic.uncovered:
+        if record.id in traffic.uncovered or (
+            not is_async and not active and self._sidecar_restarted(infra_state, run_at)
+        ):
             report.traffic_unknown.append(record)
             return
 
@@ -748,6 +750,13 @@ class EndpointGarbageCollectionService:
         )
 
     @staticmethod
+    def _sidecar_restarted(infra_state: ModelEndpointInfraState, run_at: datetime) -> bool:
+        """An istio-proxy restart inside the lookback resets the request counter; its silence
+        since then is not evidence."""
+        restarted = infra_state.sidecar_restarted_at
+        return restarted is not None and run_at - _utc(restarted) <= TRAFFIC_LOOKBACK
+
+    @staticmethod
     def _covered(infra_state: ModelEndpointInfraState, observed_pods: int) -> bool:
         """Every serving pod of the Deployment is observed by a coverage-reporting source."""
         return observed_pods >= (infra_state.deployment_state.available_workers or 0)
@@ -924,6 +933,12 @@ class EndpointGarbageCollectionService:
                 # observed.
                 report.check_failed.append(action)
                 return
+            if fresh.endpoint_type != ModelEndpointType.ASYNC and self._sidecar_restarted(
+                live, run_at
+            ):
+                # The request counter restarted while the sources were being asked.
+                report.check_failed.append(action)
+                return
             if fresh.endpoint_type == ModelEndpointType.ASYNC:
                 # Scaling to zero stops workers mid-task; deleting removes the queue with
                 # whatever is in it. Either way the queue must be empty right now.
@@ -1050,9 +1065,15 @@ class EndpointGarbageCollectionService:
                 )
                 report.skipped_at_action.append(action)
                 return None
-        if action.kind == SCALE_TO_ZERO and live_desired == 0:
-            report.skipped_at_action.append(action)
-            return None
+        if action.kind == SCALE_TO_ZERO:
+            judged_desired, _ = _worker_counts(action.infra_state)
+            if live_desired == 0 or (
+                live.deployment_state.min_workers > action.infra_state.deployment_state.min_workers
+                or live_desired > judged_desired
+            ):
+                # Already parked, or someone asked for more workers since the listing.
+                report.skipped_at_action.append(action)
+                return None
         return live
 
     async def _activity_now(
@@ -1102,6 +1123,8 @@ class EndpointGarbageCollectionService:
                         continue
                     coverage_known = True
                     self._merge_counts(observed_pods, counts, gateway.key, by_deployment, by_name)
+            if not is_async and self._sidecar_restarted(live, run_at):
+                unknown = True
             if needs_coverage and coverage_known:
                 observed = observed_pods.get(fresh.id, 0)
                 if not self._covered(live, observed):
@@ -1172,10 +1195,13 @@ class EndpointGarbageCollectionService:
             # Passing the current bundle id keeps this a resource patch; without it the service
             # marks the bundle as changed and the delegate replaces the Deployment with 0 replicas.
             # The bundle id comes from the record re-read under the lock, never the listing.
+            # expected_creation_task_id: the service applies this only if no other update was
+            # accepted since the read under the lock, so the bundle id passed is still current.
             updated = await self.model_endpoint_service.update_model_endpoint(
                 model_endpoint_id=action.record.id,
                 model_bundle_id=fresh.current_model_bundle.id,
                 min_workers=0,
+                expected_creation_task_id=fresh.creation_task_id or "",
             )
         except Exception:
             # The build may or may not have been enqueued. Keep the intent without a task id;

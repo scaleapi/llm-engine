@@ -508,3 +508,25 @@ async def test_restart_model_endpoint_success(
     await fake_live_model_endpoint_service.restart_model_endpoint(
         model_endpoint_id=model_endpoint_record.id,
     )
+
+
+@pytest.mark.asyncio
+async def test_update_with_stale_expected_task_id_writes_nothing(
+    fake_live_model_endpoint_service: LiveModelEndpointService,
+    model_endpoint_1: ModelEndpoint,
+):
+    record = await _create_model_endpoint_helper(
+        model_endpoint=model_endpoint_1, service=fake_live_model_endpoint_service
+    )
+    repo: Any = fake_live_model_endpoint_service.model_endpoint_record_repository
+    before = (repo.db[record.id].status, repo.db[record.id].current_model_bundle.id)
+
+    with pytest.raises(EndpointResourceConflictException):
+        await fake_live_model_endpoint_service.update_model_endpoint(
+            model_endpoint_id=record.id,
+            model_bundle_id=record.current_model_bundle.id,
+            min_workers=0,
+            expected_creation_task_id="someone-elses-task",
+        )
+
+    assert (repo.db[record.id].status, repo.db[record.id].current_model_bundle.id) == before

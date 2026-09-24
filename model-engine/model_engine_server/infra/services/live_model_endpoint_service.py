@@ -19,6 +19,7 @@ from model_engine_server.domain.entities import (
 )
 from model_engine_server.domain.exceptions import (
     EndpointDeleteFailedException,
+    EndpointResourceConflictException,
     ObjectAlreadyExistsException,
     ObjectNotFoundException,
 )
@@ -330,9 +331,10 @@ class LiveModelEndpointService(ModelEndpointService):
         public_inference: Optional[bool] = None,
         queue_message_timeout_seconds: Optional[int] = None,
         task_expires_seconds: Optional[int] = None,
+        expected_creation_task_id: Optional[str] = None,
     ) -> ModelEndpointRecord:
         record = await self.model_endpoint_record_repository.get_model_endpoint_record(
-            model_endpoint_id=model_endpoint_id
+            model_endpoint_id=model_endpoint_id, refresh=expected_creation_task_id is not None
         )
         if record is None:
             raise ObjectNotFoundException
@@ -340,6 +342,13 @@ class LiveModelEndpointService(ModelEndpointService):
         async with self.model_endpoint_record_repository.get_lock_context(record) as lock:
             name = record.name
             created_by = record.created_by
+            if (
+                expected_creation_task_id is not None
+                and (record.creation_task_id or "") != expected_creation_task_id
+            ):
+                # Another update was accepted since the caller read the record; applying this
+                # one would write that caller's stale bundle and settings back.
+                raise EndpointResourceConflictException
             if not lock.lock_acquired():
                 logger.warning(f"Lock was not successfully acquired by endpoint '{name}'")
                 # TODO: we should raise an exception here when locking is fixed.

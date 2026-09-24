@@ -163,6 +163,9 @@ class ModelEndpointInfraState(BaseModel):
     desired_workers: Optional[int] = None
     # metadata.resourceVersion of the Deployment as read; a conditional delete precondition.
     resource_version: Optional[str] = None
+    # Most recent termination of an istio-proxy container across the endpoint's pods: the
+    # request counter GC reads lives there and restarts with it.
+    sidecar_restarted_at: Optional[datetime.datetime] = None
 
 
 class ModelEndpoint(BaseModel):

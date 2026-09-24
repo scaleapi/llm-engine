@@ -238,12 +238,16 @@ class ModelEndpointService(ABC):
         public_inference: Optional[bool] = None,
         queue_message_timeout_seconds: Optional[int] = None,
         task_expires_seconds: Optional[int] = None,
+        expected_creation_task_id: Optional[str] = None,
     ) -> ModelEndpointRecord:
         """
         Updates a model endpoint.
 
         Args:
             model_endpoint_id: The unique ID of the model endpoint to update.
+            expected_creation_task_id: When given, the update is applied only if the record's
+                creation_task_id still matches (no other update was accepted meanwhile);
+                otherwise EndpointResourceConflictException is raised and nothing is written.
             model_bundle_id: The unique ID of the model bundle to use for the model endpoint.
             metadata: Key-value metadata to attach to the model endpoint.
             post_inference_hooks: Optional hooks to perform after inference is comoplete.

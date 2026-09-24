@@ -1975,10 +1975,16 @@ class FakeModelEndpointService(ModelEndpointService):
         queue_message_timeout_seconds: Optional[int] = None,
         task_expires_seconds: Optional[int] = None,
         public_inference: Optional[bool] = None,
+        expected_creation_task_id: Optional[str] = None,
     ) -> ModelEndpointRecord:
         model_endpoint = await self.get_model_endpoint(model_endpoint_id=model_endpoint_id)
         if model_endpoint is None:
             raise ObjectNotFoundException
+        if (
+            expected_creation_task_id is not None
+            and (model_endpoint.record.creation_task_id or "") != expected_creation_task_id
+        ):
+            raise EndpointResourceConflictException
         current_model_bundle = None
         if model_bundle_id is not None:
             current_model_bundle = await self.model_bundle_repository.get_model_bundle(
