@@ -13,27 +13,34 @@ from model_engine_server.infra.gateways.slack_digest_gateway import (
 SINCE = datetime.now(timezone.utc) - timedelta(hours=36)
 
 
+A_SERIES = {"metric": {"destination_workload": "launch-endpoint-id-end-a"}, "value": [0, "3"]}
+B_ZERO = {"metric": {"destination_workload": "launch-endpoint-id-end-b"}, "value": [0, "0"]}
+COVERED = [{"metric": {}, "value": [0, "12"]}]
+
+
 @pytest.mark.parametrize(
-    "coverage,activity,expected",
+    "coverage,increase,new_series,expected",
     [
-        pytest.param([], [], None, id="no-series-at-all-is-unknown"),
-        pytest.param([{"metric": {}, "value": [0, "0"]}], [], None, id="zero-series-is-unknown"),
-        pytest.param([{"metric": {}, "value": [0, "12"]}], [], set(), id="covered-and-idle"),
+        pytest.param([], [], [], None, id="no-series-at-all-is-unknown"),
         pytest.param(
-            [{"metric": {}, "value": [0, "12"]}],
-            [
-                {"metric": {"destination_workload": "launch-endpoint-id-end-a"}, "value": [0, "3"]},
-                {"metric": {"destination_workload": "launch-endpoint-id-end-b"}, "value": [0, "0"]},
-            ],
+            [{"metric": {}, "value": [0, "0"]}], [], [], None, id="zero-series-is-unknown"
+        ),
+        pytest.param(COVERED, [], [], set(), id="covered-and-idle"),
+        pytest.param(COVERED, [A_SERIES, B_ZERO], [], {"launch-endpoint-id-end-a"}, id="increase"),
+        pytest.param(COVERED, [], None, None, id="new-series-query-failed-is-unknown"),
+        pytest.param(
+            COVERED,
+            [B_ZERO],
+            [A_SERIES],
             {"launch-endpoint-id-end-a"},
-            id="active-workloads",
+            id="counter-born-in-window-with-no-increase-counts",
         ),
     ],
 )
 @pytest.mark.asyncio
-async def test_prometheus_active_keys(coverage, activity, expected):
+async def test_prometheus_active_keys(coverage, increase, new_series, expected):
     gateway = PrometheusEndpointTrafficGateway("http://prom")
-    answers = iter([coverage, activity])
+    answers = iter([coverage, increase, new_series])
 
     async def fake_query(query: str):
         return next(answers)

@@ -18,6 +18,14 @@ _QUERY = (
     "sum by (destination_workload) (increase(istio_request_duration_milliseconds_count"
     '{destination_workload=~"%s.*"}[%ds]))'
 )
+# increase() is zero for a counter whose first scraped sample is already positive (a series
+# born inside the window, typically the first request after a park). Those are found separately:
+# series with samples in the window but none at its start.
+_NEW_SERIES_QUERY = (
+    "sum by (destination_workload) (max_over_time(istio_request_duration_milliseconds_count"
+    '{destination_workload=~"%s.*"}[%ds]) unless istio_request_duration_milliseconds_count'
+    '{destination_workload=~"%s.*"} offset %ds)'
+)
 # Envoy's Prometheus endpoint, on the sidecar (15090) or merged through the agent (15020).
 _ISTIO_STATS_PATH = "/stats/prometheus"
 # Coverage probe: with no series at all for the prefix, the metric or the scrape is gone and an
@@ -90,14 +98,19 @@ class PrometheusEndpointTrafficGateway(EndpointTrafficGateway):
             logger.error("Prometheus has no istio request series for endpoint workloads")
             return None
         window = int((datetime.now(timezone.utc) - since).total_seconds())
-        results = await self._query(_QUERY % (self.workload_prefix, window))
-        if results is None:
-            return None
+        prefix = self.workload_prefix
         active: Set[str] = set()
-        for result in results:
-            workload = result["metric"].get("destination_workload")
-            if workload and float(result["value"][1]) > 0:
-                active.add(workload)
+        for query in (
+            _QUERY % (prefix, window),
+            _NEW_SERIES_QUERY % (prefix, window, prefix, window),
+        ):
+            results = await self._query(query)
+            if results is None:
+                return None
+            for result in results:
+                workload = result["metric"].get("destination_workload")
+                if workload and float(result["value"][1]) > 0:
+                    active.add(workload)
         return active
 
     async def last_active_at(self, since: datetime) -> Optional[Dict[str, datetime]]:
