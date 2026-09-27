@@ -4,7 +4,7 @@ import re
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional, Set, cast
 from unittest.mock import ANY, AsyncMock, MagicMock, Mock, patch
 
 import pytest
@@ -392,7 +392,8 @@ def _pod_specs(resource: Dict[str, Any]) -> List[Dict[str, Any]]:
     return [resource["spec"]["template"]["spec"]]
 
 
-def _assert_has_extra_pod_values(pod_spec: Dict[str, Any]) -> None:
+def _assert_has_extra_pod_values(pod_spec: Dict[str, Any]) -> Set[str]:
+    """Assert the extra values reach the pod; return the checked container names."""
     assert {"name": "s3-ca", "secret": {"secretName": "s3-ca"}} in pod_spec["volumes"]
     containers = [
         container
@@ -400,7 +401,6 @@ def _assert_has_extra_pod_values(pod_spec: Dict[str, Any]) -> None:
         for container in pod_spec.get(key, [])
         if container["name"] in EXTRA_POD_CONTAINERS
     ]
-    assert containers
     for container in containers:
         assert {
             "name": "s3-ca",
@@ -408,10 +408,21 @@ def _assert_has_extra_pod_values(pod_spec: Dict[str, Any]) -> None:
             "readOnly": True,
         } in container["volumeMounts"]
         assert {"configMapRef": {"name": "s3-ca-env"}} in container["envFrom"]
+    return {container["name"] for container in containers}
 
 
-@pytest.mark.parametrize("template_prefix", EXTRA_POD_TEMPLATE_PREFIXES)
-def test_extra_pod_values_reach_every_object_store_container(tmp_path, template_prefix):
+@pytest.mark.parametrize(
+    "template_prefix,expected_containers",
+    [
+        ("deployment-", {"main"}),
+        ("leader-worker-set-", {"lws-leader", "lws-worker"}),
+        ("batch-job-orchestration-job", {"main"}),
+        ("docker-image-batch-job-", {"main", "input-downloader"}),
+    ],
+)
+def test_extra_pod_values_reach_every_object_store_container(
+    tmp_path, template_prefix, expected_containers
+):
     values_path = tmp_path / "extra-pod-values.yaml"
     values_path.write_text(EXTRA_POD_VALUES)
     config_map = yaml.safe_load(_render_service_template_config_map(["-f", str(values_path)]))
@@ -424,8 +435,10 @@ def test_extra_pod_values_reach_every_object_store_container(tmp_path, template_
 
     assert templates
     for template in templates:
+        checked: Set[str] = set()
         for pod_spec in _pod_specs(_parse_service_template(template)):
-            _assert_has_extra_pod_values(pod_spec)
+            checked |= _assert_has_extra_pod_values(pod_spec)
+        assert checked == expected_containers
 
 
 def test_extra_pod_values_unset_render_nothing():
