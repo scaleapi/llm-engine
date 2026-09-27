@@ -377,6 +377,9 @@ data:
                 - name: endpoint-config
                   mountPath: /app/endpoint_config
                   subPath: raw_data
+                {{- with $.Values.extraPodVolumeMounts }}
+                {{- toYaml . | nindent 16 }}
+                {{- end }}
               ports:
                 - containerPort: ${USER_CONTAINER_PORT}
                   name: http
@@ -410,6 +413,9 @@ data:
                 items:
                   - key: infra_service_config
                     path: config.yaml
+            {{- end }}
+            {{- with $.Values.extraPodVolumes }}
+            {{- toYaml . | nindent 12 }}
             {{- end }}
   {{- end }}
   {{- end }}
@@ -791,6 +797,9 @@ data:
                   - name: endpoint-config
                     mountPath: /app/endpoint_config
                     subPath: raw_data
+                  {{- with $.Values.extraPodVolumeMounts }}
+                  {{- toYaml . | nindent 18 }}
+                  {{- end }}
                 ports:
                   - containerPort: ${USER_CONTAINER_PORT}
                     name: http
@@ -820,6 +829,9 @@ data:
                   items:
                     - key: infra_service_config
                       path: config.yaml
+              {{- end }}
+              {{- with $.Values.extraPodVolumes }}
+              {{- toYaml . | nindent 14 }}
               {{- end }}
         workerTemplate:
           metadata:
@@ -871,6 +883,10 @@ data:
                 imagePullPolicy: IfNotPresent
                 command: ${WORKER_COMMAND}
                 env: ${WORKER_ENV}
+                {{- with $.Values.extraPodEnvFrom }}
+                envFrom:
+                {{- toYaml . | nindent 18 }}
+                {{- end }}
                 resources:
                   requests:
                     {{- if eq $device "gpu" }}
@@ -904,6 +920,9 @@ data:
                   - name: endpoint-config
                     mountPath: /app/endpoint_config
                     subPath: raw_data
+                  {{- with $.Values.extraPodVolumeMounts }}
+                  {{- toYaml . | nindent 18 }}
+                  {{- end }}
                 ports:
                   - containerPort: ${USER_CONTAINER_PORT}
                     name: http
@@ -933,6 +952,9 @@ data:
                   items:
                     - key: infra_service_config
                       path: config.yaml
+              {{- end }}
+              {{- with $.Values.extraPodVolumes }}
+              {{- toYaml . | nindent 14 }}
               {{- end }}
   {{- end }}  # mode
   {{- end }}  # device
@@ -1112,6 +1134,9 @@ data:
                   - key: infra_service_config
                     path: config.yaml
             {{- end }}
+            {{- with $.Values.extraPodVolumes }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
           containers:
             - name: main
               image: {{ $gateway_repository }}:${GIT_TAG}
@@ -1127,6 +1152,10 @@ data:
                 {{- tuple $env_var | toYaml | nindent 16 }}
                 {{- end }}
                 {{- end }}
+              {{- with $.Values.extraPodEnvFrom }}
+              envFrom:
+              {{- toYaml . | nindent 16 }}
+              {{- end }}
               imagePullPolicy: IfNotPresent
               command:
                 - dumb-init
@@ -1169,6 +1198,9 @@ data:
                   mountPath: /workspace/model-engine/service_configs
                 - name: infra-service-config-volume
                   mountPath: /workspace/model-engine/model_engine_server/core/configs
+                {{- end }}
+                {{- with $.Values.extraPodVolumeMounts }}
+                {{- toYaml . | nindent 16 }}
                 {{- end }}
   {{- range $device := tuple "cpu" "gpu" }}
   docker-image-batch-job-{{- $device }}.yaml: |-
@@ -1239,6 +1271,9 @@ data:
             - name: dshm
               emptyDir:
                 medium: Memory
+            {{- with $.Values.extraPodVolumes }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
           containers:
             - name: main
               image: ${IMAGE}
@@ -1254,6 +1289,10 @@ data:
                 {{- tuple $env_var | toYaml | nindent 16 }}
                 {{- end }}
                 {{- end }}
+              {{- with $.Values.extraPodEnvFrom }}
+              envFrom:
+              {{- toYaml . | nindent 16 }}
+              {{- end }}
               imagePullPolicy: IfNotPresent
               command: ${COMMAND}
               resources:
@@ -1286,12 +1325,19 @@ data:
                   mountPath: ${MOUNT_PATH}
                 - mountPath: /dev/shm
                   name: dshm
+                {{- with $.Values.extraPodVolumeMounts }}
+                {{- toYaml . | nindent 16 }}
+                {{- end }}
           initContainers:
             - name: input-downloader
               image: {{ $gateway_repository }}:${GIT_TAG}
               env:
                 - name: AWS_CONFIG_FILE
                   value: "/opt/.aws/config"
+              {{- with $.Values.extraPodEnvFrom }}
+              envFrom:
+              {{- toYaml . | nindent 16 }}
+              {{- end }}
               command:
                 - python
                 - -m
@@ -1322,6 +1368,9 @@ data:
                 {{- end }}
                 - name: workdir
                   mountPath: ${MOUNT_PATH}
+                {{- with $.Values.extraPodVolumeMounts }}
+                {{- toYaml . | nindent 16 }}
+                {{- end }}
   {{- end }}
   {{- range $device := .Values.imageCache.devices }}
   {{- $device_node_selector := index $device "nodeSelector" }}
