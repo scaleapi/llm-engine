@@ -14,7 +14,6 @@ RUN apk add --no-cache \
   dumb-init \
   git \
   go \
-  openssl-dev \
   rsync
 
 RUN python -m venv /workspace/venv
