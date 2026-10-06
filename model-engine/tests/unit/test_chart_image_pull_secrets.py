@@ -72,6 +72,16 @@ def test_service_accounts_render_image_pull_secrets():
         assert service_account["imagePullSecrets"] == [{"name": "registry-cred"}]
 
 
+# Valid secret names that YAML would read as an int or a bool if left unquoted.
+@pytest.mark.parametrize("secret_name", ["123", "true"])
+def test_image_pull_secret_names_stay_strings(secret_name: str):
+    set_args = ["--set-string", f"imagePullSecrets[0].name={secret_name}"]
+
+    assert _autoscaler_pod_spec(set_args)["imagePullSecrets"] == [{"name": secret_name}]
+    for service_account in _service_accounts(set_args):
+        assert service_account["imagePullSecrets"] == [{"name": secret_name}]
+
+
 def test_service_accounts_omit_image_pull_secrets_when_unset():
     for service_account in _service_accounts([]):
         assert "imagePullSecrets" not in service_account
