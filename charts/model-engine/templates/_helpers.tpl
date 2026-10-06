@@ -564,9 +564,9 @@ namespaces:
 {{- end }}
 {{- end }}
 
-{{- /* Kubernetes copies a ServiceAccount's pull secrets onto pods that set none of their
-       own, which is the only way the python-rendered endpoint and batch-job pods get one. */}}
-{{- define "modelEngine.serviceAccountImagePullSecrets" }}
+{{- /* The configured pull secrets plus egp-ecr-regcred on Azure, for the ServiceAccounts and
+       the python-rendered pods. Renders nothing when the list is empty. */}}
+{{- define "modelEngine.imagePullSecrets" }}
 {{- $names := list }}
 {{- if .Values.azure }}
 {{- $names = append $names "egp-ecr-regcred" }}
@@ -576,7 +576,7 @@ namespaces:
 {{- $names = append $names .name }}
 {{- end }}
 {{- end }}
-{{- if $names }}
+{{- if $names -}}
 imagePullSecrets:
 {{- range $names }}
   - name: {{ . | quote }}

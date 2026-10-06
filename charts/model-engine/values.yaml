@@ -135,9 +135,10 @@ modelCache:
 automountServiceAccountToken: true
 
 # imagePullSecrets [optional] lists registry secrets for pulling images from a private registry,
-# e.g. [{name: my-registry-cred}]. They go on the control-plane pods and on the model-engine
-# ServiceAccounts, which pass them to endpoint and batch-job pods. Each secret must exist in
-# every namespace that uses it.
+# e.g. [{name: my-registry-cred}]. They go on the control-plane pods, the model-engine
+# ServiceAccounts, and the endpoint, batch-job and image-cache pods. A pod that lists pull secrets
+# no longer gets its ServiceAccount's, so include every secret those pods need. Each secret must
+# exist in every namespace that uses it.
 imagePullSecrets: []
 
 # Configurable utility images (for airgapped environments)

@@ -40,8 +40,9 @@ image:
   pullPolicy: Always
 
 # imagePullSecrets [optional] lists registry secrets for pulling the images above from a private
-# registry. They go on the control-plane pods and on the model-engine ServiceAccounts, which pass
-# them to endpoint and batch-job pods. Each secret must exist in every namespace that uses it.
+# registry. They go on the control-plane pods, the model-engine ServiceAccounts, and the endpoint,
+# batch-job and image-cache pods. A pod that lists pull secrets no longer gets its ServiceAccount's,
+# so include every secret those pods need. Each secret must exist in every namespace that uses it.
 # imagePullSecrets:
 #   - name: my-registry-cred
 
