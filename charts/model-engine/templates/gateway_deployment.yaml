@@ -82,7 +82,15 @@ spec:
             - -m
             - model_engine_server.entrypoints.start_fastapi_server
           resources:
-            {{- toYaml .Values.resources | nindent 12 }}
+            {{- /* The gateway proxies async-task results inline, so its memory profile is
+                 unrelated to the cacher and endpoint-builder that share .Values.resources.
+                 gateway.resources deep-merges OVER that shared block, so a memory-only
+                 override keeps the shared cpu / ephemeral-storage requests.
+                 deepCopy is required: mergeOverwrite mutates its first argument, and
+                 .Values.resources is also rendered into the cacher and endpoint-builder. */}}
+            {{- $base := .Values.resources | default dict }}
+            {{- $gatewayResources := (.Values.gateway | default dict).resources | default dict }}
+            {{- toYaml (mergeOverwrite (deepCopy $base) $gatewayResources) | nindent 12 }}
           {{- include "modelEngine.gatewayEnv" . | indent 10 }}
           {{- include "modelEngine.volumeMounts" . | indent 10 }}
       automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}

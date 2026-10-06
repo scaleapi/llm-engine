@@ -23,5 +23,5 @@ spec:
         maxAllowed:
           cpu: {{ .Values.autoscaling.vertical.maxAllowed.cpu }}
           memory: {{ .Values.autoscaling.vertical.maxAllowed.memory }}
-        controlledResources: ["cpu", "memory"]
+        controlledResources: {{ (.Values.gateway | default dict).vpaControlledResources | default (list "cpu" "memory") | toJson }}
 {{- end }}
