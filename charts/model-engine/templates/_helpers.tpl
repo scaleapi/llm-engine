@@ -564,6 +564,26 @@ namespaces:
 {{- end }}
 {{- end }}
 
+{{- /* Kubernetes copies a ServiceAccount's pull secrets onto pods that set none of their
+       own, which is the only way the python-rendered endpoint and batch-job pods get one. */}}
+{{- define "modelEngine.serviceAccountImagePullSecrets" }}
+{{- $names := list }}
+{{- if .Values.azure }}
+{{- $names = append $names "egp-ecr-regcred" }}
+{{- end }}
+{{- range .Values.imagePullSecrets }}
+{{- if not (has .name $names) }}
+{{- $names = append $names .name }}
+{{- end }}
+{{- end }}
+{{- if $names }}
+imagePullSecrets:
+{{- range $names }}
+  - name: {{ . }}
+{{- end }}
+{{- end }}
+{{- end }}
+
 {{- define "modelEngine.tokenVolume" }}
 {{- if not .Values.automountServiceAccountToken }}
 - name: token-volume
