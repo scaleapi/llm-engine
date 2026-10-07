@@ -40,7 +40,9 @@ TIMEOUT_EXCEPTION_NAMES = frozenset(
 )
 _cloud_provider = infra_config().cloud_provider
 backend_protocol = (
-    "abs" if _cloud_provider == "azure" else ("redis" if _cloud_provider == "gcp" else "s3")
+    "abs"
+    if _cloud_provider == "azure"
+    else ("redis" if _cloud_provider in ("gcp", "onprem") else "s3")
 )
 
 celery_redis = celery_app(
