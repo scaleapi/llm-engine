@@ -1,12 +1,14 @@
 import json
 import os
+import re
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional, Set, cast
 from unittest.mock import ANY, AsyncMock, MagicMock, Mock, patch
 
 import pytest
+import yaml
 from kubernetes_asyncio.client.rest import ApiException
 from model_engine_server.common.config import hmi_config
 from model_engine_server.common.dtos.resource_manager import CreateOrUpdateResourcesRequest
@@ -353,6 +355,131 @@ def test_deployment_template_substitution_does_not_require_model_cache_pvc_name(
 
     assert deployment["kind"] == "Deployment"
     assert not _pod_spec_has_model_cache(deployment["spec"]["template"]["spec"])
+
+
+EXTRA_POD_VALUES = """\
+extraPodVolumes:
+  - name: s3-ca
+    secret:
+      secretName: s3-ca
+extraPodVolumeMounts:
+  - name: s3-ca
+    mountPath: /etc/s3-ca
+    readOnly: true
+extraPodEnvFrom:
+  - configMapRef:
+      name: s3-ca-env
+"""
+EXTRA_POD_CONTAINERS = {"main", "lws-leader", "lws-worker", "input-downloader"}
+EXTRA_POD_TEMPLATE_PREFIXES = (
+    "deployment-",
+    "leader-worker-set-",
+    "batch-job-orchestration-job",
+    "docker-image-batch-job-",
+)
+
+
+def _parse_service_template(template: str) -> Dict[str, Any]:
+    # Drop bare placeholder lines, stub inline ones.
+    template = re.sub(r"(?m)^\s*\$\{[A-Z0-9_]+\}\s*\n", "", template)
+    return yaml.safe_load(re.sub(r"\$\{?[A-Z0-9_]+\}?", "x", template))
+
+
+def _pod_specs(resource: Dict[str, Any]) -> List[Dict[str, Any]]:
+    if resource["kind"] == "LeaderWorkerSet":
+        lws_template = resource["spec"]["leaderWorkerTemplate"]
+        return [lws_template[key]["spec"] for key in ("leaderTemplate", "workerTemplate")]
+    return [resource["spec"]["template"]["spec"]]
+
+
+def _assert_has_extra_pod_values(pod_spec: Dict[str, Any]) -> Set[str]:
+    """Assert the extra values reach the pod; return the checked container names."""
+    assert {"name": "s3-ca", "secret": {"secretName": "s3-ca"}} in pod_spec["volumes"]
+    containers = [
+        container
+        for key in ("containers", "initContainers")
+        for container in pod_spec.get(key, [])
+        if container["name"] in EXTRA_POD_CONTAINERS
+    ]
+    for container in containers:
+        assert {
+            "name": "s3-ca",
+            "mountPath": "/etc/s3-ca",
+            "readOnly": True,
+        } in container["volumeMounts"]
+        assert {"configMapRef": {"name": "s3-ca-env"}} in container["envFrom"]
+    return {container["name"] for container in containers}
+
+
+@pytest.mark.parametrize(
+    "template_prefix,expected_containers",
+    [
+        ("deployment-", {"main"}),
+        ("leader-worker-set-", {"lws-leader", "lws-worker"}),
+        ("batch-job-orchestration-job", {"main"}),
+        ("docker-image-batch-job-", {"main", "input-downloader"}),
+    ],
+)
+def test_extra_pod_values_reach_every_object_store_container(
+    tmp_path, template_prefix, expected_containers
+):
+    values_path = tmp_path / "extra-pod-values.yaml"
+    values_path.write_text(EXTRA_POD_VALUES)
+    config_map = yaml.safe_load(_render_service_template_config_map(["-f", str(values_path)]))
+
+    templates = [
+        template
+        for name, template in config_map["data"].items()
+        if name.startswith(template_prefix)
+    ]
+
+    assert templates
+    for template in templates:
+        checked: Set[str] = set()
+        for pod_spec in _pod_specs(_parse_service_template(template)):
+            checked |= _assert_has_extra_pod_values(pod_spec)
+        assert checked == expected_containers
+
+
+def test_extra_pod_values_unset_render_nothing():
+    config_map = yaml.safe_load(_render_service_template_config_map())
+
+    for name, template in config_map["data"].items():
+        if not name.startswith(EXTRA_POD_TEMPLATE_PREFIXES):
+            continue
+        for pod_spec in _pod_specs(_parse_service_template(template)):
+            assert all(volume["name"] != "s3-ca" for volume in pod_spec.get("volumes") or [])
+            for key in ("containers", "initContainers"):
+                assert all("envFrom" not in c for c in pod_spec.get(key, []))
+
+
+def test_extra_pod_volumes_survive_deployment_substitution(
+    tmp_path,
+    create_resources_request_sync_runnable_image: CreateOrUpdateResourcesRequest,
+):
+    values_path = tmp_path / "extra-pod-values.yaml"
+    values_path.write_text(EXTRA_POD_VALUES)
+    rendered_config_map_path = _write_rendered_service_template_config_map(
+        tmp_path, ["-f", str(values_path)]
+    )
+    resource_arguments = get_endpoint_resource_arguments_from_request(
+        k8s_resource_group_name="launch-endpoint-id-test",
+        request=create_resources_request_sync_runnable_image,
+        sqs_queue_name="my_queue",
+        sqs_queue_url="https://my_queue",
+        endpoint_resource_name="deployment-runnable-image-sync-gpu",
+    )
+
+    with (
+        patch(f"{MODULE_PATH}.LAUNCH_SERVICE_TEMPLATE_FOLDER", None),
+        patch(
+            f"{MODULE_PATH}.LAUNCH_SERVICE_TEMPLATE_CONFIG_MAP_PATH",
+            str(rendered_config_map_path),
+        ),
+    ):
+        deployment = load_k8s_yaml("deployment-runnable-image-sync-gpu.yaml", resource_arguments)
+
+    _assert_has_extra_pod_values(deployment["spec"]["template"]["spec"])
 
 
 @pytest.mark.asyncio
