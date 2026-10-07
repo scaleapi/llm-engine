@@ -197,6 +197,7 @@ class LiveModelEndpointService(ModelEndpointService):
         public_inference: Optional[bool] = False,
         queue_message_timeout_seconds: Optional[int] = None,
         task_expires_seconds: Optional[int] = None,
+        temporal_task_queue: Optional[str] = None,
     ) -> ModelEndpointRecord:
         existing_endpoints = (
             await self.model_endpoint_record_repository.list_model_endpoint_records(
@@ -220,6 +221,7 @@ class LiveModelEndpointService(ModelEndpointService):
                 public_inference=public_inference,
                 task_expires_seconds=task_expires_seconds,
                 queue_message_timeout_seconds=queue_message_timeout_seconds,
+                temporal_task_queue=temporal_task_queue,
             )
         )
         creation_task_id = await self.model_endpoint_infra_gateway.create_model_endpoint_infra(
@@ -330,6 +332,7 @@ class LiveModelEndpointService(ModelEndpointService):
         public_inference: Optional[bool] = None,
         queue_message_timeout_seconds: Optional[int] = None,
         task_expires_seconds: Optional[int] = None,
+        temporal_task_queue: Optional[str] = None,
     ) -> ModelEndpointRecord:
         record = await self.model_endpoint_record_repository.get_model_endpoint_record(
             model_endpoint_id=model_endpoint_id
@@ -371,6 +374,7 @@ class LiveModelEndpointService(ModelEndpointService):
                 public_inference=public_inference,
                 task_expires_seconds=task_expires_seconds,
                 queue_message_timeout_seconds=queue_message_timeout_seconds,
+                temporal_task_queue=temporal_task_queue,
             )
             if record is None:  # pragma: no cover
                 raise ObjectNotFoundException
