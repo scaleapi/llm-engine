@@ -36,6 +36,10 @@ spec:
         {{- include "modelEngine.baseLabels" . | nindent 8 }}
         {{- include "modelEngine.selectorLabels.celeryAutoscaler" . | nindent 8 }}
     spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
       - command:
         - python

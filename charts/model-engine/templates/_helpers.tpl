@@ -564,6 +564,26 @@ namespaces:
 {{- end }}
 {{- end }}
 
+{{- /* The configured pull secrets plus egp-ecr-regcred on Azure, for the ServiceAccounts and
+       the python-rendered pods. Renders nothing when the list is empty. */}}
+{{- define "modelEngine.imagePullSecrets" }}
+{{- $names := list }}
+{{- if .Values.azure }}
+{{- $names = append $names "egp-ecr-regcred" }}
+{{- end }}
+{{- range .Values.imagePullSecrets }}
+{{- if not (has .name $names) }}
+{{- $names = append $names .name }}
+{{- end }}
+{{- end }}
+{{- if $names -}}
+imagePullSecrets:
+{{- range $names }}
+  - name: {{ . | quote }}
+{{- end }}
+{{- end }}
+{{- end }}
+
 {{- define "modelEngine.tokenVolume" }}
 {{- if not .Values.automountServiceAccountToken }}
 - name: token-volume

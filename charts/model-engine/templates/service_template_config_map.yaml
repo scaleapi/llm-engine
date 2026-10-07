@@ -28,6 +28,12 @@
 {{- $model_cache_storage := get $model_cache "storage" | default "100Gi" }}
 {{- $model_cache_storage_class_name := get $model_cache "storageClassName" | default "" }}
 {{- $model_cache_access_mode := get $model_cache "accessMode" | default "ReadWriteMany" }}
+{{- /* Pods that list pull secrets stop getting their ServiceAccount's, so add them only
+       when the operator configured some. */}}
+{{- $image_pull_secrets := "" }}
+{{- if .Values.imagePullSecrets }}
+{{- $image_pull_secrets = include "modelEngine.imagePullSecrets" . }}
+{{- end }}
 
 {{- if .Values.message }}
 {{- .Values.message }}
@@ -85,6 +91,9 @@ data:
             sidecar.istio.io/holdApplicationUntilProxyStarts: "true"
             {{- end }}
         spec:
+          {{- with $image_pull_secrets }}
+          {{- . | nindent 10 }}
+          {{- end }}
           affinity:
             {{- include "modelEngine.serviceTemplateAffinity" . | nindent 12 }}
           {{- if eq $mode "async" }}
@@ -554,6 +563,9 @@ data:
               ad.datadoghq.com/main.logs: '[{"service": "${ENDPOINT_NAME}", "source": "python"}]'
               kubernetes.io/change-cause: "${CHANGE_CAUSE_MESSAGE}"
           spec:
+            {{- with $image_pull_secrets }}
+            {{- . | nindent 12 }}
+            {{- end }}
             affinity:
               {{- include "modelEngine.serviceTemplateAffinity" . | nindent 14 }}
             {{- if eq $mode "async" }}  # TODO
@@ -833,6 +845,9 @@ data:
               ad.datadoghq.com/main.logs: '[{"service": "${ENDPOINT_NAME}", "source": "python"}]'
               kubernetes.io/change-cause: "${CHANGE_CAUSE_MESSAGE}"
           spec:
+            {{- with $image_pull_secrets }}
+            {{- . | nindent 12 }}
+            {{- end }}
             affinity:
               {{- include "modelEngine.serviceTemplateAffinity" . | nindent 14 }}
             {{- if eq $mode "async" }}  # TODO
@@ -1086,6 +1101,9 @@ data:
             ad.datadoghq.com/main.logs: '[{"source": "python", "service": "${RESOURCE_NAME}", "tags": ["env:${DD_ENV}", "launch_job_id:${JOB_ID}"]}]'
             cluster-autoscaler.kubernetes.io/safe-to-evict: "false"
         spec:
+          {{- with $image_pull_secrets }}
+          {{- . | nindent 10 }}
+          {{- end }}
           restartPolicy: Never
           {{- with $node_selector }}
           nodeSelector:
@@ -1195,6 +1213,9 @@ data:
             ad.datadoghq.com/main.logs: '[{"source": "python", "service": "${RESOURCE_NAME}", "tags": ["env:${DD_ENV}", "launch_job_id:${JOB_ID}"]}]'
             cluster-autoscaler.kubernetes.io/safe-to-evict: "false"
         spec:
+          {{- with $image_pull_secrets }}
+          {{- . | nindent 10 }}
+          {{- end }}
           restartPolicy: Never
           {{- with $node_selector }}
           nodeSelector:
@@ -1355,6 +1376,9 @@ data:
             version: v1
             sidecar.istio.io/inject: "false"
         spec:
+          {{- with $image_pull_secrets }}
+          {{- . | nindent 10 }}
+          {{- end }}
           {{- if $device_node_selector }}
           {{- with $device_node_selector }}
           nodeSelector:
@@ -1406,6 +1430,9 @@ data:
                 launch_trigger_id: ${TRIGGER_ID}
                 tags.datadoghq.com/service: ${TRIGGER_ID}
             spec:
+              {{- with $image_pull_secrets }}
+              {{- . | nindent 14 }}
+              {{- end }}
               containers:
               - name: ${NAME}
                 image: {{ $.Values.utilityImages.curl.repository }}:{{ $.Values.utilityImages.curl.tag }}
