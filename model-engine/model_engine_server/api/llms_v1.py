@@ -10,6 +10,7 @@ from model_engine_server.api.dependencies import (
     ExternalInterfaces,
     get_external_interfaces,
     get_external_interfaces_read_only,
+    reject_deprecated_route,
     verify_authentication,
 )
 from model_engine_server.common.config import hmi_config
@@ -644,7 +645,12 @@ async def delete_llm_model_endpoint(
         ) from exc
 
 
-@llm_router_v1.post("/batch-completions", response_model=CreateBatchCompletionsV1Response)
+@llm_router_v1.post(
+    "/batch-completions",
+    response_model=CreateBatchCompletionsV1Response,
+    deprecated=True,
+    dependencies=[Depends(reject_deprecated_route)],
+)
 async def create_batch_completions(
     request: CreateBatchCompletionsV1Request,
     auth: User = Depends(verify_authentication),

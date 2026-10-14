@@ -505,6 +505,13 @@ async def get_auth_repository():
         pass
 
 
+async def reject_deprecated_route() -> None:
+    raise HTTPException(
+        status_code=status.HTTP_410_GONE,
+        detail="This API is deprecated and no longer available.",
+    )
+
+
 async def verify_authentication(
     credentials: Optional[HTTPBasicCredentials] = Depends(basic_auth),
     tokens: Optional[str] = Depends(oauth2_scheme),

