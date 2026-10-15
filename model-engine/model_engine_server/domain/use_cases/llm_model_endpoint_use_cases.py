@@ -1296,7 +1296,7 @@ class CreateLLMModelBundleV1UseCase:
         if chat_template_override:
             sglang_args.chat_template = chat_template_override
 
-        sglang_cmd = f"python3 -m sglang.launch_server --model-path {huggingface_repo} --served-model-name {model_name} --port 5005 --host '::'"
+        sglang_cmd = f"python3 -m sglang.launch_server --model-path {shlex.quote(huggingface_repo)} --served-model-name {shlex.quote(model_name)} --port 5005 --host '::'"
         for field in SGLangEndpointAdditionalArgs.model_fields.keys():
             config_value = getattr(sglang_args, field, None)
             if config_value is not None:
@@ -1305,14 +1305,20 @@ class CreateLLMModelBundleV1UseCase:
                 if field == "chat_template":
                     chat_template_cmd = f'export CHAT_TEMPLATE=$(echo "{encode_template(config_value)}" | base64 --decode)'
                     subcommands.append(chat_template_cmd)
-                    config_value = '"$CHAT_TEMPLATE"'
+                    sglang_cmd += ' --chat-template "$CHAT_TEMPLATE"'
+                    continue
 
                 # if type of config_value is True, then only need to add the key
                 if isinstance(config_value, bool):
                     if config_value:
                         sglang_cmd += f" --{field.replace('_', '-')}"
+                elif isinstance(config_value, list):
+                    values = " ".join(shlex.quote(str(value)) for value in config_value)
+                    sglang_cmd += f" --{field.replace('_', '-')} {values}"
                 else:
-                    sglang_cmd += f" --{field.replace('_', '-')} {config_value}"
+                    sglang_cmd += (
+                        f" --{field.replace('_', '-')} {format_vllm_cli_value(config_value)}"
+                    )
 
         subcommands.append(sglang_cmd)
 

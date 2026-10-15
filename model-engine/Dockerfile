@@ -1,6 +1,6 @@
 # syntax = docker/dockerfile:1
 
-FROM cgr.dev/chainguard/python:latest-dev AS builder
+FROM cgr.dev/chainguard/python:latest-dev@sha256:630df1be3733f7b38d1b535872904248adfe23fbea4befcb08da47cb7436ddb2 AS builder
 
 USER root
 WORKDIR /workspace
@@ -49,7 +49,7 @@ RUN mkdir -p /tmp/runtime-bin /tmp/runtime-libs && \
   cd /tmp/aws-iam-authenticator && \
   GOOS=linux GOARCH=${TARGETARCH} go build -o /tmp/runtime-bin/aws-iam-authenticator ./cmd/aws-iam-authenticator
 
-FROM cgr.dev/chainguard/python:latest AS model-engine
+FROM cgr.dev/chainguard/python:latest@sha256:8c6e0d0a587455e8a8d145e20234d5ef5a531a1c052a7b9d76b155ccc7fcded2 AS model-engine
 
 USER root
 WORKDIR /workspace

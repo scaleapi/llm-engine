@@ -5,6 +5,7 @@ from model_engine_server.api.dependencies import (
     ExternalInterfaces,
     get_external_interfaces,
     get_external_interfaces_read_only,
+    reject_deprecated_route,
     verify_authentication,
 )
 from model_engine_server.common.dtos.batch_jobs import (
@@ -45,7 +46,12 @@ batch_job_router_v1 = APIRouter(prefix="/v1")
 logger = make_logger(logger_name())
 
 
-@batch_job_router_v1.post("/batch-jobs", response_model=CreateBatchJobV1Response)
+@batch_job_router_v1.post(
+    "/batch-jobs",
+    response_model=CreateBatchJobV1Response,
+    deprecated=True,
+    dependencies=[Depends(reject_deprecated_route)],
+)
 async def create_batch_job(
     request: CreateBatchJobV1Request,
     auth: User = Depends(verify_authentication),
@@ -74,7 +80,12 @@ async def create_batch_job(
         ) from exc
 
 
-@batch_job_router_v1.get("/batch-jobs/{batch_job_id}", response_model=GetBatchJobV1Response)
+@batch_job_router_v1.get(
+    "/batch-jobs/{batch_job_id}",
+    response_model=GetBatchJobV1Response,
+    deprecated=True,
+    dependencies=[Depends(reject_deprecated_route)],
+)
 async def get_batch_job(
     batch_job_id: str,
     auth: User = Depends(verify_authentication),
@@ -94,7 +105,12 @@ async def get_batch_job(
         ) from exc
 
 
-@batch_job_router_v1.put("/batch-jobs/{batch_job_id}", response_model=UpdateBatchJobV1Response)
+@batch_job_router_v1.put(
+    "/batch-jobs/{batch_job_id}",
+    response_model=UpdateBatchJobV1Response,
+    deprecated=True,
+    dependencies=[Depends(reject_deprecated_route)],
+)
 async def update_batch_job(
     batch_job_id: str,
     request: UpdateBatchJobV1Request,

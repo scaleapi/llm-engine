@@ -1,227 +1,54 @@
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import pytest
 from fastapi.testclient import TestClient
-from model_engine_server.domain.entities import (
-    BatchJob,
-    DockerImageBatchJob,
-    GpuType,
-    ModelBundle,
-    ModelEndpoint,
-    Trigger,
-)
+from model_engine_server.domain.entities import DockerImageBatchJob, GpuType, Trigger
 from model_engine_server.domain.entities.docker_image_batch_job_bundle_entity import (
     DockerImageBatchJobBundle,
 )
 
 
-def test_create_batch_job_success(
-    model_bundle_1_v1: Tuple[ModelBundle, Any],
-    create_batch_job_request: Dict[str, Any],
-    test_api_key: str,
-    get_test_client_wrapper,
-):
-    client = get_test_client_wrapper(
-        fake_docker_repository_image_always_exists=True,
-        fake_model_bundle_repository_contents={
-            model_bundle_1_v1[0].id: model_bundle_1_v1[0],
-        },
-        fake_model_endpoint_record_repository_contents={},
-        fake_model_endpoint_infra_gateway_contents={},
-        fake_batch_job_record_repository_contents={},
-        fake_batch_job_progress_gateway_contents={},
-        fake_docker_image_batch_job_bundle_repository_contents={},
-    )
-    response = client.post(
-        "/v1/batch-jobs",
-        auth=(test_api_key, ""),
-        json=create_batch_job_request,
-    )
-    assert response.status_code == 200
-    assert "job_id" in response.json()
-
-
-@pytest.mark.skip(reason="TODO: team validation is currently disabled")
-def test_create_batch_job_invalid_team_returns_400(
-    model_bundle_1_v1: Tuple[ModelBundle, Any],
-    create_batch_job_request: Dict[str, Any],
-    test_api_key: str,
-    get_test_client_wrapper,
-):
-    client = get_test_client_wrapper(
-        fake_docker_repository_image_always_exists=True,
-        fake_model_bundle_repository_contents={
-            model_bundle_1_v1[0].id: model_bundle_1_v1[0],
-        },
-        fake_model_endpoint_record_repository_contents={},
-        fake_model_endpoint_infra_gateway_contents={},
-        fake_batch_job_record_repository_contents={},
-        fake_batch_job_progress_gateway_contents={},
-        fake_docker_image_batch_job_bundle_repository_contents={},
-    )
-    create_batch_job_request["labels"]["team"] = "invalid_team"
-    response = client.post(
-        "/v1/batch-jobs",
-        auth=(test_api_key, ""),
-        json=create_batch_job_request,
-    )
-    assert response.status_code == 400
-
-
-def test_create_batch_job_bundle_not_found_returns_404(
-    create_batch_job_request: Dict[str, Any],
+@pytest.mark.parametrize(
+    "method,path,body_fixture",
+    [
+        pytest.param("post", "/v1/batch-jobs", "create_batch_job_request", id="create_batch_job"),
+        pytest.param("get", "/v1/batch-jobs/some_batch_job_id", None, id="get_batch_job"),
+        pytest.param("put", "/v1/batch-jobs/some_batch_job_id", None, id="update_batch_job"),
+        pytest.param(
+            "post",
+            "/v1/llm/batch-completions",
+            "create_batch_completions_request",
+            id="create_batch_completions_v1",
+        ),
+        pytest.param("post", "/v2/batch-completions", None, id="create_batch_completions_v2"),
+        pytest.param("get", "/v2/batch-completions/some_id", None, id="get_batch_completion_v2"),
+        pytest.param(
+            "post", "/v2/batch-completions/some_id", None, id="update_batch_completion_v2"
+        ),
+        pytest.param(
+            "post",
+            "/v2/batch-completions/some_id/actions/cancel",
+            None,
+            id="cancel_batch_completion_v2",
+        ),
+    ],
+)
+def test_deprecated_batch_routes_return_410(
+    method: str,
+    path: str,
+    body_fixture: Optional[str],
     test_api_key: str,
     simple_client: TestClient,
+    request: pytest.FixtureRequest,
 ):
-    response = simple_client.post(
-        "/v1/batch-jobs",
-        auth=(test_api_key, ""),
-        json=create_batch_job_request,
-    )
-    assert response.status_code == 404
-
-
-def test_get_batch_job_success(
-    model_bundle_1_v1: Tuple[ModelBundle, Any],
-    batch_job_1: Tuple[BatchJob, Any],
-    test_api_key: str,
-    get_test_client_wrapper,
-):
-    client = get_test_client_wrapper(
-        fake_docker_repository_image_always_exists=True,
-        fake_model_bundle_repository_contents={},
-        fake_model_endpoint_record_repository_contents={},
-        fake_model_endpoint_infra_gateway_contents={},
-        fake_batch_job_record_repository_contents={
-            batch_job_1[0].record.id: batch_job_1[0].record,
-        },
-        fake_batch_job_progress_gateway_contents=batch_job_1[0].progress.json(),
-        fake_docker_image_batch_job_bundle_repository_contents={},
-    )
-    response = client.get(
-        f"/v1/batch-jobs/{batch_job_1[0].record.id}",
-        auth=(test_api_key, ""),
-    )
-    assert response.status_code == 200
-    batch_job_1[1]["duration"] = response.json()["duration"]
-    assert response.json() == batch_job_1[1]
-
-
-def test_get_batch_job_unauthorized_returns_404(
-    model_bundle_1_v1: Tuple[ModelBundle, Any],
-    batch_job_1: Tuple[BatchJob, Any],
-    get_test_client_wrapper,
-):
-    client = get_test_client_wrapper(
-        fake_docker_repository_image_always_exists=True,
-        fake_model_bundle_repository_contents={},
-        fake_model_endpoint_record_repository_contents={},
-        fake_model_endpoint_infra_gateway_contents={},
-        fake_batch_job_record_repository_contents={
-            batch_job_1[0].record.id: batch_job_1[0].record,
-        },
-        fake_batch_job_progress_gateway_contents=batch_job_1[0].progress.json(),
-        fake_docker_image_batch_job_bundle_repository_contents={},
-    )
-    response = client.get(
-        f"/v1/batch-jobs/{batch_job_1[0].record.id}",
-        auth=("invalid_api_key", ""),
-    )
-    assert response.status_code == 404
-
-
-def test_get_batch_job_not_found_returns_404(
-    test_api_key: str,
-    simple_client: TestClient,
-):
-    response = simple_client.get(
-        "/v1/batch-jobs/some_batch_job_id",
-        auth=(test_api_key, ""),
-    )
-    assert response.status_code == 404
-
-
-def test_update_batch_job_success(
-    model_bundle_1_v1: Tuple[ModelBundle, Any],
-    model_endpoint_1: Tuple[ModelEndpoint, Any],
-    batch_job_1: Tuple[BatchJob, Any],
-    test_api_key: str,
-    get_test_client_wrapper,
-):
-    assert model_endpoint_1[0].infra_state is not None
-    client = get_test_client_wrapper(
-        fake_docker_repository_image_always_exists=True,
-        fake_model_bundle_repository_contents={},
-        fake_model_endpoint_record_repository_contents={
-            model_endpoint_1[0].record.id: model_endpoint_1[0].record,
-        },
-        fake_model_endpoint_infra_gateway_contents={
-            model_endpoint_1[0].infra_state.deployment_name: model_endpoint_1[0].infra_state,
-        },
-        fake_batch_job_record_repository_contents={
-            batch_job_1[0].record.id: batch_job_1[0].record,
-        },
-        fake_batch_job_progress_gateway_contents=batch_job_1[0].progress.json(),
-        fake_docker_image_batch_job_bundle_repository_contents={},
-    )
-    response = client.put(
-        f"/v1/batch-jobs/{batch_job_1[0].record.id}",
-        auth=(test_api_key, ""),
-        json={"cancel": True},
-    )
-    assert response.status_code == 200
-    assert response.json() == {"success": True}
-
-    # Canceling is idempotent.
-    response = client.put(
-        f"/v1/batch-jobs/{batch_job_1[0].record.id}",
-        auth=(test_api_key, ""),
-        json={"cancel": True},
-    )
-    assert response.status_code == 200
-    assert response.json() == {"success": True}
-
-
-def test_update_batch_job_unauthorized_returns_404(
-    model_bundle_1_v1: Tuple[ModelBundle, Any],
-    model_endpoint_1: Tuple[ModelEndpoint, Any],
-    batch_job_1: Tuple[BatchJob, Any],
-    get_test_client_wrapper,
-):
-    assert model_endpoint_1[0].infra_state is not None
-    client = get_test_client_wrapper(
-        fake_docker_repository_image_always_exists=True,
-        fake_model_bundle_repository_contents={},
-        fake_model_endpoint_record_repository_contents={
-            model_endpoint_1[0].record.id: model_endpoint_1[0].record,
-        },
-        fake_model_endpoint_infra_gateway_contents={
-            model_endpoint_1[0].infra_state.deployment_name: model_endpoint_1[0].infra_state,
-        },
-        fake_batch_job_record_repository_contents={
-            batch_job_1[0].record.id: batch_job_1[0].record,
-        },
-        fake_batch_job_progress_gateway_contents=batch_job_1[0].progress.json(),
-        fake_docker_image_batch_job_bundle_repository_contents={},
-    )
-    response = client.put(
-        f"/v1/batch-jobs/{batch_job_1[0].record.id}",
-        auth=("invalid_api_key", ""),
-        json={"cancel": True},
-    )
-    assert response.status_code == 404
-
-
-def test_update_batch_job_not_found_returns_404(
-    test_api_key: str,
-    simple_client: TestClient,
-):
-    response = simple_client.put(
-        "/v1/batch-jobs/some_batch_job_id",
-        auth=(test_api_key, ""),
-        json={"cancel": True},
-    )
-    assert response.status_code == 404
+    kwargs: Dict[str, Any] = {"auth": (test_api_key, "")}
+    if body_fixture is not None:
+        kwargs["json"] = request.getfixturevalue(body_fixture)
+    elif method in ("post", "put"):
+        kwargs["json"] = {}
+    response = simple_client.request(method.upper(), path, **kwargs)
+    assert response.status_code == 410
+    assert response.json() == {"detail": "This API is deprecated and no longer available."}
 
 
 # these test both the api + use cases for docker image batch jobs

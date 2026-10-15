@@ -3,6 +3,7 @@ from model_engine_server.api.dependencies import (
     ExternalInterfaces,
     get_external_interfaces,
     get_external_interfaces_read_only,
+    reject_deprecated_route,
     verify_authentication,
 )
 from model_engine_server.common.dtos.llms.batch_completion import (
@@ -39,7 +40,9 @@ logger = make_logger(logger_name())
 
 
 batch_completions_router_v2 = APIRouter(
-    prefix="/batch-completions", dependencies=[Depends(record_route_call)]
+    prefix="/batch-completions",
+    deprecated=True,
+    dependencies=[Depends(record_route_call), Depends(reject_deprecated_route)],
 )
 
 
