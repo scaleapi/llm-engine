@@ -254,18 +254,6 @@ LLM_PAYLOADS_WITH_EXPECTED_RESPONSES = [
     (LLM_PAYLOAD_WITH_GUIDED_GRAMMAR, None, "John"),
 ]
 
-CREATE_BATCH_JOB_REQUEST: Dict[str, Any] = {
-    "bundle_name": "model_bundle_simple",
-    "input_path": "TBA",
-    "serialization_format": "JSON",
-    "labels": {"team": "infra", "product": "launch"},
-    "resource_requests": {
-        "memory": "500Mi",
-        "max_workers": 1,
-        "gpus": 0,
-    },
-}
-
 CREATE_DOCKER_IMAGE_BATCH_JOB_BUNDLE_REQUEST: Dict[str, Any] = {
     "name": format_name("di_batch_job_bundle_1"),
     "image_repository": "model-engine",
@@ -368,34 +356,6 @@ def create_model_endpoint(
     response = requests.post(
         f"{BASE_PATH}/v1/model-endpoints",
         json=create_model_endpoint_request,
-        headers={"Content-Type": "application/json"},
-        auth=(user_id, ""),
-        timeout=DEFAULT_NETWORK_TIMEOUT_SEC,
-    )
-    if not response.ok:
-        raise ValueError(response.content)
-    return response.json()
-
-
-def create_batch_job(create_batch_job_request: Dict[str, Any], user_id: str) -> Dict[str, Any]:
-    create_batch_job_request = create_batch_job_request.copy()
-    replace_model_bundle_name_with_id(create_batch_job_request, user_id, "v2")
-    response = requests.post(
-        f"{BASE_PATH}/v1/batch-jobs",
-        json=create_batch_job_request,
-        headers={"Content-Type": "application/json"},
-        auth=(user_id, ""),
-        timeout=DEFAULT_NETWORK_TIMEOUT_SEC,
-    )
-    if not response.ok:
-        raise ValueError(response.content)
-    return response.json()
-
-
-def cancel_batch_job(batch_job_id: str, user_id: str) -> Dict[str, Any]:
-    response = requests.put(
-        f"{BASE_PATH}/v1/batch-jobs/{batch_job_id}",
-        json={"cancel": True},
         headers={"Content-Type": "application/json"},
         auth=(user_id, ""),
         timeout=DEFAULT_NETWORK_TIMEOUT_SEC,
