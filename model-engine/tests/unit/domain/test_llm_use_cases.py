@@ -1116,48 +1116,14 @@ def test_model_cache_fingerprint_changes_with_checkpoint_path():
     assert first_fingerprint != second_fingerprint
 
 
-def test_load_model_files_sub_commands_trt_llm_gcs(
-    fake_model_bundle_repository,
-    fake_model_endpoint_service,
-    fake_docker_repository_image_always_exists,
-    fake_model_primitive_gateway,
-    fake_llm_artifact_gateway,
-):
-    fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
-    bundle_use_case = CreateModelBundleV2UseCase(
-        model_bundle_repository=fake_model_bundle_repository,
-        docker_repository=fake_docker_repository_image_always_exists,
-        model_primitive_gateway=fake_model_primitive_gateway,
-    )
-    llm_bundle_use_case = CreateLLMModelBundleV1UseCase(
-        create_model_bundle_use_case=bundle_use_case,
-        model_bundle_repository=fake_model_bundle_repository,
-        llm_artifact_gateway=fake_llm_artifact_gateway,
-        docker_repository=fake_docker_repository_image_always_exists,
-    )
-
-    checkpoint_path = "gs://fake-bucket/fake-checkpoint"
-    subcommands = llm_bundle_use_case.load_model_files_sub_commands_trt_llm(checkpoint_path)
-
-    expected_result = [
-        "curl -sSL https://dl.google.com/dl/cloudsdk/channels/rapid/google-cloud-sdk.tar.gz"
-        " | tar -xz -C /opt"
-        " && /opt/google-cloud-sdk/bin/gcloud config set disable_usage_reporting true 2>/dev/null"
-        " && /opt/google-cloud-sdk/bin/gcloud config set storage/check_hashes if_fast_else_skip 2>/dev/null",
-        "/opt/google-cloud-sdk/bin/gcloud storage cp -r gs://fake-bucket/fake-checkpoint/* ./",
-    ]
-    assert expected_result == subcommands
-
-
 @pytest.mark.asyncio
-async def test_create_model_endpoint_trt_llm_use_case_success(
+async def test_create_model_endpoint_trt_llm_is_deprecated(
     test_api_key: str,
     fake_model_bundle_repository,
     fake_model_endpoint_service,
     fake_docker_repository_image_always_exists,
     fake_model_primitive_gateway,
     fake_llm_artifact_gateway,
-    create_llm_model_endpoint_trt_llm_request_async: CreateLLMModelEndpointV1Request,
     create_llm_model_endpoint_trt_llm_request_streaming: CreateLLMModelEndpointV1Request,
 ):
     fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
@@ -1179,39 +1145,18 @@ async def test_create_model_endpoint_trt_llm_use_case_success(
         llm_artifact_gateway=fake_llm_artifact_gateway,
     )
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
-    response_1 = await use_case.execute(
-        user=user,
-        request=create_llm_model_endpoint_trt_llm_request_streaming,
-    )
-    assert response_1.endpoint_creation_task_id
-    assert isinstance(response_1, CreateLLMModelEndpointV1Response)
-    endpoint = (
+    with pytest.raises(ObjectHasInvalidValueException, match="TensorRT-LLM"):
+        await use_case.execute(
+            user=user,
+            request=create_llm_model_endpoint_trt_llm_request_streaming,
+        )
+    assert (
         await fake_model_endpoint_service.list_model_endpoints(
             owner=None,
             name=create_llm_model_endpoint_trt_llm_request_streaming.name,
             order_by=None,
         )
-    )[0]
-    assert endpoint.record.endpoint_type == ModelEndpointType.STREAMING
-    assert endpoint.record.metadata == {
-        "_llm": {
-            "model_name": create_llm_model_endpoint_trt_llm_request_streaming.model_name,
-            "source": create_llm_model_endpoint_trt_llm_request_streaming.source,
-            "inference_framework": create_llm_model_endpoint_trt_llm_request_streaming.inference_framework,
-            "inference_framework_image_tag": create_llm_model_endpoint_trt_llm_request_streaming.inference_framework_image_tag,
-            "num_shards": create_llm_model_endpoint_trt_llm_request_streaming.num_shards,
-            "model_cache_enabled": False,
-            "quantize": create_llm_model_endpoint_trt_llm_request_streaming.quantize,
-            "checkpoint_path": create_llm_model_endpoint_trt_llm_request_streaming.checkpoint_path,
-            "chat_template_override": create_llm_model_endpoint_trt_llm_request_streaming.chat_template_override,
-        }
-    }
-
-    with pytest.raises(ObjectHasInvalidValueException):
-        await use_case.execute(
-            user=user,
-            request=create_llm_model_endpoint_trt_llm_request_async,
-        )
+    ) == []
 
 
 @pytest.mark.asyncio

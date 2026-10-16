@@ -542,35 +542,6 @@ def create_llm_model_endpoint_trt_llm_request_streaming() -> CreateLLMModelEndpo
 
 
 @pytest.fixture
-def create_llm_model_endpoint_trt_llm_request_async() -> CreateLLMModelEndpointV1Request:
-    return CreateLLMModelEndpointV1Request_gen(
-        name="test_llm_endpoint_name_tgi_async",
-        model_name="llama-2-7b",
-        source="hugging_face",
-        inference_framework="tensorrt_llm",
-        inference_framework_image_tag="23.10",
-        num_shards=2,
-        quantize=Quantization.BITSANDBYTES,
-        endpoint_type=ModelEndpointType.ASYNC,
-        metadata={},
-        post_inference_hooks=["billing"],
-        cpus=1,
-        gpus=2,
-        memory="8G",
-        gpu_type=GpuType.NVIDIA_TESLA_T4,
-        storage="10G",
-        nodes_per_worker=1,
-        min_workers=1,
-        max_workers=3,
-        per_worker=2,
-        labels={"team": "infra", "product": "my_product"},
-        aws_role="test_aws_role",
-        results_s3_bucket="test_s3_bucket",
-        checkpoint_path="s3://test_checkpoint_path",
-    )
-
-
-@pytest.fixture
 def create_llm_model_endpoint_request_invalid_model_name() -> CreateLLMModelEndpointV1Request:
     return CreateLLMModelEndpointV1Request_gen(
         name="test_llm_endpoint_name_1",
