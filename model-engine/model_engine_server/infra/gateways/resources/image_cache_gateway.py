@@ -18,6 +18,28 @@ from model_engine_server.infra.gateways.resources.k8s_resource_types import (
 
 logger = make_logger(logger_name())
 
+# Cached images are only pulled, never trusted to run: every container sleeps with this static
+# busybox binary, copied in by an init container, instead of a binary from the cached image.
+TRUSTED_BUSYBOX_IMAGE = "public.ecr.aws/docker/library/busybox@sha256:5cec3fc171c87218698e85a52af7087de727372aae264a787b8112901a5b0092"  # 1.37.0-musl
+TRUSTED_BIN_INIT_CONTAINER_NAME = "copy-trusted-busybox"
+TRUSTED_BIN_VOLUME_NAME = "trusted-bin"
+TRUSTED_BIN_DIR = "/trusted"
+NOBODY_ID = 65534
+CONTAINER_SECURITY_CONTEXT = {
+    "allowPrivilegeEscalation": False,
+    "readOnlyRootFilesystem": True,
+    "capabilities": {"drop": ["ALL"]},
+}
+CONTAINER_RESOURCES = {
+    "requests": {"cpu": "1m", "memory": "8Mi"},
+    "limits": {"cpu": "10m", "memory": "16Mi"},
+}
+TRUSTED_BIN_VOLUME_MOUNT = {
+    "name": TRUSTED_BIN_VOLUME_NAME,
+    "mountPath": TRUSTED_BIN_DIR,
+    "readOnly": True,
+}
+
 
 class CachedImages(TypedDict):
     cpu: List[str]
@@ -67,7 +89,10 @@ class ImageCacheGateway:
 
                 base_container_dict = {
                     "imagePullPolicy": "IfNotPresent",
-                    "command": ["/bin/sh", "-ec", "while : ; do sleep 30 ; done"],
+                    "command": [f"{TRUSTED_BIN_DIR}/busybox", "sleep", "2147483647"],
+                    "securityContext": CONTAINER_SECURITY_CONTEXT,
+                    "resources": CONTAINER_RESOURCES,
+                    "volumeMounts": [TRUSTED_BIN_VOLUME_MOUNT],
                 }
                 base_container_dict["image"] = image
                 base_container_dict["name"] = image_hash
@@ -75,6 +100,25 @@ class ImageCacheGateway:
 
             image_cache["spec"]["template"]["metadata"]["labels"] = labels
             image_cache["spec"]["template"]["spec"]["containers"] = containers
+            pod_spec = image_cache["spec"]["template"]["spec"]
+            pod_spec["automountServiceAccountToken"] = False
+            pod_spec["securityContext"] = {
+                "runAsNonRoot": True,
+                "runAsUser": NOBODY_ID,
+                "runAsGroup": NOBODY_ID,
+            }
+            pod_spec["volumes"] = [{"name": TRUSTED_BIN_VOLUME_NAME, "emptyDir": {}}]
+            pod_spec["initContainers"] = [
+                {
+                    "name": TRUSTED_BIN_INIT_CONTAINER_NAME,
+                    "image": TRUSTED_BUSYBOX_IMAGE,
+                    "imagePullPolicy": "IfNotPresent",
+                    "command": ["/bin/cp", "/bin/busybox", f"{TRUSTED_BIN_DIR}/busybox"],
+                    "securityContext": CONTAINER_SECURITY_CONTEXT,
+                    "resources": CONTAINER_RESOURCES,
+                    "volumeMounts": [{**TRUSTED_BIN_VOLUME_MOUNT, "readOnly": False}],
+                }
+            ]
 
             # Add the default image value defined in the yaml to the set of images
             images.append("public.ecr.aws/docker/library/busybox:latest")
@@ -114,7 +158,15 @@ class ImageCacheGateway:
                         containers = daemonset.spec.template.spec.containers
                         current_images = set([container.image for container in containers])
                         new_images = set(images)
-                        if current_images == new_images:
+                        # Daemonsets created before the trusted-busybox init container still run
+                        # binaries from the cached images, so they are replaced.
+                        init_containers = daemonset.spec.template.spec.init_containers or []
+                        has_trusted_bin = any(
+                            container.name == TRUSTED_BIN_INIT_CONTAINER_NAME
+                            and container.image == TRUSTED_BUSYBOX_IMAGE
+                            for container in init_containers
+                        )
+                        if current_images == new_images and has_trusted_bin:
                             logger.info(f"Image cache {name} has not changed, not updating")
                             return
 
