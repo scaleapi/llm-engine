@@ -1288,6 +1288,75 @@ async def test_get_llm_model_endpoint_use_case_raises_not_authorized(
     "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases._get_latest_tag",
     mocked__get_latest_tag(),
 )
+async def test_update_model_endpoint_keeps_public_inference_when_unset(
+    test_api_key: str,
+    fake_model_bundle_repository,
+    fake_model_endpoint_service,
+    fake_docker_repository_image_always_exists,
+    fake_model_primitive_gateway,
+    fake_llm_artifact_gateway,
+    fake_llm_model_endpoint_service,
+    create_llm_model_endpoint_request_streaming: CreateLLMModelEndpointV1Request,
+    update_llm_model_endpoint_request_only_workers: UpdateLLMModelEndpointV1Request,
+):
+    assert update_llm_model_endpoint_request_only_workers.public_inference is None
+    fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
+    bundle_use_case = CreateModelBundleV2UseCase(
+        model_bundle_repository=fake_model_bundle_repository,
+        docker_repository=fake_docker_repository_image_always_exists,
+        model_primitive_gateway=fake_model_primitive_gateway,
+    )
+    llm_bundle_use_case = CreateLLMModelBundleV1UseCase(
+        create_model_bundle_use_case=bundle_use_case,
+        model_bundle_repository=fake_model_bundle_repository,
+        llm_artifact_gateway=fake_llm_artifact_gateway,
+        docker_repository=fake_docker_repository_image_always_exists,
+    )
+    create_use_case = CreateLLMModelEndpointV1UseCase(
+        create_llm_model_bundle_use_case=llm_bundle_use_case,
+        model_endpoint_service=fake_model_endpoint_service,
+        docker_repository=fake_docker_repository_image_always_exists,
+        llm_artifact_gateway=fake_llm_artifact_gateway,
+    )
+    update_use_case = UpdateLLMModelEndpointV1UseCase(
+        create_llm_model_bundle_use_case=llm_bundle_use_case,
+        model_endpoint_service=fake_model_endpoint_service,
+        llm_model_endpoint_service=fake_llm_model_endpoint_service,
+        docker_repository=fake_docker_repository_image_always_exists,
+    )
+    user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
+    request = create_llm_model_endpoint_request_streaming
+    await create_use_case.execute(user=user, request=request)
+    endpoint = (
+        await fake_model_endpoint_service.list_model_endpoints(
+            owner=None, name=request.name, order_by=None
+        )
+    )[0]
+    fake_llm_model_endpoint_service.add_model_endpoint(endpoint)
+    # The record repository treats None as "leave unchanged" (dict_not_none).
+    update_model_endpoint = mock.AsyncMock(wraps=fake_model_endpoint_service.update_model_endpoint)
+    fake_model_endpoint_service.update_model_endpoint = update_model_endpoint
+
+    await update_use_case.execute(
+        user=user,
+        model_endpoint_name=request.name,
+        request=update_llm_model_endpoint_request_only_workers,
+    )
+    assert update_model_endpoint.call_args.kwargs["public_inference"] is None
+
+    await update_use_case.execute(
+        user=user,
+        model_endpoint_name=request.name,
+        request=UpdateLLMModelEndpointV1Request_gen(public_inference=True),
+    )
+    assert update_model_endpoint.call_args.kwargs["public_inference"] is True
+
+
+@pytest.mark.asyncio
+@mock.patch(
+    "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases._get_latest_tag",
+    mocked__get_latest_tag(),
+)
 async def test_update_model_endpoint_use_case_success(
     test_api_key: str,
     fake_model_bundle_repository,
