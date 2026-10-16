@@ -2,14 +2,12 @@ from typing import Any
 from unittest.mock import Mock, mock_open
 
 import pytest
-from model_engine_server.common.dtos.docker_repository import BuildImageResponse
 from model_engine_server.common.dtos.endpoint_builder import (
     BuildEndpointRequest,
     BuildEndpointResponse,
     BuildEndpointStatus,
 )
-from model_engine_server.core.fake_notification_gateway import FakeNotificationGateway
-from model_engine_server.core.notification_gateway import NotificationApp
+from model_engine_server.core.config import infra_config
 from model_engine_server.domain.entities.model_bundle_entity import (
     ArtifactLike,
     RunnableImageFlavor,
@@ -75,29 +73,6 @@ def endpoint_builder_service_empty_docker_not_built(
     )
 
 
-@pytest.fixture
-def endpoint_builder_service_empty_docker_builds_dont_work(
-    fake_docker_repository_image_never_exists_and_builds_dont_work,
-    fake_resource_gateway,
-    fake_monitoring_metrics_gateway,
-    fake_model_endpoint_record_repository,
-    fake_model_endpoint_cache_repository,
-    fake_filesystem_gateway,
-    fake_notification_gateway,
-    fake_feature_flag_repository,
-) -> LiveEndpointBuilderService:
-    return LiveEndpointBuilderService(
-        docker_repository=fake_docker_repository_image_never_exists_and_builds_dont_work,
-        resource_gateway=fake_resource_gateway,
-        monitoring_metrics_gateway=fake_monitoring_metrics_gateway,
-        model_endpoint_record_repository=fake_model_endpoint_record_repository,
-        model_endpoint_cache_repository=fake_model_endpoint_cache_repository,
-        filesystem_gateway=fake_filesystem_gateway,
-        notification_gateway=fake_notification_gateway,
-        feature_flag_repo=fake_feature_flag_repository,
-    )
-
-
 @pytest.fixture(autouse=True)
 def set_env_vars():
     live_endpoint_builder_service.ECR_AWS_PROFILE = "default"
@@ -144,6 +119,13 @@ async def test_build_endpoint(
         ]:
             fake_monitoring_metrics_gateway.reset()
             repo.add_model_endpoint_record(request.model_endpoint_record)
+            is_artifact = isinstance(
+                request.model_endpoint_record.current_model_bundle.flavor, ArtifactLike
+            )
+            if is_artifact and service == endpoint_builder_service_empty_docker_not_built:
+                with pytest.raises(DockerBuildFailedException):
+                    await service.build_endpoint(request.copy(deep=True))
+                continue
             # Pass in a deep copy of request since LiveEndpointBuilderService.convert_artifact_like_bundle_to_runnable_image mutate the request
             response = await service.build_endpoint(request.copy(deep=True))
             assert response == BuildEndpointResponse(status=BuildEndpointStatus.OK)
@@ -155,13 +137,9 @@ async def test_build_endpoint(
             assert fake_monitoring_metrics_gateway.docker_failed_build == 0
             assert fake_monitoring_metrics_gateway.successful_build == 1
             assert fake_monitoring_metrics_gateway.build_time_seconds > 0
-            if isinstance(request.model_endpoint_record.current_model_bundle.flavor, ArtifactLike):
-                if service == endpoint_builder_service_empty_docker_built:
-                    assert sum(fake_monitoring_metrics_gateway.image_build_cache_hit.values()) > 0
-                    assert sum(fake_monitoring_metrics_gateway.image_build_cache_miss.values()) == 0
-                else:
-                    assert sum(fake_monitoring_metrics_gateway.image_build_cache_hit.values()) == 0
-                    assert sum(fake_monitoring_metrics_gateway.image_build_cache_miss.values()) > 0
+            if is_artifact:
+                assert sum(fake_monitoring_metrics_gateway.image_build_cache_hit.values()) > 0
+                assert sum(fake_monitoring_metrics_gateway.image_build_cache_miss.values()) == 0
 
 
 @pytest.mark.asyncio
@@ -258,53 +236,52 @@ async def test_build_endpoint_tensorflow_with_invalid_aws_role_raises_value_erro
 
 
 @pytest.mark.asyncio
-async def test_build_endpoint_build_result_failed_yields_docker_build_failed_exception(
-    build_endpoint_request_sync_pytorch: BuildEndpointRequest,
-    endpoint_builder_service_empty_docker_not_built: LiveEndpointBuilderService,
-    fake_monitoring_metrics_gateway: FakeMonitoringMetricsGateway,
-    fake_notification_gateway: FakeNotificationGateway,
+async def test_build_endpoint_with_control_plane_aws_role_raises_value_error(
+    build_endpoint_request_sync_runnable_image: BuildEndpointRequest,
+    endpoint_builder_service_empty_docker_built: LiveEndpointBuilderService,
+    monkeypatch: pytest.MonkeyPatch,
 ):
-    repo: Any = endpoint_builder_service_empty_docker_not_built.model_endpoint_record_repository
-    repo.add_model_endpoint_record(build_endpoint_request_sync_pytorch.model_endpoint_record)
-    endpoint_builder_service_empty_docker_not_built.docker_repository.__setattr__(
-        "build_image",
-        Mock(return_value=BuildImageResponse(status=False, logs="", job_name="")),
-    )
-    with pytest.raises(DockerBuildFailedException):
-        await endpoint_builder_service_empty_docker_not_built.build_endpoint(
-            build_endpoint_request_sync_pytorch
+    monkeypatch.setattr(infra_config(), "profile_ml_worker", "control-plane-role")
+    monkeypatch.setattr(infra_config(), "profile_ml_inference_worker", "inference-role")
+    repo: Any = endpoint_builder_service_empty_docker_built.model_endpoint_record_repository
+    repo.add_model_endpoint_record(build_endpoint_request_sync_runnable_image.model_endpoint_record)
+    build_endpoint_request_sync_runnable_image.aws_role = "control-plane-role"
+    with pytest.raises(ValueError):
+        await endpoint_builder_service_empty_docker_built.build_endpoint(
+            build_endpoint_request_sync_runnable_image
         )
-    assert fake_monitoring_metrics_gateway.attempted_build == 1
-    assert fake_monitoring_metrics_gateway.successful_build == 0
-    assert fake_monitoring_metrics_gateway.docker_failed_build == 1
-    assert len(fake_notification_gateway.notifications_sent[NotificationApp.SLACK]) == 1
-    assert len(fake_notification_gateway.notifications_sent[NotificationApp.EMAIL]) == 1
+    persisted = await repo.get_model_endpoint_record(
+        model_endpoint_id=build_endpoint_request_sync_runnable_image.model_endpoint_record.id
+    )
+    assert persisted.status == ModelEndpointStatus.UPDATE_FAILED
 
 
 @pytest.mark.asyncio
-async def test_build_endpoint_build_result_throws_error_yields_docker_build_failed_exception(
+async def test_build_endpoint_missing_image_yields_docker_build_failed_exception(
     build_endpoint_request_sync_pytorch: BuildEndpointRequest,
-    endpoint_builder_service_empty_docker_builds_dont_work: LiveEndpointBuilderService,
+    endpoint_builder_service_empty_docker_not_built: LiveEndpointBuilderService,
     fake_monitoring_metrics_gateway: FakeMonitoringMetricsGateway,
-    fake_notification_gateway: FakeNotificationGateway,
 ):
-    repo: Any = (
-        endpoint_builder_service_empty_docker_builds_dont_work.model_endpoint_record_repository
-    )
-    repo.add_model_endpoint_record(build_endpoint_request_sync_pytorch.model_endpoint_record)
+    service = endpoint_builder_service_empty_docker_not_built
+    repo: Any = service.model_endpoint_record_repository
+    record = build_endpoint_request_sync_pytorch.model_endpoint_record
+    repo.add_model_endpoint_record(record)
+    build_image = Mock()
+    service.docker_repository.__setattr__("build_image", build_image)
+
     with pytest.raises(DockerBuildFailedException):
-        await endpoint_builder_service_empty_docker_builds_dont_work.build_endpoint(
-            build_endpoint_request_sync_pytorch
-        )
-    record = await repo.get_model_endpoint_record(
-        build_endpoint_request_sync_pytorch.model_endpoint_record.id
+        await service.build_endpoint(build_endpoint_request_sync_pytorch)
+
+    build_image.assert_not_called()
+    persisted = await repo.get_model_endpoint_record(model_endpoint_id=record.id)
+    assert persisted.status == ModelEndpointStatus.UPDATE_FAILED
+    assert persisted.status_reason == (
+        "Building images for cloudpickle and zip bundles is no longer supported. "
+        "Use a runnable image bundle instead."
     )
-    assert record.status == "UPDATE_FAILED"
     assert fake_monitoring_metrics_gateway.attempted_build == 1
     assert fake_monitoring_metrics_gateway.successful_build == 0
     assert fake_monitoring_metrics_gateway.docker_failed_build == 1
-    assert len(fake_notification_gateway.notifications_sent[NotificationApp.SLACK]) == 1
-    assert len(fake_notification_gateway.notifications_sent[NotificationApp.EMAIL]) == 1
 
 
 def test_convert_artifact_like_bundle_to_runnable_image(

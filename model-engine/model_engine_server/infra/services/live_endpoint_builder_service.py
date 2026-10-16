@@ -7,9 +7,8 @@ from contextlib import AsyncExitStack
 from logging import LoggerAdapter
 from typing import Dict, List, Optional, Sequence, Set
 
-from datadog import statsd
 from model_engine_server.common.config import hmi_config
-from model_engine_server.common.dtos.docker_repository import BuildImageRequest, BuildImageResponse
+from model_engine_server.common.dtos.docker_repository import BuildImageRequest
 from model_engine_server.common.dtos.endpoint_builder import (
     BuildEndpointRequest,
     BuildEndpointResponse,
@@ -21,7 +20,7 @@ from model_engine_server.common.io import open_wrapper
 from model_engine_server.common.serialization_utils import bool_to_str
 from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
-from model_engine_server.core.notification_gateway import NotificationApp, NotificationGateway
+from model_engine_server.core.notification_gateway import NotificationGateway
 from model_engine_server.core.utils.env import environment
 from model_engine_server.domain.entities import (
     ArtifactLike,
@@ -175,8 +174,6 @@ class LiveEndpointBuilderService(EndpointBuilderService):
             f"Building service for endpoint_name: {model_endpoint_record.name}",
         )
 
-        self._validate_build_endpoint_request(build_endpoint_request)
-
         async with AsyncExitStack() as stack:
             lock_ctx = self.model_endpoint_record_repository.get_lock_context(model_endpoint_record)
             lock = await stack.enter_async_context(lock_ctx)
@@ -190,6 +187,9 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                 )
 
             try:
+                # Inside the try so a rejected request marks the endpoint UPDATE_FAILED.
+                self._validate_build_endpoint_request(build_endpoint_request)
+
                 # First, build the image if the model bundle does not have a docker image
                 if not model_bundle.is_runnable():
                     logger_adapter.info(
@@ -674,19 +674,14 @@ class LiveEndpointBuilderService(EndpointBuilderService):
         image_type: str,
     ) -> str:
         """
-        Builds the service image and updates the endpoint status if the image building fails.
+        Returns the URL of the service image if it already exists.
 
         Returns:
-            Image url: if image build is successful or if it already exists.
+            Image url: if the image already exists.
         Raises:
-            DockerBuildFailedException: If image build is required and building it fails.
+            DockerBuildFailedException: If the image does not exist. Building it is deprecated.
         """
-        model_endpoint_record = build_endpoint_request.model_endpoint_record
-        model_endpoint_name = model_endpoint_record.name
-        user_id = model_endpoint_record.created_by
         endpoint_id = build_endpoint_request.model_endpoint_record.id
-
-        log_error = make_exception_log(logger_adapter)
 
         # image_exists hardcodes the ML ECR account, which needs to change for external self-hosted
         if not self.docker_repository.image_exists(
@@ -695,99 +690,15 @@ class LiveEndpointBuilderService(EndpointBuilderService):
             aws_profile=ECR_AWS_PROFILE,
         ):
             self.monitoring_metrics_gateway.emit_image_build_cache_miss_metric(image_type)
-            tags = [
-                f"kube_deployment:{build_endpoint_request.deployment_name}",
-                f"user_id:{user_id}",
-            ]
-            with statsd.timed(f"kaniko.{image_type}_build_time", tags=tags):
-                try:
-                    build_result: BuildImageResponse = self.docker_repository.build_image(
-                        image_params,
-                    )
-                    build_result_status = build_result.status
-                    build_result_logs: str = build_result.logs
-                    logger_adapter.info(f"Image Build job: {build_result.job_name}")
-                except Exception:  # noqa
-                    build_result_status = False
-                    s3_logs_location: Optional[str] = None
-                    log_error(
-                        "Unknown error encountered on image build. "
-                        f"No logs to write for {model_endpoint_name}, since docker build threw exception"
-                    )
-                else:
-                    # Write builder logs into a remote file
-                    s3_logs_location = self._get_service_builder_logs_location(
-                        user_id=user_id,
-                        endpoint_name=model_endpoint_name,
-                    )
-                    try:
-                        with self.filesystem_gateway.open(
-                            s3_logs_location,
-                            "w",
-                            aws_profile=infra_config().profile_ml_worker,
-                        ) as file_out:
-                            file_out.write(build_result_logs)
-                    except Exception:  # noqa
-                        log_error(
-                            f"Unable to publish service builder logs for {model_endpoint_name}"
-                        )
-
-                # Check that the build didn't succeed and the image doesn't exist.
-                # There's a race condition where if another simultaneous build is started,
-                # then one of the builds will not succeed, but the docker image ends up built.
-                if not build_result_status and not self.docker_repository.image_exists(
-                    repository_name=image_params.repo,
-                    image_tag=image_params.image_tag,
-                    aws_profile=ECR_AWS_PROFILE,
-                ):
-                    log_error(
-                        f"Image build failed for endpoint {model_endpoint_name}, user {user_id}"
-                    )
-
-                    # Note: status (and status_reason) is set by the outer except handler
-                    # from the DockerBuildFailedException raised below, so we don't write
-                    # the record here — doing so would be overwritten. The exception message
-                    # is kept user-safe (no internal ids) since it becomes the status_reason.
-
-                    if s3_logs_location is not None:
-                        help_url = self.filesystem_gateway.generate_signed_url(
-                            s3_logs_location,
-                            expiration=43200,  # 12 hours
-                            aws_profile=infra_config().profile_ml_worker,
-                        )
-                    else:
-                        help_url = (
-                            "https://app.datadoghq.com/logs?query=service%3Alaunch-"
-                            f"endpoint-builder%20env%3A{ENV}&cols=host%2Cservice&"
-                            "index=%2A&messageDisplay=inline&stream_sort=time%2C"
-                            "desc&viz=stream&live=true"
-                        )
-
-                    user_id = build_endpoint_request.model_endpoint_record.created_by
-
-                    endpoint_name = build_endpoint_request.model_endpoint_record.name
-                    bundle_id = build_endpoint_request.model_endpoint_record.current_model_bundle.id
-                    message = (
-                        f"Your endpoint '{endpoint_name}' failed to build! "
-                        f"Endpoint ID: {endpoint_id}. Bundle ID: {bundle_id}."
-                    )
-
-                    self.notification_gateway.send_notification(
-                        title="Launch Endpoint Build Failed",
-                        description=message,
-                        help_url=help_url,
-                        notification_apps=[
-                            NotificationApp.SLACK,
-                            NotificationApp.EMAIL,
-                        ],
-                        users=[user_id],
-                    )
-
-                    logger_adapter.error(f"Image build failed ({endpoint_id=})")
-                    raise DockerBuildFailedException(
-                        "Image build failed. Check that the bundle's image and "
-                        "dependencies are valid and accessible."
-                    )
+            # Building images for artifact bundles is deprecated: endpoints can only use images
+            # that already exist.
+            logger_adapter.error(
+                f"Image not found, artifact image builds are deprecated ({endpoint_id=})"
+            )
+            raise DockerBuildFailedException(
+                "Building images for cloudpickle and zip bundles is no longer supported. "
+                "Use a runnable image bundle instead."
+            )
 
         else:
             self.monitoring_metrics_gateway.emit_image_build_cache_hit_metric(image_type)
@@ -802,10 +713,8 @@ class LiveEndpointBuilderService(EndpointBuilderService):
         build_endpoint_request: BuildEndpointRequest,
     ) -> None:
         """Raises ValueError if the request's AWS role isn't allowed."""
-        allowed_aws_roles = {
-            infra_config().profile_ml_worker,
-            infra_config().profile_ml_inference_worker,
-        }
+        # Endpoints run with the inference role only; the control-plane role is never allowed.
+        allowed_aws_roles = {infra_config().profile_ml_inference_worker}
 
         if build_endpoint_request.aws_role not in allowed_aws_roles:
             raise ValueError(
@@ -859,12 +768,3 @@ class LiveEndpointBuilderService(EndpointBuilderService):
         pip-installable requirements.
         """
         return "-".join([base_image_tag, git_tag, requirements_hash])
-
-    @staticmethod
-    def _get_service_builder_logs_location(user_id: str, endpoint_name: str) -> str:
-        """Creates an S3 url for the user's endpoint docker build logs.
-
-        This function uses creates a key from the endpoint's name and owning user's ID.
-        It uses an S3 bucket that is accessible by the Gateway & Service Builder.
-        """
-        return f"s3://{infra_config().s3_bucket}/service_builder_logs/{user_id}_{endpoint_name}"

@@ -23,10 +23,13 @@ class CreateDockerImageBatchJobBundleV1UseCase:
 
     def __init__(self, docker_image_batch_job_bundle_repo: DockerImageBatchJobBundleRepository):
         self.docker_image_batch_job_bundle_repo = docker_image_batch_job_bundle_repo
+        self.authz_module = LiveAuthorizationModule()
 
     async def execute(
         self, user: User, request: CreateDockerImageBatchJobBundleV1Request
     ) -> CreateDockerImageBatchJobBundleV1Response:
+        if not self.authz_module.check_access_create_docker_image_batch_job(user):
+            raise ObjectNotAuthorizedException
         # TODO should we verify gpu_type, cpus, memory, gpus compatibility?
 
         # type conversions

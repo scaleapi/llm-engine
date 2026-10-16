@@ -37,6 +37,13 @@ class LiveAuthorizationModule:
         )
 
     @staticmethod
+    def check_access_create_docker_image_batch_job(user: User) -> bool:
+        """Checks whether the provided user is authorized to create docker image batch job
+        bundles and jobs, which run caller-chosen images and commands."""
+        # External customers cannot use custom images.
+        return user.is_privileged_user
+
+    @staticmethod
     def check_access_read_owned_entity(user: User, owned_entity: OwnedEntity) -> bool:
         """Check whether the provided user is authorized to read the owned entity."""
         return user.team_id == owned_entity.owner
