@@ -219,6 +219,40 @@ async def test_get_model_endpoint_coalesces_concurrent_infra_reads(
 
 
 @pytest.mark.asyncio
+async def test_get_model_endpoint_rereads_cached_zero_max_workers(
+    fake_live_model_endpoint_service: LiveModelEndpointService,
+    model_endpoint_1: ModelEndpoint,
+):
+    model_endpoint_record = await _create_model_endpoint_helper(
+        model_endpoint=model_endpoint_1, service=fake_live_model_endpoint_service
+    )
+    infra_gateway: Any = fake_live_model_endpoint_service.model_endpoint_infra_gateway
+    await infra_gateway.promote_in_flight_infra(
+        owner=model_endpoint_record.created_by,
+        model_endpoint_name=model_endpoint_record.name,
+    )
+    real_state = await infra_gateway.get_model_endpoint_infra(
+        model_endpoint_record=model_endpoint_record
+    )
+    assert real_state is not None and real_state.deployment_state.max_workers > 0
+    cached_state = real_state.copy(deep=True)
+    cached_state.deployment_state.max_workers = 0
+    await fake_live_model_endpoint_service.model_endpoint_cache_repository.write_endpoint_info(
+        endpoint_id=model_endpoint_record.id, endpoint_info=cached_state, ttl_seconds=60
+    )
+
+    model_endpoint = await fake_live_model_endpoint_service.get_model_endpoint(
+        model_endpoint_id=model_endpoint_record.id
+    )
+
+    assert model_endpoint is not None and model_endpoint.infra_state is not None
+    assert (
+        model_endpoint.infra_state.deployment_state.max_workers
+        == real_state.deployment_state.max_workers
+    )
+
+
+@pytest.mark.asyncio
 async def test_create_update_model_endpoint_success(
     fake_live_model_endpoint_service: LiveModelEndpointService,
     model_bundle_2: ModelBundle,

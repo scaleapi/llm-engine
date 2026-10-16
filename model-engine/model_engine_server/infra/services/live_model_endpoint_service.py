@@ -111,6 +111,10 @@ class LiveModelEndpointService(ModelEndpointService):
             state = await self.model_endpoint_cache_repository.read_endpoint_info(
                 endpoint_id=record.id, deployment_name=deployment_name
             )
+            if state is not None and state.deployment_state.max_workers == 0:
+                # Callers reject endpoints with max_workers == 0, so confirm it against k8s
+                # instead of trusting the shared cache.
+                state = None
             tags = [
                 f"endpoint_name:{record.name}",
                 f"user_id:{record.created_by}",
