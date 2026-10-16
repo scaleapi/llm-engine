@@ -24,6 +24,7 @@ TRUSTED_BUSYBOX_IMAGE = "public.ecr.aws/docker/library/busybox@sha256:5cec3fc171
 TRUSTED_BIN_INIT_CONTAINER_NAME = "copy-trusted-busybox"
 TRUSTED_BIN_VOLUME_NAME = "trusted-bin"
 TRUSTED_BIN_DIR = "/trusted"
+NOBODY_ID = 65534
 CONTAINER_SECURITY_CONTEXT = {
     "allowPrivilegeEscalation": False,
     "readOnlyRootFilesystem": True,
@@ -103,8 +104,8 @@ class ImageCacheGateway:
             pod_spec["automountServiceAccountToken"] = False
             pod_spec["securityContext"] = {
                 "runAsNonRoot": True,
-                "runAsUser": 65534,
-                "runAsGroup": 65534,
+                "runAsUser": NOBODY_ID,
+                "runAsGroup": NOBODY_ID,
             }
             pod_spec["volumes"] = [{"name": TRUSTED_BIN_VOLUME_NAME, "emptyDir": {}}]
             pod_spec["initContainers"] = [
