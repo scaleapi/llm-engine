@@ -712,10 +712,8 @@ class LiveEndpointBuilderService(EndpointBuilderService):
         build_endpoint_request: BuildEndpointRequest,
     ) -> None:
         """Raises ValueError if the request's AWS role isn't allowed."""
-        allowed_aws_roles = {
-            infra_config().profile_ml_worker,
-            infra_config().profile_ml_inference_worker,
-        }
+        # Endpoints run with the inference role only; the control-plane role is never allowed.
+        allowed_aws_roles = {infra_config().profile_ml_inference_worker}
 
         if build_endpoint_request.aws_role not in allowed_aws_roles:
             raise ValueError(

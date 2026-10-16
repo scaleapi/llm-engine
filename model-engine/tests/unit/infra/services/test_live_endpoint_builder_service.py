@@ -7,6 +7,7 @@ from model_engine_server.common.dtos.endpoint_builder import (
     BuildEndpointResponse,
     BuildEndpointStatus,
 )
+from model_engine_server.core.config import infra_config
 from model_engine_server.domain.entities.model_bundle_entity import (
     ArtifactLike,
     RunnableImageFlavor,
@@ -231,6 +232,23 @@ async def test_build_endpoint_tensorflow_with_invalid_aws_role_raises_value_erro
     with pytest.raises(ValueError):
         await endpoint_builder_service_empty_docker_not_built.build_endpoint(
             build_endpoint_request_async_tensorflow
+        )
+
+
+@pytest.mark.asyncio
+async def test_build_endpoint_with_control_plane_aws_role_raises_value_error(
+    build_endpoint_request_sync_runnable_image: BuildEndpointRequest,
+    endpoint_builder_service_empty_docker_built: LiveEndpointBuilderService,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.setattr(infra_config(), "profile_ml_worker", "control-plane-role")
+    monkeypatch.setattr(infra_config(), "profile_ml_inference_worker", "inference-role")
+    repo: Any = endpoint_builder_service_empty_docker_built.model_endpoint_record_repository
+    repo.add_model_endpoint_record(build_endpoint_request_sync_runnable_image.model_endpoint_record)
+    build_endpoint_request_sync_runnable_image.aws_role = "control-plane-role"
+    with pytest.raises(ValueError):
+        await endpoint_builder_service_empty_docker_built.build_endpoint(
+            build_endpoint_request_sync_runnable_image
         )
 
 
