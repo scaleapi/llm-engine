@@ -169,6 +169,8 @@ def _get_s3_endpoint_flag() -> str:
 
 OPENAI_CHAT_COMPLETION_PATH = "/v1/chat/completions"
 CHAT_TEMPLATE_MAX_LENGTH = 10_000
+# Docker tag grammar. framework_image_tag is substituted into the endpoint's k8s YAML.
+DOCKER_IMAGE_TAG_PATTERN = re.compile(r"[A-Za-z0-9_][A-Za-z0-9._-]{0,127}")
 CHAT_SUPPORTED_INFERENCE_FRAMEWORKS = [
     LLMInferenceFramework.VLLM,
     LLMInferenceFramework.SGLANG,
@@ -520,6 +522,27 @@ def _model_endpoint_entity_to_get_llm_model_endpoint_response(
     return response
 
 
+def _redact_llm_model_endpoint_response_for_non_owner(
+    response: GetLLMModelEndpointV1Response,
+) -> GetLLMModelEndpointV1Response:
+    """Hides the owner's configuration from callers who can see the endpoint only because it is
+    public_inference."""
+    spec = response.spec
+    if spec is not None:
+        spec = spec.model_copy(
+            update=dict(
+                metadata=None,
+                post_inference_hooks=None,
+                default_callback_url=None,
+                default_callback_auth=None,
+                labels=None,
+                aws_role=None,
+                results_s3_bucket=None,
+            )
+        )
+    return response.model_copy(update=dict(checkpoint_path=None, spec=spec))
+
+
 def validate_model_name(_model_name: str, _inference_framework: LLMInferenceFramework) -> None:
     # TODO: replace this logic to check if the model architecture is supported instead
     pass
@@ -641,6 +664,10 @@ class CreateLLMModelBundleV1UseCase:
     def check_docker_image_exists_for_image_tag(
         self, framework_image_tag: str, repository_name: str
     ):
+        if not DOCKER_IMAGE_TAG_PATTERN.fullmatch(framework_image_tag):
+            raise ObjectHasInvalidValueException(
+                f"Invalid image tag {framework_image_tag!r}: must be a valid Docker image tag."
+            )
         if not self.docker_repository.image_exists(
             image_tag=framework_image_tag,
             repository_name=repository_name,
@@ -1981,6 +2008,7 @@ class ListLLMModelEndpointsV1UseCase:
 
     def __init__(self, llm_model_endpoint_service: LLMModelEndpointService):
         self.llm_model_endpoint_service = llm_model_endpoint_service
+        self.authz_module = LiveAuthorizationModule()
 
     async def execute(
         self, user: User, name: Optional[str], order_by: Optional[ModelEndpointOrderBy]
@@ -1999,12 +2027,13 @@ class ListLLMModelEndpointsV1UseCase:
         model_endpoints = await self.llm_model_endpoint_service.list_llm_model_endpoints(
             owner=user.team_id, name=name, order_by=order_by
         )
-        return ListLLMModelEndpointsV1Response(
-            model_endpoints=[
-                _model_endpoint_entity_to_get_llm_model_endpoint_response(m)
-                for m in model_endpoints
-            ]
-        )
+        responses = []
+        for m in model_endpoints:
+            response = _model_endpoint_entity_to_get_llm_model_endpoint_response(m)
+            if not self.authz_module.check_access_read_owned_entity(user, m.record):
+                response = _redact_llm_model_endpoint_response_for_non_owner(response)
+            responses.append(response)
+        return ListLLMModelEndpointsV1Response(model_endpoints=responses)
 
 
 class GetLLMModelEndpointByNameV1UseCase:
@@ -2036,13 +2065,15 @@ class GetLLMModelEndpointByNameV1UseCase:
         )
         if not model_endpoint:
             raise ObjectNotFoundException
-        if not self.authz_module.check_access_read_owned_entity(
-            user, model_endpoint.record
-        ) and not self.authz_module.check_endpoint_public_inference_for_user(
+        is_owner = self.authz_module.check_access_read_owned_entity(user, model_endpoint.record)
+        if not is_owner and not self.authz_module.check_endpoint_public_inference_for_user(
             user, model_endpoint.record
         ):
             raise ObjectNotAuthorizedException
-        return _model_endpoint_entity_to_get_llm_model_endpoint_response(model_endpoint)
+        response = _model_endpoint_entity_to_get_llm_model_endpoint_response(model_endpoint)
+        if not is_owner:
+            response = _redact_llm_model_endpoint_response_for_non_owner(response)
+        return response
 
 
 def merge_metadata(
@@ -4010,7 +4041,7 @@ def get_model_param_count_b(model_name: str) -> int:
     elif "deepseek-coder-v2" in model_name:
         model_param_count_b = 237
     else:
-        numbers = re.findall(r"(\d+)b", model_name)
+        numbers = re.findall(r"(?<!\d)(\d+)b", model_name)
         if len(numbers) == 0:
             raise ObjectHasInvalidValueException(
                 f"Unable to infer number of parameters for {model_name}."

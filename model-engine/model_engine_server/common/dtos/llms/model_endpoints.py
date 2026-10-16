@@ -213,6 +213,7 @@ class UpdateLLMModelEndpointArgs(LLMModelEndpointCommonArgs):
     max_workers: Optional[int] = None
     per_worker: Optional[int] = None
     labels: Optional[Dict[str, str]] = None
+    public_inference: Optional[bool] = None  # None leaves the current value unchanged.
 
 
 class UpdateVLLMModelEndpointRequest(

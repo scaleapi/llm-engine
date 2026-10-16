@@ -63,12 +63,14 @@ from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
     DeleteLLMEndpointByNameUseCase,
     GetLLMModelEndpointByNameV1UseCase,
     GpuType,
+    ListLLMModelEndpointsV1UseCase,
     ModelDownloadV1UseCase,
     UpdateLLMModelEndpointV1UseCase,
     _fill_hardware_info,
     _get_s3_endpoint_flag,
     _infer_hardware,
     get_legacy_vllm_additional_args_from_command,
+    get_model_param_count_b,
     merge_metadata,
     validate_and_update_completion_params,
     validate_chat_template,
@@ -1265,6 +1267,52 @@ async def test_get_llm_model_endpoint_use_case_raises_not_found(
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "is_owner", [pytest.param(True, id="owner"), pytest.param(False, id="non-owner")]
+)
+async def test_get_and_list_llm_model_endpoint_redacts_config_for_non_owner(
+    test_api_key: str,
+    fake_llm_model_endpoint_service,
+    llm_model_endpoint_async: Tuple[ModelEndpoint, Any],
+    is_owner: bool,
+):
+    endpoint = llm_model_endpoint_async[0]
+    assert endpoint.record.public_inference
+    fake_llm_model_endpoint_service.add_model_endpoint(endpoint)
+    team = test_api_key if is_owner else "other_team"
+    user = User(user_id=team, team_id=team, is_privileged_user=False)
+
+    get_response = await GetLLMModelEndpointByNameV1UseCase(
+        llm_model_endpoint_service=fake_llm_model_endpoint_service
+    ).execute(user=user, model_endpoint_name=endpoint.record.name)
+    list_response = await ListLLMModelEndpointsV1UseCase(
+        llm_model_endpoint_service=fake_llm_model_endpoint_service
+    ).execute(user=user, name=endpoint.record.name, order_by=None)
+
+    for response in [get_response, *list_response.model_endpoints]:
+        assert response.name == endpoint.record.name
+        spec = response.spec
+        redacted = {
+            "metadata": spec.metadata,
+            "post_inference_hooks": spec.post_inference_hooks,
+            "default_callback_url": spec.default_callback_url,
+            "default_callback_auth": spec.default_callback_auth,
+            "labels": spec.labels,
+            "aws_role": spec.aws_role,
+            "results_s3_bucket": spec.results_s3_bucket,
+            "checkpoint_path": response.checkpoint_path,
+        }
+        if is_owner:
+            assert spec.metadata is not None
+            assert spec.default_callback_auth is not None
+            assert spec.aws_role == "test_aws_role"
+            assert spec.results_s3_bucket == "test_s3_bucket"
+        else:
+            assert redacted == {key: None for key in redacted}
+    assert len(list_response.model_endpoints) == 1
+
+
+@pytest.mark.asyncio
 async def test_get_llm_model_endpoint_use_case_raises_not_authorized(
     test_api_key: str,
     fake_llm_model_endpoint_service,
@@ -1280,6 +1328,75 @@ async def test_get_llm_model_endpoint_use_case_raises_not_authorized(
         await use_case.execute(
             user=user, model_endpoint_name=llm_model_endpoint_async[0].record.name
         )
+
+
+@pytest.mark.asyncio
+@mock.patch(
+    "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases._get_latest_tag",
+    mocked__get_latest_tag(),
+)
+async def test_update_model_endpoint_keeps_public_inference_when_unset(
+    test_api_key: str,
+    fake_model_bundle_repository,
+    fake_model_endpoint_service,
+    fake_docker_repository_image_always_exists,
+    fake_model_primitive_gateway,
+    fake_llm_artifact_gateway,
+    fake_llm_model_endpoint_service,
+    create_llm_model_endpoint_request_streaming: CreateLLMModelEndpointV1Request,
+    update_llm_model_endpoint_request_only_workers: UpdateLLMModelEndpointV1Request,
+):
+    assert update_llm_model_endpoint_request_only_workers.public_inference is None
+    fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
+    bundle_use_case = CreateModelBundleV2UseCase(
+        model_bundle_repository=fake_model_bundle_repository,
+        docker_repository=fake_docker_repository_image_always_exists,
+        model_primitive_gateway=fake_model_primitive_gateway,
+    )
+    llm_bundle_use_case = CreateLLMModelBundleV1UseCase(
+        create_model_bundle_use_case=bundle_use_case,
+        model_bundle_repository=fake_model_bundle_repository,
+        llm_artifact_gateway=fake_llm_artifact_gateway,
+        docker_repository=fake_docker_repository_image_always_exists,
+    )
+    create_use_case = CreateLLMModelEndpointV1UseCase(
+        create_llm_model_bundle_use_case=llm_bundle_use_case,
+        model_endpoint_service=fake_model_endpoint_service,
+        docker_repository=fake_docker_repository_image_always_exists,
+        llm_artifact_gateway=fake_llm_artifact_gateway,
+    )
+    update_use_case = UpdateLLMModelEndpointV1UseCase(
+        create_llm_model_bundle_use_case=llm_bundle_use_case,
+        model_endpoint_service=fake_model_endpoint_service,
+        llm_model_endpoint_service=fake_llm_model_endpoint_service,
+        docker_repository=fake_docker_repository_image_always_exists,
+    )
+    user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
+    request = create_llm_model_endpoint_request_streaming
+    await create_use_case.execute(user=user, request=request)
+    endpoint = (
+        await fake_model_endpoint_service.list_model_endpoints(
+            owner=None, name=request.name, order_by=None
+        )
+    )[0]
+    fake_llm_model_endpoint_service.add_model_endpoint(endpoint)
+    # The record repository treats None as "leave unchanged" (dict_not_none).
+    update_model_endpoint = mock.AsyncMock(wraps=fake_model_endpoint_service.update_model_endpoint)
+    fake_model_endpoint_service.update_model_endpoint = update_model_endpoint
+
+    await update_use_case.execute(
+        user=user,
+        model_endpoint_name=request.name,
+        request=update_llm_model_endpoint_request_only_workers,
+    )
+    assert update_model_endpoint.call_args.kwargs["public_inference"] is None
+
+    await update_use_case.execute(
+        user=user,
+        model_endpoint_name=request.name,
+        request=UpdateLLMModelEndpointV1Request_gen(public_inference=True),
+    )
+    assert update_model_endpoint.call_args.kwargs["public_inference"] is True
 
 
 @pytest.mark.asyncio
@@ -3908,3 +4025,54 @@ def test_validate_chat_template():
 
     with pytest.raises(ObjectHasInvalidValueException):
         validate_chat_template(good_chat_template, LLMInferenceFramework.DEEPSPEED)
+
+
+@pytest.mark.parametrize(
+    "model_name,expected",
+    [
+        pytest.param("llama-2-7b", 7, id="single"),
+        pytest.param("qwen2.5-72b-instruct", 72, id="dotted-version"),
+        pytest.param("model-1b-v2-13b", 13, id="last-match-wins"),
+        pytest.param("12a34b", 34, id="digit-run-after-letter"),
+        pytest.param("mixtral-8x7b-instruct", 47, id="lookup-table"),
+    ],
+)
+def test_get_model_param_count_b(model_name: str, expected: int):
+    assert get_model_param_count_b(model_name) == expected
+
+
+def test_get_model_param_count_b_long_digit_run_is_linear():
+    start = time.monotonic()
+    with pytest.raises(ObjectHasInvalidValueException):
+        get_model_param_count_b("1" * 100_000)
+    assert time.monotonic() - start < 1
+
+
+@pytest.mark.parametrize(
+    "image_tag,valid",
+    [
+        pytest.param("0.9.1", True, id="semver"),
+        pytest.param("v0.4.0_abc-123", True, id="mixed"),
+        pytest.param("x" * 128, True, id="max-length"),
+        pytest.param("x" * 129, False, id="too-long"),
+        pytest.param("-leading-dash", False, id="leading-dash"),
+        pytest.param("0.9.1\n", False, id="trailing-newline"),
+        pytest.param("0.9.1\n        command: [sh]", False, id="yaml-injection"),
+        pytest.param("0.9.1 extra", False, id="space"),
+        pytest.param("", False, id="empty"),
+    ],
+)
+def test_check_docker_image_exists_for_image_tag_validates_tag(
+    fake_docker_repository_image_always_exists, image_tag: str, valid: bool
+):
+    use_case = CreateLLMModelBundleV1UseCase(
+        create_model_bundle_use_case=mock.Mock(),
+        model_bundle_repository=mock.Mock(),
+        llm_artifact_gateway=mock.Mock(),
+        docker_repository=fake_docker_repository_image_always_exists,
+    )
+    if valid:
+        use_case.check_docker_image_exists_for_image_tag(image_tag, "repo")
+    else:
+        with pytest.raises(ObjectHasInvalidValueException):
+            use_case.check_docker_image_exists_for_image_tag(image_tag, "repo")
