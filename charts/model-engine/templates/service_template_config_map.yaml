@@ -1259,9 +1259,12 @@ data:
                 - name: AWS_CONFIG_FILE
                   value: "/opt/.aws/config"
                 {{- $env_vars := $service_env | fromYaml }}
+                {{- /* The user container runs a caller-chosen image: never hand it the
+                       control plane's database, broker or Redis credentials. */}}
+                {{- $control_plane_env := list "DD_SERVICE" "ML_INFRA_DATABASE_URL" "DB_SECRET_NAME" "CELERY_BROKER_URL" "CELERY_RESULT_BACKEND" "REDIS_HOST" "REDIS_PORT" "REDIS_AUTH_TOKEN" "SERVICE_BUILDER_QUEUE" }}
                 {{- range $env_var := index $env_vars "env" }}
                 {{- $env_var_name := index $env_var "name" }}
-                {{- if ne $env_var_name "DD_SERVICE" }}
+                {{- if not (has $env_var_name $control_plane_env) }}
                 {{- tuple $env_var | toYaml | nindent 16 }}
                 {{- end }}
                 {{- end }}
