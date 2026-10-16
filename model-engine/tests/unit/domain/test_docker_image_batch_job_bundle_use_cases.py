@@ -1,7 +1,10 @@
+from unittest.mock import Mock
+
 import pytest
 from model_engine_server.common.dtos.batch_jobs import (
     CreateDockerImageBatchJobBundleV1Request,
     CreateDockerImageBatchJobBundleV1Response,
+    CreateDockerImageBatchJobV1Request,
 )
 from model_engine_server.common.dtos.model_bundles import ModelBundleOrderBy
 from model_engine_server.core.auth.authentication_repository import User
@@ -10,6 +13,9 @@ from model_engine_server.domain.exceptions import (
     ObjectNotFoundException,
 )
 from model_engine_server.domain.repositories import DockerImageBatchJobBundleRepository
+from model_engine_server.domain.use_cases.batch_job_use_cases import (
+    CreateDockerImageBatchJobV1UseCase,
+)
 from model_engine_server.domain.use_cases.docker_image_batch_job_bundle_use_cases import (
     CreateDockerImageBatchJobBundleV1UseCase,
     GetDockerImageBatchJobBundleByIdV1UseCase,
@@ -33,6 +39,39 @@ async def test_create_docker_image_batch_job_bundle_use_case(
     )
     assert response.docker_image_batch_job_bundle_id
     assert isinstance(response, CreateDockerImageBatchJobBundleV1Response)
+
+
+@pytest.mark.asyncio
+async def test_create_docker_image_batch_job_bundle_use_case_requires_privileged_user(
+    test_api_key: str,
+    fake_docker_image_batch_job_bundle_repository: DockerImageBatchJobBundleRepository,
+    create_docker_image_batch_job_bundle_request: CreateDockerImageBatchJobBundleV1Request,
+):
+    use_case = CreateDockerImageBatchJobBundleV1UseCase(
+        docker_image_batch_job_bundle_repo=fake_docker_image_batch_job_bundle_repository
+    )
+    user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=False)
+    with pytest.raises(ObjectNotAuthorizedException):
+        await use_case.execute(user=user, request=create_docker_image_batch_job_bundle_request)
+
+
+@pytest.mark.asyncio
+async def test_create_docker_image_batch_job_use_case_requires_privileged_user(test_api_key: str):
+    bundle_repository = Mock()
+    use_case = CreateDockerImageBatchJobV1UseCase(
+        docker_image_batch_job_gateway=Mock(),
+        docker_image_batch_job_bundle_repository=bundle_repository,
+        docker_repository=Mock(),
+    )
+    user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=False)
+    request = CreateDockerImageBatchJobV1Request(
+        docker_image_batch_job_bundle_id="test_bundle_id",
+        job_config={},
+        labels={"team": "infra", "product": "testing"},
+    )
+    with pytest.raises(ObjectNotAuthorizedException):
+        await use_case.execute(user=user, request=request)
+    bundle_repository.get_docker_image_batch_job_bundle.assert_not_called()
 
 
 @pytest.mark.asyncio
