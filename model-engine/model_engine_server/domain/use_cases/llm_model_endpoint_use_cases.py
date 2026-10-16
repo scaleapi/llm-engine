@@ -4010,7 +4010,7 @@ def get_model_param_count_b(model_name: str) -> int:
     elif "deepseek-coder-v2" in model_name:
         model_param_count_b = 237
     else:
-        numbers = re.findall(r"(\d+)b", model_name)
+        numbers = re.findall(r"(?<!\d)(\d+)b", model_name)
         if len(numbers) == 0:
             raise ObjectHasInvalidValueException(
                 f"Unable to infer number of parameters for {model_name}."

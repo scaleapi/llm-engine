@@ -69,6 +69,7 @@ from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
     _get_s3_endpoint_flag,
     _infer_hardware,
     get_legacy_vllm_additional_args_from_command,
+    get_model_param_count_b,
     merge_metadata,
     validate_and_update_completion_params,
     validate_chat_template,
@@ -3908,3 +3909,24 @@ def test_validate_chat_template():
 
     with pytest.raises(ObjectHasInvalidValueException):
         validate_chat_template(good_chat_template, LLMInferenceFramework.DEEPSPEED)
+
+
+@pytest.mark.parametrize(
+    "model_name,expected",
+    [
+        pytest.param("llama-2-7b", 7, id="single"),
+        pytest.param("qwen2.5-72b-instruct", 72, id="dotted-version"),
+        pytest.param("model-1b-v2-13b", 13, id="last-match-wins"),
+        pytest.param("12a34b", 34, id="digit-run-after-letter"),
+        pytest.param("mixtral-8x7b-instruct", 47, id="lookup-table"),
+    ],
+)
+def test_get_model_param_count_b(model_name: str, expected: int):
+    assert get_model_param_count_b(model_name) == expected
+
+
+def test_get_model_param_count_b_long_digit_run_is_linear():
+    start = time.monotonic()
+    with pytest.raises(ObjectHasInvalidValueException):
+        get_model_param_count_b("1" * 100_000)
+    assert time.monotonic() - start < 1
