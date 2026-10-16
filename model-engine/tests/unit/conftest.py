@@ -2121,12 +2121,6 @@ def fake_docker_repository_image_never_exists() -> FakeDockerRepository:
 
 
 @pytest.fixture
-def fake_docker_repository_image_never_exists_and_builds_dont_work() -> FakeDockerRepository:
-    repo = FakeDockerRepository(image_always_exists=False, raises_error=True)
-    return repo
-
-
-@pytest.fixture
 def fake_model_endpoint_cache_repository() -> FakeModelEndpointCacheRepository:
     repo = FakeModelEndpointCacheRepository()
     return repo
