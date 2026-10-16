@@ -31,6 +31,7 @@ def test_create_llm_model_endpoint_success(
 
 
 def test_list_model_endpoints_success(
+    test_api_key: str,
     llm_model_endpoint_async: Tuple[ModelEndpoint, Any],
     model_endpoint_2: Tuple[ModelEndpoint, Any],
     get_test_client_wrapper,
@@ -48,7 +49,7 @@ def test_list_model_endpoints_success(
     )
     response_1 = client.get(
         "/v1/llm/model-endpoints?order_by=newest",
-        auth=("no_user", ""),
+        auth=(test_api_key, ""),
     )
     expected_model_endpoint_1 = json.loads(
         GetLLMModelEndpointV1Response.parse_obj(llm_model_endpoint_async[1]).json()
@@ -58,6 +59,7 @@ def test_list_model_endpoints_success(
 
 
 def test_get_llm_model_endpoint_success(
+    test_api_key: str,
     llm_model_endpoint_sync: Tuple[ModelEndpoint, Any],
     model_endpoint_2: Tuple[ModelEndpoint, Any],
     get_test_client_wrapper,
@@ -75,7 +77,7 @@ def test_get_llm_model_endpoint_success(
     )
     response_1 = client.get(
         f"/v1/llm/model-endpoints/{llm_model_endpoint_sync[0].record.name}",
-        auth=("no_user", ""),
+        auth=(test_api_key, ""),
     )
     expected_model_endpoint_1 = json.loads(
         GetLLMModelEndpointV1Response.parse_obj(llm_model_endpoint_sync[1]).json()

@@ -63,6 +63,7 @@ from model_engine_server.domain.use_cases.llm_model_endpoint_use_cases import (
     DeleteLLMEndpointByNameUseCase,
     GetLLMModelEndpointByNameV1UseCase,
     GpuType,
+    ListLLMModelEndpointsV1UseCase,
     ModelDownloadV1UseCase,
     UpdateLLMModelEndpointV1UseCase,
     _fill_hardware_info,
@@ -1263,6 +1264,52 @@ async def test_get_llm_model_endpoint_use_case_raises_not_found(
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
     with pytest.raises(ObjectNotFoundException):
         await use_case.execute(user=user, model_endpoint_name="invalid_model_endpoint_name")
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "is_owner", [pytest.param(True, id="owner"), pytest.param(False, id="non-owner")]
+)
+async def test_get_and_list_llm_model_endpoint_redacts_config_for_non_owner(
+    test_api_key: str,
+    fake_llm_model_endpoint_service,
+    llm_model_endpoint_async: Tuple[ModelEndpoint, Any],
+    is_owner: bool,
+):
+    endpoint = llm_model_endpoint_async[0]
+    assert endpoint.record.public_inference
+    fake_llm_model_endpoint_service.add_model_endpoint(endpoint)
+    team = test_api_key if is_owner else "other_team"
+    user = User(user_id=team, team_id=team, is_privileged_user=False)
+
+    get_response = await GetLLMModelEndpointByNameV1UseCase(
+        llm_model_endpoint_service=fake_llm_model_endpoint_service
+    ).execute(user=user, model_endpoint_name=endpoint.record.name)
+    list_response = await ListLLMModelEndpointsV1UseCase(
+        llm_model_endpoint_service=fake_llm_model_endpoint_service
+    ).execute(user=user, name=endpoint.record.name, order_by=None)
+
+    for response in [get_response, *list_response.model_endpoints]:
+        assert response.name == endpoint.record.name
+        spec = response.spec
+        redacted = {
+            "metadata": spec.metadata,
+            "post_inference_hooks": spec.post_inference_hooks,
+            "default_callback_url": spec.default_callback_url,
+            "default_callback_auth": spec.default_callback_auth,
+            "labels": spec.labels,
+            "aws_role": spec.aws_role,
+            "results_s3_bucket": spec.results_s3_bucket,
+            "checkpoint_path": response.checkpoint_path,
+        }
+        if is_owner:
+            assert spec.metadata is not None
+            assert spec.default_callback_auth is not None
+            assert spec.aws_role == "test_aws_role"
+            assert spec.results_s3_bucket == "test_s3_bucket"
+        else:
+            assert redacted == {key: None for key in redacted}
+    assert len(list_response.model_endpoints) == 1
 
 
 @pytest.mark.asyncio
