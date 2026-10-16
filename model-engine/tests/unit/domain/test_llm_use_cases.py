@@ -3930,3 +3930,33 @@ def test_get_model_param_count_b_long_digit_run_is_linear():
     with pytest.raises(ObjectHasInvalidValueException):
         get_model_param_count_b("1" * 100_000)
     assert time.monotonic() - start < 1
+
+
+@pytest.mark.parametrize(
+    "image_tag,valid",
+    [
+        pytest.param("0.9.1", True, id="semver"),
+        pytest.param("v0.4.0_abc-123", True, id="mixed"),
+        pytest.param("x" * 128, True, id="max-length"),
+        pytest.param("x" * 129, False, id="too-long"),
+        pytest.param("-leading-dash", False, id="leading-dash"),
+        pytest.param("0.9.1\n", False, id="trailing-newline"),
+        pytest.param("0.9.1\n        command: [sh]", False, id="yaml-injection"),
+        pytest.param("0.9.1 extra", False, id="space"),
+        pytest.param("", False, id="empty"),
+    ],
+)
+def test_check_docker_image_exists_for_image_tag_validates_tag(
+    fake_docker_repository_image_always_exists, image_tag: str, valid: bool
+):
+    use_case = CreateLLMModelBundleV1UseCase(
+        create_model_bundle_use_case=mock.Mock(),
+        model_bundle_repository=mock.Mock(),
+        llm_artifact_gateway=mock.Mock(),
+        docker_repository=fake_docker_repository_image_always_exists,
+    )
+    if valid:
+        use_case.check_docker_image_exists_for_image_tag(image_tag, "repo")
+    else:
+        with pytest.raises(ObjectHasInvalidValueException):
+            use_case.check_docker_image_exists_for_image_tag(image_tag, "repo")

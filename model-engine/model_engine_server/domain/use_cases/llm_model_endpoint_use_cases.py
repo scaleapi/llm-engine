@@ -169,6 +169,8 @@ def _get_s3_endpoint_flag() -> str:
 
 OPENAI_CHAT_COMPLETION_PATH = "/v1/chat/completions"
 CHAT_TEMPLATE_MAX_LENGTH = 10_000
+# Docker tag grammar. framework_image_tag is substituted into the endpoint's k8s YAML.
+DOCKER_IMAGE_TAG_PATTERN = re.compile(r"[A-Za-z0-9_][A-Za-z0-9._-]{0,127}")
 CHAT_SUPPORTED_INFERENCE_FRAMEWORKS = [
     LLMInferenceFramework.VLLM,
     LLMInferenceFramework.SGLANG,
@@ -641,6 +643,10 @@ class CreateLLMModelBundleV1UseCase:
     def check_docker_image_exists_for_image_tag(
         self, framework_image_tag: str, repository_name: str
     ):
+        if not DOCKER_IMAGE_TAG_PATTERN.fullmatch(framework_image_tag):
+            raise ObjectHasInvalidValueException(
+                f"Invalid image tag {framework_image_tag!r}: must be a valid Docker image tag."
+            )
         if not self.docker_repository.image_exists(
             image_tag=framework_image_tag,
             repository_name=repository_name,
