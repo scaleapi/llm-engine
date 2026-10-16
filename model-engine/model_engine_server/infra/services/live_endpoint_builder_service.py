@@ -174,8 +174,6 @@ class LiveEndpointBuilderService(EndpointBuilderService):
             f"Building service for endpoint_name: {model_endpoint_record.name}",
         )
 
-        self._validate_build_endpoint_request(build_endpoint_request)
-
         async with AsyncExitStack() as stack:
             lock_ctx = self.model_endpoint_record_repository.get_lock_context(model_endpoint_record)
             lock = await stack.enter_async_context(lock_ctx)
@@ -189,6 +187,9 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                 )
 
             try:
+                # Inside the try so a rejected request marks the endpoint UPDATE_FAILED.
+                self._validate_build_endpoint_request(build_endpoint_request)
+
                 # First, build the image if the model bundle does not have a docker image
                 if not model_bundle.is_runnable():
                     logger_adapter.info(

@@ -250,6 +250,10 @@ async def test_build_endpoint_with_control_plane_aws_role_raises_value_error(
         await endpoint_builder_service_empty_docker_built.build_endpoint(
             build_endpoint_request_sync_runnable_image
         )
+    persisted = await repo.get_model_endpoint_record(
+        model_endpoint_id=build_endpoint_request_sync_runnable_image.model_endpoint_record.id
+    )
+    assert persisted.status == ModelEndpointStatus.UPDATE_FAILED
 
 
 @pytest.mark.asyncio
