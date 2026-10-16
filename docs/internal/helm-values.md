@@ -637,6 +637,32 @@ serviceTemplate:
     "helm.sh/hook-weight": "-2"
 ```
 
+### Private CA for Object Storage (extraPod*)
+
+These values add env and files to the pods rendered from the service template: endpoint Deployments, both LeaderWorkerSet templates, and the batch jobs, including their `input-downloader` initContainer. Use them when the S3 endpoint's certificate is signed by a private CA. `s5cmd` and boto3 then verify it through `AWS_CA_BUNDLE`, with no `--no-verify-ssl`. The mounts go on the containers that read object storage (`main`, `lws-leader`, `lws-worker`, `input-downloader`), not on the forwarder or Triton sidecars. The control-plane pods use `extraEnvVars`, `extraVolumes` and `extraVolumeMounts` instead.
+
+| Value | Type | Default | Required | Description |
+|---|---|---|---|---|
+| `extraPodEnvFrom` | list | `[]` | No | `envFrom` entries for those containers, e.g. a ConfigMap that sets `AWS_CA_BUNDLE` |
+| `extraPodVolumes` | list | `[]` | No | Pod volumes, e.g. the Secret or ConfigMap that holds the CA bundle |
+| `extraPodVolumeMounts` | list | `[]` | No | Mounts for `extraPodVolumes` in those containers |
+
+```yaml
+extraPodVolumes:
+  - name: s3-ca
+    secret:
+      secretName: s3-ca            # key ca.crt, in each endpoint namespace
+extraPodVolumeMounts:
+  - name: s3-ca
+    mountPath: /etc/s3-ca
+    readOnly: true
+extraPodEnvFrom:
+  - configMapRef:
+      name: s3-ca-env              # AWS_CA_BUNDLE=/etc/s3-ca/ca.crt
+```
+
+The Secret and the ConfigMap must exist in the namespace where endpoints and jobs run.
+
 ### FIPS / Federal Compliance
 
 | Value | Type | Default | Required | Description |
