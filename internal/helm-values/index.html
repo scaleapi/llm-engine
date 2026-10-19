@@ -2838,6 +2838,13 @@
 <td>No</td>
 <td>Whether Istio service mesh is active. When <code>false</code>, VirtualService/DestinationRule resources are not used and direct service routing applies</td>
 </tr>
+<tr>
+<td><code>config.values.launch.istio_proxy_image</code></td>
+<td>string</td>
+<td><code>gcr.io/istio-release/proxyv2:1.15.0</code></td>
+<td>No</td>
+<td>Istio sidecar image (<code>repo:tag</code>) that the cacher pre-pulls onto GPU nodes through the <code>launch-image-cache-*</code> DaemonSets</td>
+</tr>
 </tbody>
 </table>
 <div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span style="color: #008000; font-weight: bold">virtualservice</span>:
