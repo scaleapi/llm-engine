@@ -188,6 +188,11 @@ class VLLMModelConfig(BaseModel):
         description="Arguments to be forwarded to the model's processor for multi-modal data, e.g., image processor.",
     )
 
+    speculative_config: Optional[Dict[str, Any]] = Field(
+        None,
+        description='Speculative decoding configuration, e.g. {"method": "mtp", "num_speculative_tokens": 3}.',
+    )
+
     # cache configs
     block_size: Optional[int] = Field(
         None,
