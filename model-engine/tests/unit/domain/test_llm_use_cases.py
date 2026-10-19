@@ -517,9 +517,15 @@ async def test_create_model_endpoint_w_vllm_args(
         llm_artifact_gateway=fake_llm_artifact_gateway,
     )
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
+    request = CreateLLMModelEndpointV1Request_gen(
+        **create_llm_model_endpoint_request_llama_3_70b_chat_vllm_args.model_dump(
+            exclude_unset=True
+        ),
+        speculative_config={"method": "mtp", "num_speculative_tokens": 3},
+    )
     response = await use_case.execute(
         user=user,
-        request=create_llm_model_endpoint_request_llama_3_70b_chat_vllm_args,
+        request=request,
     )
     assert response.endpoint_creation_task_id
     assert isinstance(response, CreateLLMModelEndpointV1Response)
@@ -535,6 +541,9 @@ async def test_create_model_endpoint_w_vllm_args(
     expected_vllm_args = ["max-model-len", "max-num-seqs", "chat-template"]
     for arg in expected_vllm_args:
         assert arg in bundle_command
+    assert (
+        """--speculative-config '{"method":"mtp","num_speculative_tokens":3}'""" in bundle_command
+    )
     assert endpoint.record.endpoint_type == ModelEndpointType.STREAMING
     assert endpoint.record.metadata == {
         "_llm": {
@@ -550,6 +559,7 @@ async def test_create_model_endpoint_w_vllm_args(
             "vllm_additional_args": {
                 "max_model_len": create_llm_model_endpoint_request_llama_3_70b_chat_vllm_args.max_model_len,
                 "max_num_seqs": create_llm_model_endpoint_request_llama_3_70b_chat_vllm_args.max_num_seqs,
+                "speculative_config": {"method": "mtp", "num_speculative_tokens": 3},
             },
         }
     }

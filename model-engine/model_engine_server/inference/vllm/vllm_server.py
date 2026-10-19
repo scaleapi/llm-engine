@@ -14,7 +14,11 @@ import threading  # noqa: E402
 from logging import Logger  # noqa: E402
 
 from vllm.entrypoints.openai.api_server import run_server  # noqa: E402
-from vllm.entrypoints.openai.cli_args import make_arg_parser  # noqa: E402
+
+try:
+    from vllm.entrypoints.launchers.cli_args import make_arg_parser  # noqa: E402
+except ImportError:  # older vLLM releases keep it under entrypoints.openai
+    from vllm.entrypoints.openai.cli_args import make_arg_parser  # noqa: E402
 from vllm.utils.argparse_utils import FlexibleArgumentParser  # noqa: E402
 
 logger = Logger("vllm_server")
