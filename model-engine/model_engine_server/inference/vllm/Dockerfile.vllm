@@ -57,12 +57,17 @@ RUN pip install --no-cache-dir --pre --upgrade \
 
 # Post-install fixups: ensure flashinfer and pplx-kernels match the new vllm/torch.
 # IMPORTANT: --no-deps prevents pip from re-resolving torch (which can downgrade it).
-RUN FLASHINFER_CUDA_TAG="$(python3 -c 'import torch; print((torch.version.cuda or "12.4").replace(".", ""))')" && \
-    pip install --no-cache-dir --upgrade --force-reinstall --no-deps \
-      "flashinfer-python==0.6.3" \
-      "flashinfer-cubin==0.6.3" \
-      "flashinfer-jit-cache==0.6.3" \
-      --extra-index-url "https://flashinfer.ai/whl/cu${FLASHINFER_CUDA_TAG}" && \
+# Set FLASHINFER_VERSION="" to keep the flashinfer shipped with the base image, which
+# is the right choice when the base image and VLLM_VERSION are the same release.
+ARG FLASHINFER_VERSION=0.6.3
+RUN if [ -n "$FLASHINFER_VERSION" ]; then \
+      FLASHINFER_CUDA_TAG="$(python3 -c 'import torch; print((torch.version.cuda or "12.4").replace(".", ""))')" && \
+      pip install --no-cache-dir --upgrade --force-reinstall --no-deps \
+        "flashinfer-python==${FLASHINFER_VERSION}" \
+        "flashinfer-cubin==${FLASHINFER_VERSION}" \
+        "flashinfer-jit-cache==${FLASHINFER_VERSION}" \
+        --extra-index-url "https://flashinfer.ai/whl/cu${FLASHINFER_CUDA_TAG}"; \
+    fi && \
     pip uninstall -y pplx-kernels || true
 
 FROM vllm_base AS vllm

@@ -25,6 +25,8 @@ set -eo pipefail
 #   --sccache-region=REGION     - AWS region for sccache bucket (defaults to us-west-2)
 #   --vllm-omni-source-dir=PATH - Path to local vllm-omni repo (installs from source instead of PyPI)
 #   --vllm-omni-source-ref=REF  - Branch/tag/commit to checkout in vllm-omni repo before building
+#   --flashinfer-version=VER    - flashinfer force-installed over the base image (defaults to 0.6.3).
+#                                 Pass an empty value to keep the base image's flashinfer.
 #
 # Environment variables (optional, can override flags):
 #   VLLM_VERSION, VLLM_OMNI_VERSION, AWS_ACCOUNT_ID, VLLM_BASE_REPO
@@ -101,6 +103,7 @@ SCCACHE_BUCKET=${SCCACHE_BUCKET:-""}
 SCCACHE_REGION=${SCCACHE_REGION:-"us-west-2"}
 VLLM_WHEEL_INDEX=""
 VLLM_PIP_VERSION=""
+FLASHINFER_VERSION=${FLASHINFER_VERSION-"0.6.3"}
 
 VLLM_OMNI_VERSION=${VLLM_OMNI_VERSION:-"0.16.0"}
 VLLM_OMNI_SOURCE_DIR=""
@@ -136,6 +139,7 @@ declare -A FLAG_VARS=(
   ["--vllm-omni-source-ref"]="VLLM_OMNI_SOURCE_REF"
   ["--vllm-wheel-index"]="VLLM_WHEEL_INDEX"
   ["--vllm-pip-version"]="VLLM_PIP_VERSION"
+  ["--flashinfer-version"]="FLASHINFER_VERSION"
 )
 
 # Parse keyword arguments
@@ -242,6 +246,7 @@ fi
 echo "VLLM_VERSION: $VLLM_VERSION"
 echo "VLLM_OMNI_VERSION: $VLLM_OMNI_VERSION"
 echo "VLLM_BASE_VERSION: $VLLM_BASE_VERSION"
+echo "FLASHINFER_VERSION: ${FLASHINFER_VERSION:-<base image>}"
 echo "AWS_ACCOUNT_ID: $AWS_ACCOUNT_ID"
 echo "VLLM_BASE_REPO: $VLLM_BASE_REPO"
 echo "BUILD_TARGET: $BUILD_TARGET"
@@ -357,6 +362,9 @@ fi
 if [ -n "$VLLM_PIP_VERSION" ]; then
   BUILD_ARGS+=(--build-arg VLLM_PIP_VERSION="${VLLM_PIP_VERSION}")
 fi
+
+# Always passed so an empty value can disable the flashinfer override
+BUILD_ARGS+=(--build-arg FLASHINFER_VERSION="${FLASHINFER_VERSION}")
 
 # Explicit torch version (needed when base image has incompatible torch)
 if [ -n "$TORCH_VERSION" ]; then
