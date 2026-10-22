@@ -3,6 +3,7 @@ import time
 from typing import Any, Dict, List, Optional
 
 import botocore
+from model_engine_server.common.config import redact_redis_url
 from model_engine_server.common.dtos.model_endpoints import BrokerType
 from model_engine_server.common.dtos.tasks import (
     CreateAsyncTaskV1Response,
@@ -210,8 +211,8 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
                 "Celery broker details",
                 extra={
                     "broker_type": self.broker_type.value,
-                    "broker_url": broker_url,
-                    "backend_url": backend_url,
+                    "broker_url": redact_redis_url(str(broker_url)),
+                    "backend_url": redact_redis_url(str(backend_url)),
                     "queue_name": queue_name,
                     "celery_app_name": celery_dest.main,
                 },
@@ -224,7 +225,7 @@ class CeleryTaskQueueGateway(TaskQueueGateway):
                     logger.info(  # pragma: no cover
                         "Redis connection details",
                         extra={
-                            "redis_endpoint": redis_endpoint,
+                            "redis_endpoint": redact_redis_url(redis_endpoint),
                             "queue_name": queue_name,
                         },
                     )

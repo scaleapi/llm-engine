@@ -263,6 +263,32 @@ def test_forwarders(post_inference_hooks_handler):
     _check(json_response)
 
 
+@mock.patch("model_engine_server.inference.forwarding.forwarding.logger")
+@mock.patch("requests.post")
+def test_sync_forwarder_does_not_log_non_dict_payload(
+    mock_post, mock_logger, post_inference_hooks_handler
+):
+    mock_post.return_value.status_code = 200
+    mock_post.return_value.json.return_value = PAYLOAD
+    fwd = Forwarder(
+        "http://user-service/predict",
+        model_engine_unwrap=True,
+        serialize_results_as_string=False,
+        post_inference_hooks_handler=post_inference_hooks_handler,
+        wrap_response=False,
+        forward_http_status=False,
+        forward_http_status_in_body=False,
+    )
+
+    fwd({"args": ["secret-input"]})
+
+    mock_post.assert_called_once()
+    assert mock_post.call_args.kwargs["json"] == ["secret-input"]
+    logged = " ".join(str(call) for call in mock_logger.info.call_args_list)
+    assert "json_payload_repr='list'" in logged
+    assert "secret-input" not in logged
+
+
 @mock.patch("requests.post")
 def test_sync_forwarder_uses_configured_timeout(mock_post, post_inference_hooks_handler):
     mock_post.return_value.status_code = 200

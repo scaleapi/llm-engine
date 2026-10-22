@@ -71,13 +71,13 @@ class ModelEndpointDeploymentState(BaseModel):
 class CallbackBasicAuth(BaseModel):
     kind: Literal["basic"]
     username: str
-    password: str
+    password: str = Field(repr=False)
 
 
 class CallbackmTLSAuth(BaseModel):
     kind: Literal["mtls"]
     cert: str
-    key: str
+    key: str = Field(repr=False)
 
 
 class CallbackAuth(RootModel):

@@ -11,7 +11,7 @@ from typing import Any
 from kubernetes import config as kube_config
 from kubernetes.config.config_exception import ConfigException
 from model_engine_server.api.dependencies import get_monitoring_metrics_gateway
-from model_engine_server.common.config import hmi_config
+from model_engine_server.common.config import hmi_config, redact_redis_url
 from model_engine_server.common.constants import READYZ_FPATH
 from model_engine_server.common.env_vars import CIRCLECI
 from model_engine_server.core.config import infer_registry_type, infra_config
@@ -105,7 +105,7 @@ async def main(args: Any):
             "Redis ttl is less than polling interval, cache entries will expire and cause misses"
         )
     redis_url = args.redis_url_override if args.redis_url_override else hmi_config.cache_redis_url
-    logger.info(f"Using cache redis url {redis_url}")
+    logger.info(f"Using cache redis url {redact_redis_url(redis_url)}")
     cache_repo = RedisModelEndpointCacheRepository(redis_info=redis_url)
 
     monitoring_metrics_gateway = get_monitoring_metrics_gateway()

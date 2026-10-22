@@ -292,3 +292,42 @@ async def test_predict_upstream_raises_400(
             )
             async for message in response:
                 message
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "timeout_seconds,num_retries,expected_timeout_seconds,expected_num_retries",
+    [
+        pytest.param(None, None, 10, 8, id="defaults"),
+        pytest.param(30, 5, 30, 5, id="within-bounds"),
+        pytest.param(1e9, 10**9, 300, 80, id="clamped"),
+    ],
+)
+async def test_streaming_predict_clamps_caller_timeout_and_retries(
+    fake_monitoring_metrics_gateway: MonitoringMetricsGateway,
+    timeout_seconds,
+    num_retries,
+    expected_timeout_seconds,
+    expected_num_retries,
+):
+    gateway = LiveStreamingModelEndpointInferenceGateway(
+        monitoring_metrics_gateway=fake_monitoring_metrics_gateway, use_asyncio=True
+    )
+
+    async def _response():
+        yield {"test": "content"}
+
+    gateway.make_request_with_retries = MagicMock(return_value=_response())
+
+    response = gateway.streaming_predict(
+        topic="test_topic",
+        predict_request=SyncEndpointPredictV1Request(
+            args={"x": 1}, timeout_seconds=timeout_seconds, num_retries=num_retries
+        ),
+    )
+    async for _ in response:
+        pass
+
+    kwargs = gateway.make_request_with_retries.call_args.kwargs
+    assert kwargs["timeout_seconds"] == expected_timeout_seconds
+    assert kwargs["num_retries"] == expected_num_retries
