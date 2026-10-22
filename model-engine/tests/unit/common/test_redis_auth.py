@@ -50,18 +50,24 @@ def test_credential_without_tls_yields_plaintext_url(redis_env):
 
 def test_tls_without_credential_yields_rediss_url(redis_env):
     redis_env(enable_tls="true")
-    assert build_redis_url("host", 6379, 0) == "rediss://host:6379/0?ssl_cert_reqs=required"
+    assert (
+        build_redis_url("host", 6379, 0)
+        == "rediss://host:6379/0?ssl_cert_reqs=required&ssl_check_hostname=true"
+    )
 
 
 def test_credential_defaults_to_tls_url(redis_env):
     redis_env(auth_token="tok")
-    assert build_redis_url("host", 6379, 1) == "rediss://:tok@host:6379/1?ssl_cert_reqs=required"
+    assert (
+        build_redis_url("host", 6379, 1)
+        == "rediss://:tok@host:6379/1?ssl_cert_reqs=required&ssl_check_hostname=true"
+    )
 
 
 def test_tls_url_includes_ca_certs_when_set(redis_env):
     redis_env(enable_tls="true", ca_certs="/etc/ssl/redis ca.pem")
     assert build_redis_url("host", 6379, 0) == (
-        "rediss://host:6379/0?ssl_cert_reqs=required&ssl_ca_certs=%2Fetc%2Fssl%2Fredis%20ca.pem"
+        "rediss://host:6379/0?ssl_cert_reqs=required&ssl_check_hostname=true&ssl_ca_certs=%2Fetc%2Fssl%2Fredis%20ca.pem"
     )
 
 

@@ -233,7 +233,7 @@ def build_redis_url(host: str, port: Union[str, int], db_index: int = 0) -> str:
     # what lets a password containing @, / or # survive URL parsing.
     credential = f":{quote(auth_token, safe='')}@" if auth_token else ""
     if redis_tls_enabled():
-        query = "ssl_cert_reqs=required"
+        query = "ssl_cert_reqs=required&ssl_check_hostname=true"
         ca_certs = os.getenv("REDIS_SSL_CA_CERTS")
         if ca_certs:
             query += f"&ssl_ca_certs={quote(ca_certs, safe='')}"
