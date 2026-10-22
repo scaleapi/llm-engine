@@ -9,7 +9,7 @@ from celery.signals import worker_process_init
 from celery.utils.log import get_task_logger
 from model_engine_server.api.dependencies import get_monitoring_metrics_gateway
 from model_engine_server.common.aioredis_pool import build_aioredis_pool
-from model_engine_server.common.config import hmi_config
+from model_engine_server.common.config import hmi_config, redact_redis_url
 from model_engine_server.common.constants import READYZ_FPATH
 from model_engine_server.common.dtos.endpoint_builder import (
     BuildEndpointRequest,
@@ -59,7 +59,6 @@ from model_engine_server.infra.repositories import (
 )
 from model_engine_server.infra.services import LiveEndpointBuilderService
 from model_engine_server.service_builder.celery import service_builder_service
-from sqlalchemy.engine import make_url
 
 # Need to disable lazy loading of k8s clients because each event loop should contain its own k8s
 # client, which constructs the aiohttp.ClientSession in the event loop.
@@ -158,11 +157,7 @@ async def _build_endpoint(
         if infra_config().debug_mode:  # pragma: no cover
             logger.info(
                 "Connecting to Redis",
-                extra={
-                    "redis_url": make_url(hmi_config.cache_redis_url).render_as_string(
-                        hide_password=True
-                    )
-                },
+                extra={"redis_url": redact_redis_url(hmi_config.cache_redis_url)},
             )
         pool = build_aioredis_pool(hmi_config.cache_redis_url)
         redis = aioredis.Redis(connection_pool=pool)
