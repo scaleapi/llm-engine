@@ -134,19 +134,7 @@ class LoggingHook(PostInferenceHook):
             "LABELS": self._labels,
         }
         try:  # pragma: no cover
-            json_string = json.dumps(data_record)  # pragma: no cover
-            # Check for unexpected double quotes or escape characters
-            import re  # pragma: no cover
-
-            pattern = r'\\[ntrbfv\'"]|["\']'  # pragma: no cover
-            matches = re.findall(pattern, repr(json_string))  # pragma: no cover
-            if matches:  # pragma: no cover
-                logger.info(  # pragma: no cover
-                    "The JSON string contains double quotes or escape characters.",
-                    extra={"json_string": json_string, "matches": matches},
-                )
-            else:
-                logger.info("The JSON string is valid.")  # pragma: no cover
+            json.dumps(data_record)  # pragma: no cover
         except (TypeError, ValueError) as e:  # pragma: no cover
             logger.warning(
                 f"Error: The data_record object is not a valid JSON object. {e}"
