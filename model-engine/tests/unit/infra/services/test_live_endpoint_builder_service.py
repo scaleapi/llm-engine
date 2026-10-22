@@ -286,32 +286,49 @@ async def test_build_endpoint_missing_image_yields_docker_build_failed_exception
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "same_bundle", [pytest.param(True, id="same-bundle"), pytest.param(False, id="new-bundle")]
+    "running_bundle_url,running_requirements,reused",
+    [
+        pytest.param(None, None, True, id="same-bundle"),
+        pytest.param("s3://other", None, False, id="other-bundle-url"),
+        pytest.param(None, ["other==1.0"], False, id="other-requirements"),
+    ],
 )
 async def test_build_endpoint_missing_image_reuses_running_image_for_same_bundle(
     build_endpoint_request_sync_pytorch: BuildEndpointRequest,
     endpoint_builder_service_empty_docker_not_built: LiveEndpointBuilderService,
     fake_resource_gateway,
     model_endpoint_1,
-    same_bundle: bool,
+    running_bundle_url,
+    running_requirements,
+    reused: bool,
 ):
     service = endpoint_builder_service_empty_docker_not_built
     repo: Any = service.model_endpoint_record_repository
-    record = build_endpoint_request_sync_pytorch.model_endpoint_record
+    request = build_endpoint_request_sync_pytorch
+    record = request.model_endpoint_record
     repo.add_model_endpoint_record(record)
-    running_image = (
-        "000000000000.dkr.ecr.us-west-2.amazonaws.com/hosted-model-inference/pytorch:old-tag"
+    # The image a builder at another GIT_TAG built for the running bundle.
+    running_request = request.copy(deep=True)
+    if running_requirements is not None:
+        running_request.model_endpoint_record.current_model_bundle.requirements = (
+            running_requirements
+        )
+    running_params = service._get_user_image_params("", running_request, Mock())
+    running_image = service.docker_repository.get_image_url(
+        running_params.image_tag.replace("-test_tag-", "-0ldgittag-"), running_params.repo
     )
-    location = record.current_model_bundle.flavor.location
     fake_resource_gateway.db[record.id] = model_endpoint_1.infra_state.copy(
-        update=dict(image=running_image, bundle_url=location if same_bundle else "s3://other")
+        update=dict(
+            image=running_image,
+            bundle_url=running_bundle_url or record.current_model_bundle.flavor.location,
+        )
     )
 
-    if not same_bundle:
+    if not reused:
         with pytest.raises(DockerBuildFailedException):
-            await service.build_endpoint(build_endpoint_request_sync_pytorch)
+            await service.build_endpoint(request)
         return
-    response = await service.build_endpoint(build_endpoint_request_sync_pytorch)
+    response = await service.build_endpoint(request)
 
     assert response == BuildEndpointResponse(status=BuildEndpointStatus.OK)
     assert fake_resource_gateway.db[record.id].image == running_image
