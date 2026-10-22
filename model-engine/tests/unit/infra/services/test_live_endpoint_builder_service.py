@@ -284,6 +284,41 @@ async def test_build_endpoint_missing_image_yields_docker_build_failed_exception
     assert fake_monitoring_metrics_gateway.docker_failed_build == 1
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "same_bundle", [pytest.param(True, id="same-bundle"), pytest.param(False, id="new-bundle")]
+)
+async def test_build_endpoint_missing_image_reuses_running_image_for_same_bundle(
+    build_endpoint_request_sync_pytorch: BuildEndpointRequest,
+    endpoint_builder_service_empty_docker_not_built: LiveEndpointBuilderService,
+    fake_resource_gateway,
+    model_endpoint_1,
+    same_bundle: bool,
+):
+    service = endpoint_builder_service_empty_docker_not_built
+    repo: Any = service.model_endpoint_record_repository
+    record = build_endpoint_request_sync_pytorch.model_endpoint_record
+    repo.add_model_endpoint_record(record)
+    running_image = (
+        "000000000000.dkr.ecr.us-west-2.amazonaws.com/hosted-model-inference/pytorch:old-tag"
+    )
+    location = record.current_model_bundle.flavor.location
+    fake_resource_gateway.db[record.id] = model_endpoint_1.infra_state.copy(
+        update=dict(image=running_image, bundle_url=location if same_bundle else "s3://other")
+    )
+
+    if not same_bundle:
+        with pytest.raises(DockerBuildFailedException):
+            await service.build_endpoint(build_endpoint_request_sync_pytorch)
+        return
+    response = await service.build_endpoint(build_endpoint_request_sync_pytorch)
+
+    assert response == BuildEndpointResponse(status=BuildEndpointStatus.OK)
+    assert fake_resource_gateway.db[record.id].image == running_image
+    persisted = await repo.get_model_endpoint_record(model_endpoint_id=record.id)
+    assert persisted.status == ModelEndpointStatus.READY
+
+
 def test_convert_artifact_like_bundle_to_runnable_image(
     build_endpoint_request_sync_custom: BuildEndpointRequest,
     endpoint_builder_service_empty_docker_built: LiveEndpointBuilderService,

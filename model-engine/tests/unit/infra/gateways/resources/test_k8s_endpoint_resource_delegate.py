@@ -1085,6 +1085,7 @@ async def test_get_resources_async_success(
                 memory="8G",
                 storage="10G",
                 image="test_image",
+                bundle_url="test_bundle_url",
             ),
         ),
     )
@@ -1128,6 +1129,7 @@ async def test_get_resources_async_success(
         endpoint_id="", deployment_name="", endpoint_type=ModelEndpointType.ASYNC
     )
     assert infra_state
+    assert infra_state.bundle_url == "test_bundle_url"
 
 
 @pytest.mark.asyncio
@@ -1154,6 +1156,7 @@ async def test_get_resources_sync_success(
                 memory="8G",
                 storage="10G",
                 image="test_image",
+                bundle_url="test_bundle_url",
             )
         ),
     )
@@ -1191,6 +1194,7 @@ async def test_get_resources_sync_success(
         endpoint_id="", deployment_name="", endpoint_type=ModelEndpointType.SYNC
     )
     assert infra_state
+    assert infra_state.bundle_url == "test_bundle_url"
 
 
 @pytest.mark.asyncio

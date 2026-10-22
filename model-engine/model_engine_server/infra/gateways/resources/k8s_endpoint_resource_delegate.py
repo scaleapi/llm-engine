@@ -2341,6 +2341,7 @@ class K8SEndpointResourceDelegate:
                 k8s_resource_group_name, config_maps
             ),
             image=common_params["image"],
+            bundle_url=common_params["bundle_url"],
             num_queued_items=None,
         )
 
@@ -2398,6 +2399,7 @@ class K8SEndpointResourceDelegate:
                 k8s_resource_group_name, config_maps
             ),
             image=common_params["image"],
+            bundle_url=common_params["bundle_url"],
             num_queued_items=None,
         )
 
