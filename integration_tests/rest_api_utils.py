@@ -508,18 +508,6 @@ def upload_file(file, user_id: str) -> Dict[str, Any]:
     return response.json()
 
 
-def get_file_by_id(file_id: str, user_id: str) -> Dict[str, Any]:
-    response = requests.get(
-        f"{BASE_PATH}/v1/files/{file_id}",
-        headers={"Content-Type": "application/json"},
-        auth=(user_id, ""),
-        timeout=DEFAULT_NETWORK_TIMEOUT_SEC,
-    )
-    if not response.ok:
-        raise ValueError(response.content)
-    return response.json()
-
-
 def list_files(user_id: str) -> Dict[str, Any]:
     response = requests.get(
         f"{BASE_PATH}/v1/files",
@@ -535,18 +523,6 @@ def list_files(user_id: str) -> Dict[str, Any]:
 def delete_file_by_id(file_id: str, user_id: str) -> Dict[str, Any]:
     response = requests.delete(
         f"{BASE_PATH}/v1/files/{file_id}",
-        headers={"Content-Type": "application/json"},
-        auth=(user_id, ""),
-        timeout=DEFAULT_NETWORK_TIMEOUT_SEC,
-    )
-    if not response.ok:
-        raise ValueError(response.content)
-    return response.json()
-
-
-def get_file_content_by_id(file_id: str, user_id: str) -> Dict[str, Any]:
-    response = requests.get(
-        f"{BASE_PATH}/v1/files/{file_id}/content",
         headers={"Content-Type": "application/json"},
         auth=(user_id, ""),
         timeout=DEFAULT_NETWORK_TIMEOUT_SEC,

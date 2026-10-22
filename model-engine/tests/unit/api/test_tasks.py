@@ -561,3 +561,68 @@ def test_emit_result_size_counts_bytes_not_characters(monkeypatch):
     body = "ü" * 10  # 10 characters, 20 UTF-8 bytes
     tasks_v1._emit_result_size(task, body.encode("utf-8"), "user")
     assert emitted == [20]
+
+
+@pytest.mark.parametrize("route", ["async-tasks", "sync-tasks", "streaming-tasks"])
+def test_create_task_rejects_cloudpickle(
+    route: str,
+    model_bundle_1_v1: Tuple[ModelBundle, Any],
+    model_endpoint_2: Tuple[ModelEndpoint, Any],
+    test_api_key: str,
+    get_test_client_wrapper,
+):
+    assert model_endpoint_2[0].infra_state is not None
+    client = get_test_client_wrapper(
+        fake_docker_repository_image_always_exists=True,
+        fake_model_bundle_repository_contents={
+            model_bundle_1_v1[0].id: model_bundle_1_v1[0],
+        },
+        fake_model_endpoint_record_repository_contents={
+            model_endpoint_2[0].record.id: model_endpoint_2[0].record,
+        },
+        fake_model_endpoint_infra_gateway_contents={
+            model_endpoint_2[0].infra_state.deployment_name: model_endpoint_2[0].infra_state,
+        },
+        fake_batch_job_record_repository_contents={},
+        fake_batch_job_progress_gateway_contents={},
+        fake_docker_image_batch_job_bundle_repository_contents={},
+    )
+    response = client.post(
+        f"/v1/{route}?model_endpoint_id={model_endpoint_2[0].record.id}",
+        auth=(test_api_key, ""),
+        json={"args": {"x": 1}, "cloudpickle": "gASVAAAAAAAAAAA="},
+    )
+    assert response.status_code == 400
+    assert response.json() == {
+        "detail": "The cloudpickle field is no longer supported. Use args or url instead."
+    }
+
+
+def test_create_sync_task_accepts_null_cloudpickle(
+    model_bundle_1_v1: Tuple[ModelBundle, Any],
+    model_endpoint_2: Tuple[ModelEndpoint, Any],
+    test_api_key: str,
+    get_test_client_wrapper,
+):
+    assert model_endpoint_2[0].infra_state is not None
+    client = get_test_client_wrapper(
+        fake_docker_repository_image_always_exists=True,
+        fake_model_bundle_repository_contents={
+            model_bundle_1_v1[0].id: model_bundle_1_v1[0],
+        },
+        fake_model_endpoint_record_repository_contents={
+            model_endpoint_2[0].record.id: model_endpoint_2[0].record,
+        },
+        fake_model_endpoint_infra_gateway_contents={
+            model_endpoint_2[0].infra_state.deployment_name: model_endpoint_2[0].infra_state,
+        },
+        fake_batch_job_record_repository_contents={},
+        fake_batch_job_progress_gateway_contents={},
+        fake_docker_image_batch_job_bundle_repository_contents={},
+    )
+    response = client.post(
+        f"/v1/sync-tasks?model_endpoint_id={model_endpoint_2[0].record.id}",
+        auth=(test_api_key, ""),
+        json={"args": {"x": 1}, "cloudpickle": None},
+    )
+    assert response.status_code == 200

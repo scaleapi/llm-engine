@@ -7,6 +7,16 @@ from typing import Any, Dict, List, Optional, cast
 from unittest.mock import ANY, AsyncMock, MagicMock, Mock, patch
 
 import pytest
+from kubernetes_asyncio.client.models import (
+    V1Container,
+    V1Deployment,
+    V1DeploymentSpec,
+    V1EnvVar,
+    V1ObjectMeta,
+    V1PodSpec,
+    V1PodTemplateSpec,
+    V1ResourceRequirements,
+)
 from kubernetes_asyncio.client.rest import ApiException
 from model_engine_server.common.config import hmi_config
 from model_engine_server.common.dtos.resource_manager import CreateOrUpdateResourcesRequest
@@ -1061,6 +1071,45 @@ async def test_get_resources_raises_k8s_endpoint_resource_delegate(
         )
 
 
+@pytest.mark.parametrize(
+    "main_env,expected_bundle_url",
+    [
+        pytest.param(
+            [V1EnvVar(name="BUNDLE_URL", value="s3://bundle")], "s3://bundle", id="artifact"
+        ),
+        pytest.param([], "main_image", id="runnable-image"),
+    ],
+)
+def test_get_common_endpoint_params_reads_bundle_url_from_main_container(
+    main_env, expected_bundle_url
+):
+    resources = V1ResourceRequirements(requests={"cpu": "1", "memory": "1Gi"}, limits={})
+    deployment = V1Deployment(
+        metadata=V1ObjectMeta(labels={}),
+        spec=V1DeploymentSpec(
+            selector={},
+            template=V1PodTemplateSpec(
+                spec=V1PodSpec(
+                    containers=[
+                        V1Container(
+                            name="main", image="main_image", env=main_env, resources=resources
+                        ),
+                        V1Container(
+                            name="celery-forwarder",
+                            image="forwarder_image",
+                            env=[V1EnvVar(name="AWS_PROFILE", value="default")],
+                        ),
+                    ]
+                )
+            ),
+        ),
+    )
+
+    params = K8SEndpointResourceDelegate()._get_common_endpoint_params(deployment)
+
+    assert params["bundle_url"] == expected_bundle_url
+
+
 @pytest.mark.asyncio
 async def test_get_resources_async_success(
     k8s_endpoint_resource_delegate,
@@ -1085,6 +1134,7 @@ async def test_get_resources_async_success(
                 memory="8G",
                 storage="10G",
                 image="test_image",
+                bundle_url="test_bundle_url",
             ),
         ),
     )
@@ -1128,6 +1178,7 @@ async def test_get_resources_async_success(
         endpoint_id="", deployment_name="", endpoint_type=ModelEndpointType.ASYNC
     )
     assert infra_state
+    assert infra_state.bundle_url == "test_bundle_url"
 
 
 @pytest.mark.asyncio
@@ -1154,6 +1205,7 @@ async def test_get_resources_sync_success(
                 memory="8G",
                 storage="10G",
                 image="test_image",
+                bundle_url="test_bundle_url",
             )
         ),
     )
@@ -1191,6 +1243,7 @@ async def test_get_resources_sync_success(
         endpoint_id="", deployment_name="", endpoint_type=ModelEndpointType.SYNC
     )
     assert infra_state
+    assert infra_state.bundle_url == "test_bundle_url"
 
 
 @pytest.mark.asyncio

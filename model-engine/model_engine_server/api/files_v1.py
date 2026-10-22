@@ -5,6 +5,7 @@ from model_engine_server.api.dependencies import (
     ExternalInterfaces,
     get_external_interfaces,
     get_external_interfaces_read_only,
+    reject_deprecated_route,
     verify_authentication,
 )
 from model_engine_server.common.dtos.files import (
@@ -32,7 +33,12 @@ file_router_v1 = APIRouter(prefix="/v1")
 logger = make_logger(logger_name())
 
 
-@file_router_v1.post("/files", response_model=UploadFileResponse)
+@file_router_v1.post(
+    "/files",
+    response_model=UploadFileResponse,
+    deprecated=True,
+    dependencies=[Depends(reject_deprecated_route)],
+)
 async def upload_file(
     file: UploadFile,
     auth: User = Depends(verify_authentication),
