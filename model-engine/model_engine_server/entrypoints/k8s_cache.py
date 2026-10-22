@@ -67,6 +67,7 @@ from model_engine_server.infra.services.image_cache_service import ImageCacheSer
 from model_engine_server.infra.services.model_endpoint_cache_service import (
     ModelEndpointCacheWriteService,
 )
+from sqlalchemy.engine import make_url
 
 logger = make_logger(logger_name())
 # This is the entrypoint to the k8s cacher
@@ -105,7 +106,7 @@ async def main(args: Any):
             "Redis ttl is less than polling interval, cache entries will expire and cause misses"
         )
     redis_url = args.redis_url_override if args.redis_url_override else hmi_config.cache_redis_url
-    logger.info(f"Using cache redis url {redis_url}")
+    logger.info(f"Using cache redis url {make_url(redis_url).render_as_string(hide_password=True)}")
     cache_repo = RedisModelEndpointCacheRepository(redis_info=redis_url)
 
     monitoring_metrics_gateway = get_monitoring_metrics_gateway()
