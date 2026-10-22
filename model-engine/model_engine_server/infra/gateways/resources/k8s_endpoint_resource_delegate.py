@@ -639,7 +639,12 @@ class K8SEndpointResourceDelegate:
         # Hack: for LIRA since the bundle_url isn't really a real env var
         # we use the `image` for now. This may change if we allow for unpickling
         # in LIRA.
-        bundle_url = self._get_env_value_from_envlist(envlist, "BUNDLE_URL") or image
+        # Artifact endpoints set BUNDLE_URL on the main container, not the forwarder.
+        bundle_url = (
+            self._get_env_value_from_envlist(main_container.env, "BUNDLE_URL")
+            or self._get_env_value_from_envlist(envlist, "BUNDLE_URL")
+            or image
+        )
         aws_role = self._get_env_value_from_envlist(envlist, "AWS_PROFILE")
         results_s3_bucket = self._get_env_value_from_envlist(envlist, "RESULTS_S3_BUCKET")
 
