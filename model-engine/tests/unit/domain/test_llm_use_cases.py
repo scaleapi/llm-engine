@@ -1307,8 +1307,10 @@ async def test_get_and_list_llm_model_endpoint_redacts_config_for_non_owner(
             assert spec.default_callback_auth is not None
             assert spec.aws_role == "test_aws_role"
             assert spec.results_s3_bucket == "test_s3_bucket"
+            assert spec.created_by == endpoint.record.created_by
         else:
             assert redacted == {key: None for key in redacted}
+            assert spec.created_by == ""
     assert len(list_response.model_endpoints) == 1
 
 

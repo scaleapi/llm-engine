@@ -538,6 +538,8 @@ def _redact_llm_model_endpoint_response_for_non_owner(
                 labels=None,
                 aws_role=None,
                 results_s3_bucket=None,
+                # created_by is a required str in the response schema, so blank it instead.
+                created_by="",
             )
         )
     return response.model_copy(update=dict(checkpoint_path=None, spec=spec))
