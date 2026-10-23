@@ -1,4 +1,7 @@
+from types import SimpleNamespace
+
 import pytest
+from model_engine_server.common.aioredis_pool import build_aioredis_pool
 from model_engine_server.common.config import (
     HostedModelInferenceServiceConfig,
     _apply_redis_auth_token,
@@ -126,6 +129,47 @@ def test_host_port_never_leaks_password_into_scaler_address(redis_env):
     assert "@" not in host_port
     assert ENCODED_RESERVED_CHARS not in host_port
     assert host_port == "redis:6379"
+
+
+@pytest.mark.parametrize(
+    "url,expected",
+    [
+        ("rediss://:p%40ss@redis.url:6379/15", "rediss://redis.url:6379/15"),
+        ("rediss://user:tok@cache.redis.azure.com", "rediss://cache.redis.azure.com"),
+        ("redis://redis.url:6379/15", "redis://redis.url:6379/15"),
+    ],
+)
+def test_redact_strips_credentials(url, expected):
+    assert redact_redis_url(url) == expected
+
+
+def _aws_cache_url(monkeypatch, url: str) -> str:
+    """Evaluate the cache_redis_url property for an AWS config with cache_redis_aws_url set."""
+    monkeypatch.setattr(
+        "model_engine_server.common.config.infra_config",
+        lambda: SimpleNamespace(cloud_provider="aws"),
+    )
+    stub = SimpleNamespace(
+        cache_redis_onprem_url=None, cache_redis_aws_url=url, cache_redis_aws_secret_name=None
+    )
+    return HostedModelInferenceServiceConfig.cache_redis_url.fget(stub)
+
+
+def test_aws_cache_url_gets_auth_token(redis_env, monkeypatch):
+    redis_env(auth_token=TOKEN_WITH_RESERVED_CHARS)
+    url = _aws_cache_url(monkeypatch, "rediss://cache.example.com:6379/15")
+    assert url == f"rediss://:{ENCODED_RESERVED_CHARS}@cache.example.com:6379/15"
+    pool = build_aioredis_pool(url)
+    assert pool.connection_kwargs["password"] == TOKEN_WITH_RESERVED_CHARS
+    assert pool.connection_kwargs["host"] == "cache.example.com"
+    assert pool.connection_kwargs["db"] == 15
+    assert pool.connection_class.__name__ == "SSLConnection"
+
+
+def test_aws_cache_url_unchanged_without_auth_token(redis_env, monkeypatch):
+    redis_env()
+    url = "redis://cache.example.com:6379/15"
+    assert _aws_cache_url(monkeypatch, url) == url
 
 
 @pytest.fixture

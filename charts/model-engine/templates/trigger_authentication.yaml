@@ -8,7 +8,7 @@ spec:
   podIdentity:
     provider: azure-workload
     identityId: {{ .Values.azure.client_id }}
-{{- else if .Values.redis.enableAuth }}
+{{- else if and .Values.redis.enableAuth .Values.redis.kedaSecretName }}
 apiVersion: keda.sh/v1alpha1
 kind: TriggerAuthentication
 metadata:
