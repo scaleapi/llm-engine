@@ -31,6 +31,7 @@ from model_engine_server.common.dtos.tasks import SyncEndpointPredictV1Response,
 from model_engine_server.core.auth.authentication_repository import User
 from model_engine_server.domain.entities import (
     LLMInferenceFramework,
+    LLMSource,
     ModelEndpoint,
     ModelEndpointType,
     Quantization,
@@ -832,6 +833,46 @@ async def test_create_sglang_bundle_quotes_user_values(
         "--load-format": [load_format],
         "--lora-paths": lora_paths,
     }
+
+
+@pytest.mark.asyncio
+async def test_create_llm_model_bundle_rejects_sglang(
+    monkeypatch,
+    test_api_key: str,
+    fake_model_bundle_repository,
+    fake_docker_repository_image_always_exists,
+    fake_model_primitive_gateway,
+    fake_llm_artifact_gateway,
+):
+    monkeypatch.setattr(llm_use_cases.hmi_config, "sglang_repository", "sglang")
+    llm_bundle_use_case = CreateLLMModelBundleV1UseCase(
+        create_model_bundle_use_case=CreateModelBundleV2UseCase(
+            model_bundle_repository=fake_model_bundle_repository,
+            docker_repository=fake_docker_repository_image_always_exists,
+            model_primitive_gateway=fake_model_primitive_gateway,
+        ),
+        model_bundle_repository=fake_model_bundle_repository,
+        llm_artifact_gateway=fake_llm_artifact_gateway,
+        docker_repository=fake_docker_repository_image_always_exists,
+    )
+
+    with pytest.raises(ObjectHasInvalidValueException, match="SGLang endpoints are deprecated"):
+        await llm_bundle_use_case.execute(
+            user=User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True),
+            endpoint_name="test-sglang-endpoint",
+            model_name="test-model",
+            source=LLMSource.HUGGING_FACE,
+            framework=LLMInferenceFramework.SGLANG,
+            framework_image_tag="0.4.0",
+            endpoint_type=ModelEndpointType.STREAMING,
+            num_shards=1,
+            quantize=None,
+            checkpoint_path="s3://fake-bucket/fake-checkpoint",
+            chat_template_override=None,
+            nodes_per_worker=1,
+            additional_args={"huggingface_repo": "org/repo"},
+        )
+    assert fake_model_bundle_repository.db == {}
 
 
 def test_create_vllm_bundle_command_with_model_cache(
