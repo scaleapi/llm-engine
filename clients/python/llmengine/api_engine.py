@@ -14,6 +14,10 @@ from llmengine.errors import parse_error
 SPELLBOOK_API_URL = "https://api.spellbook.scale.com/llm-engine/"
 DEFAULT_TIMEOUT: int = 10
 
+# Redirects are never followed: the API key is sent in the x-api-key header, which
+# requests/aiohttp do not strip on cross-origin redirects, so following one would
+# leak the key to whatever host the Location header names.
+
 base_path = None
 api_key = None
 
@@ -70,6 +74,7 @@ class APIEngine:
             timeout=timeout,
             headers={"x-api-key": api_key, **(headers or {})},
             auth=(api_key, ""),
+            allow_redirects=False,
         )
         if response.status_code != 200:
             raise parse_error(response.status_code, response.content)
@@ -92,6 +97,7 @@ class APIEngine:
             timeout=timeout,
             headers={"x-api-key": api_key, **(headers or {})},
             auth=(api_key, ""),
+            allow_redirects=False,
         )
         if response.status_code != 200:
             raise parse_error(response.status_code, response.content)
@@ -109,6 +115,7 @@ class APIEngine:
             timeout=timeout,
             headers={"x-api-key": api_key, **(headers or {})},
             auth=(api_key, ""),
+            allow_redirects=False,
         )
         if response.status_code != 200:
             raise parse_error(response.status_code, response.content)
@@ -130,6 +137,7 @@ class APIEngine:
             json=data,
             timeout=timeout,
             auth=(api_key, ""),
+            allow_redirects=False,
             headers={"x-api-key": api_key, **(headers or {})},
         )
         if response.status_code != 200:
@@ -153,6 +161,7 @@ class APIEngine:
             timeout=timeout,
             headers={"x-api-key": api_key, **(headers or {})},
             auth=(api_key, ""),
+            allow_redirects=False,
             stream=True,
         )
         if response.status_code != 200:
@@ -190,6 +199,7 @@ class APIEngine:
             timeout=timeout,
             headers={"x-api-key": api_key, **(headers or {})},
             auth=(api_key, ""),
+            allow_redirects=False,
         )
         if response.status_code != 200:
             raise parse_error(response.status_code, response.content)
@@ -211,7 +221,9 @@ class APIEngine:
             headers={"x-api-key": api_key, **(headers or {})},
             auth=BasicAuth(api_key, ""),
         ) as session:
-            async with session.post(urljoin(base_path, resource_name), json=data) as resp:
+            async with session.post(
+                urljoin(base_path, resource_name), json=data, allow_redirects=False
+            ) as resp:
                 if resp.status != 200:
                     raise parse_error(resp.status, await resp.read())
                 payload = await resp.json()
@@ -232,7 +244,9 @@ class APIEngine:
             headers={"x-api-key": api_key, **(headers or {})},
             auth=BasicAuth(api_key, ""),
         ) as session:
-            async with session.post(urljoin(base_path, resource_name), json=data) as resp:
+            async with session.post(
+                urljoin(base_path, resource_name), json=data, allow_redirects=False
+            ) as resp:
                 if resp.status != 200:
                     raise parse_error(resp.status, await resp.read())
                 async for byte_payload in resp.content:
