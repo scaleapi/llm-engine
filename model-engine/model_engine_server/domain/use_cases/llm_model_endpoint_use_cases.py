@@ -2108,6 +2108,8 @@ class UpdateLLMModelEndpointV1UseCase:
         llm_metadata: Dict[str, Any] = (
             raw_llm_metadata if isinstance(raw_llm_metadata, dict) else {}
         )
+        if llm_metadata.get("inference_framework") == LLMInferenceFramework.SGLANG:
+            raise ObjectHasInvalidValueException("SGLang endpoints are deprecated.")
 
         # Model cache mode is sticky per bundle. Toggling MODEL_CACHE_ENABLED affects
         # new or explicitly recreated bundles, but resource-only updates must not
