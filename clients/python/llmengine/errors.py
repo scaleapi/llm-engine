@@ -77,19 +77,20 @@ def parse_error(status_code: int, content: bytes) -> Exception:
         Exception: parsed exception
 
     """
+    # Redirects are not followed so the API key is never sent to another host.
+    # Checked before the body is parsed, since a redirect body can be anything.
+    if 300 <= status_code < 400:
+        return UnknownError(
+            f"Received an HTTP {status_code} redirect, which is not followed. "
+            "Set LLM_ENGINE_BASE_PATH (or call set_base_path) to the final URL of the API."
+        )
+
     # Try to parse a LLM Engine error
     try:
         payload = json.loads(content)
         message = payload["detail"]
     except (json.JSONDecodeError, KeyError):
         message = content.decode("utf-8")
-
-    # Redirects are not followed so the API key is never sent to another host
-    if 300 <= status_code < 400:
-        return UnknownError(
-            f"Received an HTTP {status_code} redirect, which is not followed. "
-            "Set LLM_ENGINE_BASE_PATH (or call set_base_path) to the final URL of the API."
-        )
 
     # Try to parse a APIInference error
     if status_code == 400:
