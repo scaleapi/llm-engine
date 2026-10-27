@@ -105,6 +105,9 @@ Below are the configurations to specify in the `values_sample.yaml` file.
 | aws.profileName | The AWS configurations (by configMap) for LLM Engine server deployments | No |
 | serviceTemplate.securityContext.capabilities.drop | Additional flags for model endpoints | No |
 | serviceTemplate.mountInfraConfig | Additional flags for model endpoints | No |
+| extraPodVolumes | Additional volumes for generated endpoint and batch-job pods | No |
+| extraPodVolumeMounts | Additional mounts for endpoint containers and batch input-downloaders | No |
+| extraPodEnvFrom | Additional environment sources for endpoint containers and batch input-downloaders | No |
 | config.values.infra.k8s_cluster_name | The name of the k8s cluster | Yes |
 | config.values.infra.dns_host_domain | The domain name of the k8s cluster | Yes |
 | config.values.infra.default_region | The default AWS region for various resources | Yes |
@@ -117,6 +120,35 @@ Below are the configurations to specify in the `values_sample.yaml` file.
 | config.values.llm_engine.cache_redis_azure_host | The redis cluster host when using cloud_provider azure | No |
 | config.values.llm_engine.s3_file_llm_fine_tuning_job_repository | The S3 URI for the S3 bucket/key that you wish to save fine-tuned assets | Yes |
 | config.values.dd_trace_enabled | Whether to enable datadog tracing, datadog must be installed in the cluster | No |
+
+### Mount a custom object-store CA
+
+Generated model pods don't inherit `extraVolumes` or `extraVolumeMounts` from the server deployments.
+Use the separate pod hooks when an HTTPS object store requires a private certificate authority (CA).
+
+```yaml
+extraVolumes: &storage-volumes
+  - name: object-store-ca
+    secret:
+      secretName: object-store-ca
+extraVolumeMounts: &storage-mounts
+  - name: object-store-ca
+    mountPath: /etc/object-store-ca
+    readOnly: true
+extraEnvVars:
+  - name: AWS_CA_BUNDLE
+    value: /etc/object-store-ca/ca.crt
+extraPodVolumes: *storage-volumes
+extraPodVolumeMounts: *storage-mounts
+extraPodEnvFrom:
+  - secretRef:
+      name: object-store-client-env
+```
+
+Create these Secrets in each namespace that runs the configured pods.
+The environment Secret supplies `AWS_CA_BUNDLE=/etc/object-store-ca/ca.crt` and any required object-store credentials.
+The pod hooks cover model containers, forwarding containers, and batch input-downloaders.
+Image-cache utility pods and HTTP-trigger pods don't use these hooks.
 
 ## Play With It
 Once `helm install` succeeds, you can forward port `5000` from a `llm-engine` pod and test sending requests to it.

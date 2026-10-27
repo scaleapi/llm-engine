@@ -1,3 +1,6 @@
+"""Helm rendering for pull secrets and generated pod configuration."""
+
+import json
 import re
 import shutil
 import subprocess
@@ -44,6 +47,32 @@ GENERATED_POD_TEMPLATES = {
     "image-cache-cpu.yaml",
     "cron-trigger.yaml",
 }
+STORAGE_CONTAINER_NAMES = {
+    "main",
+    "http-forwarder",
+    "celery-forwarder",
+    "tritonserver",
+    "lws-leader",
+    "lws-worker",
+    "input-downloader",
+}
+EXTRA_VOLUME = {"name": "object-store-ca", "secret": {"secretName": "object-store-ca"}}
+EXTRA_MOUNT = {"name": "object-store-ca", "mountPath": "/etc/object-store-ca", "readOnly": True}
+EXTRA_ENV_FROM = {"secretRef": {"name": "object-store-client-env"}}
+EXTRA_POD_VALUES = {
+    "extraPodVolumes": [EXTRA_VOLUME],
+    "extraPodVolumeMounts": [EXTRA_MOUNT],
+    "extraPodEnvFrom": [EXTRA_ENV_FROM],
+}
+
+
+def _set_json(values: Dict[str, Any]) -> List[str]:
+    return [
+        arg
+        for name, value in values.items()
+        for arg in ("--set-json", f"{name}={json.dumps(value)}")
+    ]
+
 
 # The endpoint delegate fills ${...} placeholders at runtime. Some stand in for a whole mapping
 # entry (e.g. ${STORAGE_DICT}), so one alone on its line becomes a key to keep the YAML valid.
@@ -177,3 +206,45 @@ def test_azure_generated_pods_keep_regcred():
             {"name": "egp-ecr-regcred"},
             {"name": "registry-cred"},
         ]
+
+
+@pytest.mark.parametrize("extra_args", [[], AZURE_ARGS], ids=["default", "azure"])
+def test_generated_storage_clients_receive_extra_pod_configuration(extra_args: List[str]) -> None:
+    pod_specs = _generated_pod_specs(extra_args + _set_json(EXTRA_POD_VALUES))
+    seen_containers = set()
+    for pod_spec in pod_specs:
+        containers = pod_spec["containers"] + (pod_spec.get("initContainers") or [])
+        storage_clients = [c for c in containers if c["name"] in STORAGE_CONTAINER_NAMES]
+        if not storage_clients:
+            continue
+
+        assert EXTRA_VOLUME in pod_spec["volumes"], (
+            "generated storage pods must receive extraPodVolumes"
+        )
+        for container in storage_clients:
+            seen_containers.add(container["name"])
+            assert EXTRA_MOUNT in container["volumeMounts"], (
+                f"{container['name']} must receive extraPodVolumeMounts"
+            )
+            assert container.get("envFrom") == [EXTRA_ENV_FROM], (
+                f"{container['name']} must receive extraPodEnvFrom"
+            )
+
+    assert seen_containers == STORAGE_CONTAINER_NAMES, (
+        "storage-client render coverage must not be empty or incomplete"
+    )
+
+
+@pytest.mark.parametrize("extra_args", [[], AZURE_ARGS], ids=["default", "azure"])
+def test_unconfigured_pod_hooks_preserve_generated_templates(extra_args: List[str]) -> None:
+    templates = ["templates/service_template_config_map.yaml"]
+    (default,) = _render(templates, extra_args, base_args=[])
+    (explicit_empty,) = _render(
+        templates,
+        extra_args + _set_json(dict.fromkeys(EXTRA_POD_VALUES, [])),
+        base_args=[],
+    )
+
+    assert default["data"] == explicit_empty["data"], (
+        "unconfigured pod hooks must render the same templates as explicitly empty hooks"
+    )

@@ -270,6 +270,7 @@ env:
   - name: HTTP_HOST
     value: "0.0.0.0"
 {{- end }}
+{{- include "modelEngine.extraPodEnvFrom" . }}
 {{- end }}
 
 {{- define "modelEngine.asyncForwarderTemplateEnv" -}}
@@ -288,6 +289,14 @@ env:
   - name: SERVICEBUS_NAMESPACE
     value: {{ .Values.azure.servicebus_namespace }}
   {{- end }}
+{{- include "modelEngine.extraPodEnvFrom" . }}
+{{- end }}
+
+{{- define "modelEngine.extraPodEnvFrom" -}}
+{{- with .Values.extraPodEnvFrom }}
+envFrom:
+{{- toYaml . | nindent 2 }}
+{{- end }}
 {{- end }}
 
 {{- /* True only when an operator gave redis.enableTLS a value. A stringified
@@ -553,6 +562,9 @@ volumeMounts:
   {{- if .Values.config.values }}
   - name: infra-service-config-volume
     mountPath: /workspace/model-engine/model_engine_server/core/configs
+  {{- end }}
+  {{- with .Values.extraPodVolumeMounts }}
+  {{- toYaml . | nindent 2 }}
   {{- end }}
 {{- end }}
 
