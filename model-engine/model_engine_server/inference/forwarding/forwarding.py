@@ -81,6 +81,12 @@ class ModelEngineSerializationMixin:
         return None
 
     def unwrap_json_payload(self, json_payload: Any) -> Tuple[Any, bool]:
+        # The model container unpickles this field, and the forwarder is reachable from any
+        # in-cluster workload, not only the gateway that already rejects it.
+        if isinstance(json_payload, dict) and json_payload.get("cloudpickle") is not None:
+            raise HTTPException(
+                status_code=400, detail="The cloudpickle field is no longer supported."
+            )
         # TODO: eventually delete
         serialize_results_as_string: Optional[bool] = None
         # IF we get a feature update in model_engine where it's able to allow a user to

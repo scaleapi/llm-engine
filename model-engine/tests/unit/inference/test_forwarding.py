@@ -669,6 +669,34 @@ def test_streaming_forwarder_400_upstream(post_inference_hooks_handler):
     assert e.value.status_code == 400
 
 
+@pytest.mark.parametrize("streaming", [False, True])
+@pytest.mark.parametrize("model_engine_unwrap", [True, False])
+def test_forwarders_reject_cloudpickle(
+    streaming, model_engine_unwrap, post_inference_hooks_handler
+):
+    common = dict(
+        predict_endpoint="ignored",
+        model_engine_unwrap=model_engine_unwrap,
+        serialize_results_as_string=False,
+        post_inference_hooks_handler=post_inference_hooks_handler,
+    )
+    fwd = (
+        StreamingForwarder(**common)
+        if streaming
+        else Forwarder(
+            **common,
+            wrap_response=True,
+            forward_http_status=False,
+            forward_http_status_in_body=False,
+        )
+    )
+    with mock.patch("requests.post") as post, pytest.raises(HTTPException) as e:
+        fwd({"cloudpickle": "s3://bucket/payload.pkl", "args": None})
+
+    assert e.value.status_code == 400
+    post.assert_not_called()
+
+
 @mock.patch("requests.post", mocked_post)
 @mock.patch("requests.get", mocked_get)
 @mock.patch("sseclient.SSEClient", mocked_sse_client)
