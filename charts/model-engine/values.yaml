@@ -76,6 +76,52 @@ rateLimits:
       pathPrefix: /v1/async-tasks
       requestsPerSecondPerPod: 20
       burst: 40
+
+# callerRateLimits [optional] per-caller limits at the ingress gateway, ahead of the
+# shared per-pod buckets above, so one caller over its limit is refused at the edge
+# instead of draining the buckets every caller shares. The caller is a hash of the
+# Authorization header. See templates/istio-caller-ratelimit.yaml.
+callerRateLimits:
+  enabled: false
+  # Count and report would-be refusals without refusing. Turn off to enforce.
+  shadowMode: true
+  domain: model-engine
+  # How long the gateway waits for the rate-limit service before letting the request
+  # through (the filter fails open).
+  timeout: 0.05s
+  gateway:
+    namespace: istio-ingress
+    selectorLabels:
+      istio: ingressgateway-internal
+    # Port of the gateway server model-engine's VirtualService is bound to; Istio
+    # names the gateway's virtual hosts "<host>:<port>".
+    port: 443
+  service:
+    image: envoyproxy/ratelimit:f4e76690
+    replicas: 2
+    grpcPort: 8081
+    resources:
+      requests:
+        cpu: 250m
+        memory: 128Mi
+  redis:
+    image: redis:7.4.1-alpine
+    maxmemory: 256mb
+    resources:
+      requests:
+        cpu: 100m
+        memory: 300Mi
+  # Starting values match the app's per-user limits (user_rate_limits), so enforcing
+  # here changes who is refused only for the caller that floods.
+  routes:
+    - name: post_async_tasks
+      method: POST
+      pathPrefix: /v1/async-tasks
+      requestsPerSecondPerCaller: 25
+    - name: get_async_task
+      method: GET
+      pathPrefix: /v1/async-tasks/
+      requestsPerSecondPerCaller: 400
 redis:
   auth:
   authSecretName: ""
