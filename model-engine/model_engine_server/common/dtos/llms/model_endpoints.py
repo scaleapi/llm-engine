@@ -9,6 +9,7 @@ from model_engine_server.common.dtos.core import HttpUrlStr
 from model_engine_server.common.dtos.llms.sglang import SGLangEndpointAdditionalArgs
 from model_engine_server.common.dtos.llms.vllm import VLLMEndpointAdditionalArgs
 from model_engine_server.common.dtos.model_endpoints import (
+    ENDPOINT_NAME_PATTERN,
     CpuSpecificationType,
     GetModelEndpointV1Response,
     GpuType,
@@ -78,7 +79,7 @@ class LLMModelEndpointCommonArgs(BaseModel):
 
 
 class CreateLLMModelEndpointArgs(LLMModelEndpointCommonArgs):
-    name: str
+    name: str = Field(..., max_length=63, pattern=ENDPOINT_NAME_PATTERN)
     model_name: str
     """
     Number of shards to distribute the model onto GPUs.
