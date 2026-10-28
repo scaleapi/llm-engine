@@ -103,6 +103,8 @@ callerRateLimits:
     image: envoyproxy/ratelimit:f4e76690
     replicas: 2
     grpcPort: 8081
+    # Annotate the pods for the Datadog agent to scrape the Prometheus metrics.
+    datadogMetrics: true
     resources:
       requests:
         cpu: 250m

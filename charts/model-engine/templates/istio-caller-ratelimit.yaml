@@ -36,7 +36,7 @@ data:
     descriptors:
       {{- range $cfg.routes }}
       - key: route
-        value: {{ printf "%s.%s" $fullName .name }}
+        value: {{ printf "%s_%s" $fullName .name }}
         descriptors:
           - key: caller
             rate_limit:
@@ -81,6 +81,11 @@ spec:
         # out on every request (Istio 1.15, IPv6 pods), while plaintext h2c to the
         # same pod answered in ~20 ms. Without a sidecar, auto-mTLS sends plaintext.
         sidecar.istio.io/inject: "false"
+        {{- if $cfg.service.datadogMetrics }}
+        # Per-route within/near/over-limit counts (shadow mode included). The service's
+        # statsd sink is TCP-only, so metrics are scraped over Prometheus instead.
+        ad.datadoghq.com/ratelimit.checks: '{"openmetrics":{"init_config":{},"instances":[{"openmetrics_endpoint":"http://%%host%%:9090/metrics","namespace":"model_engine_caller_ratelimit","metrics":["ratelimit_service_.*"]}]}}'
+        {{- end }}
     spec:
       containers:
         - name: ratelimit
@@ -91,6 +96,8 @@ spec:
               containerPort: 8081
             - name: http-health
               containerPort: 8080
+            - name: http-metrics
+              containerPort: 9090
           env:
             - name: LOG_LEVEL
               value: warn
@@ -118,13 +125,13 @@ spec:
             - name: RUNTIME_IGNOREDOTFILES
               value: "true"
             - name: USE_STATSD
+              value: "false"
+            - name: USE_PROMETHEUS
               value: "true"
-            - name: STATSD_HOST
-              valueFrom:
-                fieldRef:
-                  fieldPath: status.hostIP
-            - name: STATSD_PORT
-              value: "8125"
+            - name: PROMETHEUS_ADDR
+              value: ":9090"
+            - name: PROMETHEUS_PATH
+              value: /metrics
           readinessProbe:
             httpGet:
               path: /healthcheck
@@ -347,7 +354,7 @@ spec:
               actions:
                 - header_value_match:
                     descriptor_key: route
-                    descriptor_value: {{ printf "%s.%s" $fullName .name }}
+                    descriptor_value: {{ printf "%s_%s" $fullName .name }}
                     headers:
                       - name: ":method"
                         string_match:
