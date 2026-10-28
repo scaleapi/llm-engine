@@ -86,6 +86,9 @@ callerRateLimits:
   # Count and report would-be refusals without refusing. Turn off to enforce.
   shadowMode: true
   domain: model-engine
+  # Envoy rate-limit stage (0-10) of this release's filter and route limits. Releases
+  # that enable this on the same gateway must use different stages.
+  stage: 0
   # How long the gateway waits for the rate-limit service before letting the request
   # through (the filter fails open).
   timeout: 0.05s
