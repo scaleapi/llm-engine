@@ -817,6 +817,14 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                 raise ValueError(
                     f"Runnable image endpoints cannot set the following env vars: {restriced_env_vars}"
                 )
+        # Bundles built before the TensorRT-LLM deprecation download the checkpoint over the
+        # image's own launch script and then run it.
+        if isinstance(model_bundle.flavor, RunnableImageLike) and any(
+            "launch_triton_server.py" in part for part in model_bundle.flavor.command
+        ):
+            raise ValueError(
+                "The TensorRT-LLM inference framework is deprecated and no longer supported."
+            )
         if (
             not isinstance(model_bundle.flavor, RunnableImageLike)
             and build_endpoint_request.nodes_per_worker > 1

@@ -293,6 +293,41 @@ async def test_build_endpoint_rejects_request_not_matching_stored_record(
 
 
 @pytest.mark.asyncio
+async def test_build_endpoint_rejects_tensorrt_llm_bundle(
+    build_endpoint_request_sync_runnable_image: BuildEndpointRequest,
+    endpoint_builder_service_empty_docker_built: LiveEndpointBuilderService,
+):
+    repo: Any = endpoint_builder_service_empty_docker_built.model_endpoint_record_repository
+    request_record = build_endpoint_request_sync_runnable_image.model_endpoint_record
+    bundle = request_record.current_model_bundle
+    request_record.current_model_bundle = bundle.copy(
+        update={
+            "flavor": bundle.flavor.copy(
+                update={
+                    "command": [
+                        "/usr/bin/bash",
+                        "-c",
+                        "./s5cmd cp s3://bucket/ckpt/* ./ ; python3 launch_triton_server.py",
+                    ]
+                }
+            )
+        }
+    )
+    repo.add_model_endpoint_record(request_record.copy(deep=True))
+    create_or_update_resources = Mock()
+    endpoint_builder_service_empty_docker_built.resource_gateway.__setattr__(
+        "create_or_update_resources", create_or_update_resources
+    )
+
+    with pytest.raises(ValueError):
+        await endpoint_builder_service_empty_docker_built.build_endpoint(
+            build_endpoint_request_sync_runnable_image
+        )
+
+    create_or_update_resources.assert_not_called()
+
+
+@pytest.mark.asyncio
 async def test_build_endpoint_deploys_stored_bundle(
     build_endpoint_request_sync_runnable_image: BuildEndpointRequest,
     endpoint_builder_service_empty_docker_built: LiveEndpointBuilderService,
