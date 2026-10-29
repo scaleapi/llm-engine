@@ -1,0 +1,370 @@
+{{- if (.Values.callerRateLimits).enabled -}}
+{{- $fullName := include "modelEngine.fullname" . -}}
+{{- $cfg := .Values.callerRateLimits -}}
+{{- $rlName := printf "%s-caller-ratelimit" $fullName -}}
+{{- $redisName := printf "%s-caller-ratelimit-redis" $fullName -}}
+{{- /* Release-scoped, so releases sharing a gateway keep separate filters and budgets. */}}
+{{- $luaFilter := printf "envoy.filters.http.lua.%s.caller_key" $fullName -}}
+{{- $rlFilter := printf "envoy.filters.http.ratelimit.%s" $fullName -}}
+{{- $rlCluster := printf "outbound|%v||%s.%s.svc.cluster.local" $cfg.service.grpcPort $rlName .Release.Namespace -}}
+{{- $hosts := list -}}
+{{- range .Values.virtualservice.hostDomains }}
+{{- $hosts = append $hosts (printf "%s.%s" $fullName .) -}}
+{{- end }}
+# Per-caller rate limits enforced at the ingress gateway, ahead of the gateway pods.
+#
+# The per-pod buckets in istio-ratelimit-envoyfilter.yaml are shared by every caller,
+# so one caller past the fleet ceiling drains them and every other caller gets 429.
+# The app's per-user limiter runs after those buckets and cannot prevent that. Here
+# the gateway asks a global rate-limit service, keyed by caller, before forwarding:
+# a caller over its limit is refused at the edge and never reaches the shared buckets.
+#
+# Envoy 1.23 (Istio 1.15) local_ratelimit has no per-value buckets, hence the external
+# service. The caller key is a hash of the Authorization header computed in Lua, so
+# no credential is stored in Redis; the gateway does not authenticate, and a request
+# with a forged key is still refused by the app.
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $rlName }}
+  labels:
+    {{- include "modelEngine.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    domain: {{ $cfg.domain }}
+    descriptors:
+      {{- range $cfg.routes }}
+      - key: route
+        value: {{ printf "%s_%s" $fullName .name }}
+        descriptors:
+          - key: caller
+            rate_limit:
+              unit: second
+              requests_per_unit: {{ .requestsPerSecondPerCaller }}
+            shadow_mode: {{ $cfg.shadowMode }}
+      {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $rlName }}
+  labels:
+    {{- include "modelEngine.labels" . | nindent 4 }}
+spec:
+  selector:
+    app: {{ $rlName }}
+  ports:
+    - name: grpc
+      port: {{ $cfg.service.grpcPort }}
+      targetPort: grpc
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $rlName }}
+  labels:
+    {{- include "modelEngine.labels" . | nindent 4 }}
+spec:
+  replicas: {{ $cfg.service.replicas }}
+  selector:
+    matchLabels:
+      app: {{ $rlName }}
+  template:
+    metadata:
+      labels:
+        app: {{ $rlName }}
+        {{- include "modelEngine.baseLabels" . | nindent 8 }}
+      annotations:
+        checksum/config: {{ toYaml $cfg.routes | sha256sum | trunc 16 }}
+        # No sidecar: the gateway's mTLS gRPC call to a sidecar-injected pod timed
+        # out on every request (Istio 1.15, IPv6 pods), while plaintext h2c to the
+        # same pod answered in ~20 ms. Without a sidecar, auto-mTLS sends plaintext.
+        sidecar.istio.io/inject: "false"
+        {{- if $cfg.service.datadogMetrics }}
+        # Per-route within/near/over-limit counts (shadow mode included). The service's
+        # statsd sink is TCP-only, so metrics are scraped over Prometheus instead.
+        ad.datadoghq.com/ratelimit.checks: '{"openmetrics":{"init_config":{},"instances":[{"openmetrics_endpoint":"http://%%host%%:9090/metrics","namespace":"model_engine_caller_ratelimit","metrics":["ratelimit_service_.*"]}]}}'
+        {{- end }}
+    spec:
+      containers:
+        - name: ratelimit
+          image: {{ $cfg.service.image }}
+          command: ["/bin/ratelimit"]
+          ports:
+            - name: grpc
+              containerPort: 8081
+            - name: http-health
+              containerPort: 8080
+            - name: http-metrics
+              containerPort: 9090
+          env:
+            - name: LOG_LEVEL
+              value: warn
+            # The defaults bind 0.0.0.0 (IPv4 only); the clusters' pods are IPv6.
+            - name: HOST
+              value: "::"
+            - name: GRPC_HOST
+              value: "::"
+            - name: DEBUG_HOST
+              value: "::"
+            - name: REDIS_SOCKET_TYPE
+              value: tcp
+            - name: REDIS_URL
+              value: "{{ $redisName }}.{{ .Release.Namespace }}.svc.cluster.local:6379"
+            # Over-limit keys are cached in-process, so a caller flooding far past its
+            # limit is refused without a Redis round trip per request.
+            - name: LOCAL_CACHE_SIZE_IN_BYTES
+              value: "1048576"
+            - name: RUNTIME_ROOT
+              value: /data
+            - name: RUNTIME_SUBDIRECTORY
+              value: ratelimit
+            - name: RUNTIME_WATCH_ROOT
+              value: "false"
+            - name: RUNTIME_IGNOREDOTFILES
+              value: "true"
+            - name: USE_STATSD
+              value: "false"
+            - name: USE_PROMETHEUS
+              value: "true"
+            - name: PROMETHEUS_ADDR
+              value: ":9090"
+            - name: PROMETHEUS_PATH
+              value: /metrics
+          readinessProbe:
+            httpGet:
+              path: /healthcheck
+              port: http-health
+            periodSeconds: 5
+          resources:
+            {{- toYaml $cfg.service.resources | nindent 12 }}
+          volumeMounts:
+            - name: config
+              mountPath: /data/ratelimit/config
+      volumes:
+        - name: config
+          configMap:
+            name: {{ $rlName }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $redisName }}
+  labels:
+    {{- include "modelEngine.labels" . | nindent 4 }}
+spec:
+  selector:
+    app: {{ $redisName }}
+  ports:
+    - name: tcp-redis
+      port: 6379
+      targetPort: 6379
+---
+# One-second counters only: no persistence, and losing them on restart just resets
+# the current window.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $redisName }}
+  labels:
+    {{- include "modelEngine.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ $redisName }}
+  template:
+    metadata:
+      labels:
+        app: {{ $redisName }}
+        {{- include "modelEngine.baseLabels" . | nindent 8 }}
+      annotations:
+        # Only the rate-limit service talks to it; see the note on that Deployment.
+        sidecar.istio.io/inject: "false"
+    spec:
+      containers:
+        - name: redis
+          image: {{ $cfg.redis.image }}
+          args: ["--save", "", "--appendonly", "no", "--maxmemory", "{{ $cfg.redis.maxmemory }}", "--maxmemory-policy", "allkeys-lru"]
+          ports:
+            - containerPort: 6379
+          readinessProbe:
+            tcpSocket:
+              port: 6379
+            periodSeconds: 5
+          resources:
+            {{- toYaml $cfg.redis.resources | nindent 12 }}
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: {{ $rlName }}
+  namespace: {{ $cfg.gateway.namespace }}
+  labels:
+    {{- include "modelEngine.labels" . | nindent 4 }}
+spec:
+  workloadSelector:
+    labels:
+      {{- toYaml $cfg.gateway.selectorLabels | nindent 6 }}
+  configPatches:
+    # The gateway serves every internal host, so the filter-level script is a no-op:
+    # the caller-key script runs only on model-engine's routes (typed_per_filter_config
+    # below), and every other host never executes it.
+    - applyTo: HTTP_FILTER
+      match:
+        context: GATEWAY
+        listener:
+          filterChain:
+            filter:
+              name: envoy.filters.network.http_connection_manager
+              subFilter:
+                name: envoy.filters.http.router
+      patch:
+        operation: INSERT_BEFORE
+        value:
+          name: {{ $luaFilter }}
+          typed_config:
+            "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
+            inline_code: |
+              function envoy_on_request(handle) end
+              function envoy_on_response(handle) end
+            # Named so a route can select it with LuaPerRoute.name. Envoy 1.23 ignores
+            # LuaPerRoute.source_code, so the script cannot live on the route itself.
+            source_codes:
+              model_engine_caller:
+                inline_string: |
+                  local HEADER = "x-model-engine-caller"
+                  -- FNV-1a, twice with different seeds, for a 64-bit key.
+                  -- h * 16777619 is split as (h << 24) + h * 403 to stay exact in a double.
+                  local function fnv1a(s, h)
+                    for i = 1, #s do
+                      h = bit.bxor(h, s:byte(i))
+                      h = bit.tobit(bit.lshift(h, 24) + h * 403)
+                    end
+                    return h
+                  end
+                  local B64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+                  local B64DEC = {}
+                  for i = 1, #B64 do B64DEC[B64:byte(i)] = i - 1 end
+                  -- Like Python's b64decode(validate=False): characters outside the
+                  -- alphabet, padding included, are skipped.
+                  local function b64decode(s)
+                    local out, acc, nbits = {}, 0, 0
+                    for i = 1, #s do
+                      local v = B64DEC[s:byte(i)]
+                      if v ~= nil then
+                        acc = bit.bor(bit.lshift(acc, 6), v)
+                        nbits = nbits + 6
+                        if nbits >= 8 then
+                          nbits = nbits - 8
+                          out[#out + 1] = string.char(bit.band(bit.rshift(acc, nbits), 255))
+                          acc = bit.band(acc, bit.lshift(1, nbits) - 1)
+                        end
+                      end
+                    end
+                    return table.concat(out)
+                  end
+                  -- The identity the gateway authenticates: the Basic username (the
+                  -- password is never checked) or the Bearer token, both looked up as a
+                  -- username. Anything else is refused by the app; its raw value is used.
+                  local function identity(auth)
+                    local scheme, param = string.match(auth, "^(%S*) (.*)$")
+                    if scheme ~= nil then
+                      scheme = string.lower(scheme)
+                      if scheme == "basic" then
+                        local user, sep = string.match(b64decode(param), "^([^:]*)(:?)")
+                        if sep == ":" then
+                          return "u:" .. user
+                        end
+                      elseif scheme == "bearer" then
+                        return "u:" .. param
+                      end
+                    end
+                    return "h:" .. auth
+                  end
+                  function envoy_on_request(handle)
+                    local headers = handle:headers()
+                    -- A client-supplied key is never trusted.
+                    headers:remove(HEADER)
+                    local auth = headers:get("authorization")
+                    if auth == nil or auth == "" then
+                      headers:add(HEADER, "anonymous")
+                      return
+                    end
+                    local id = identity(auth)
+                    headers:add(HEADER, bit.tohex(fnv1a(id, bit.tobit(0x811c9dc5))) .. bit.tohex(fnv1a(id, bit.tobit(0x050c5d1f))))
+                  end
+                  function envoy_on_response(handle)
+                    if handle:headers():get("x-envoy-ratelimited") ~= nil then
+                      handle:headers():replace("retry-after", "1")
+                    end
+                  end
+    # Global rate limit filter. A no-op for routes without rate_limits, which is every
+    # route except model-engine's (patched below).
+    - applyTo: HTTP_FILTER
+      match:
+        context: GATEWAY
+        listener:
+          filterChain:
+            filter:
+              name: envoy.filters.network.http_connection_manager
+              subFilter:
+                name: envoy.filters.http.router
+      patch:
+        operation: INSERT_BEFORE
+        value:
+          name: {{ $rlFilter }}
+          typed_config:
+            "@type": type.googleapis.com/envoy.extensions.filters.http.ratelimit.v3.RateLimit
+            domain: {{ $cfg.domain }}
+            # A filter applies only route rate_limits of its own stage. Releases that
+            # share a gateway must use distinct stages, or each filter would also
+            # evaluate the other release's routes.
+            stage: {{ $cfg.stage }}
+            # Fail open: the service being down or slow must not take model-engine down.
+            failure_mode_deny: false
+            timeout: {{ $cfg.timeout }}
+            rate_limit_service:
+              transport_api_version: V3
+              grpc_service:
+                envoy_grpc:
+                  cluster_name: {{ $rlCluster | quote }}
+    {{- range $hosts }}
+    # model-engine's gateway routes: the caller-key script, and the rate-limit actions.
+    # Envoy 1.23 reads route-level policies, so the patch targets the routes of this
+    # virtual host.
+    - applyTo: HTTP_ROUTE
+      match:
+        context: GATEWAY
+        routeConfiguration:
+          vhost:
+            name: {{ printf "%s:%v" . $cfg.gateway.port | quote }}
+      patch:
+        operation: MERGE
+        value:
+          typed_per_filter_config:
+            {{ $luaFilter }}:
+              "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.LuaPerRoute
+              name: model_engine_caller
+          route:
+            rate_limits:
+            {{- range $cfg.routes }}
+            - stage: {{ $cfg.stage }}
+              actions:
+                - header_value_match:
+                    descriptor_key: route
+                    descriptor_value: {{ printf "%s_%s" $fullName .name }}
+                    headers:
+                      - name: ":method"
+                        string_match:
+                          exact: {{ .method }}
+                      - name: ":path"
+                        string_match:
+                          prefix: {{ .pathPrefix }}
+                - request_headers:
+                    header_name: x-model-engine-caller
+                    descriptor_key: caller
+            {{- end }}
+    {{- end }}
+{{- end }}

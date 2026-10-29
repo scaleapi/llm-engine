@@ -69,7 +69,8 @@ class ImageCacheService:
             # setting it to max to ensure it will be at top after reverse sorting
         )
 
-        istio_image = DockerImage("gcr.io/istio-release/proxyv2", "1.15.0")
+        istio_repo, _, istio_tag = hmi_config.istio_proxy_image.rpartition(":")
+        istio_image = DockerImage(istio_repo, istio_tag)
         tgi_image_110 = DockerImage(
             f"{infra_config().docker_repo_prefix}/{hmi_config.tgi_repository}", "1.1.0"
         )

@@ -117,6 +117,8 @@ class HostedModelInferenceServiceConfig:
     #     get_async_task: 200   # requests/second per user; unset = unlimited
     #     post_async_tasks: 25
     user_rate_limits: Optional[dict] = None
+    # Istio sidecar image pre-pulled onto GPU nodes by the image cache.
+    istio_proxy_image: str = "gcr.io/istio-release/proxyv2:1.15.0"
 
     @classmethod
     def from_json(cls, json):

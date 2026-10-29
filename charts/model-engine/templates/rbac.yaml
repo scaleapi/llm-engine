@@ -1,0 +1,173 @@
+{{- if include "modelEngine.scopedRbac" . }}
+{{- $fullname := include "modelEngine.fullname" . }}
+{{- $labels := include "modelEngine.labels" . }}
+{{- $releaseNamespace := .Release.Namespace }}
+{{- $serviceAccountNamespaces := index (include "modelEngine.serviceAccountNamespaces" . | fromYaml) "namespaces" | uniq }}
+{{- $configuredEndpointNamespace := dig "launch" "endpoint_namespace" "" (.Values.config.values | default dict) }}
+{{- $endpointNamespace := dig "endpointNamespace" "" .Values.rbac | default $configuredEndpointNamespace | required "rbac.clusterAdmin=false needs the endpoint namespace: set config.values.launch.endpoint_namespace or rbac.endpointNamespace" }}
+{{- $proportionalAutoscaler := and (not .Values.serviceIdentifier) (dig "autoscaling" "prewarming" "enabled" false .Values.AsMap) }}
+{{- range $namespace := append $serviceAccountNamespaces $endpointNamespace | uniq }}
+{{- $isEndpoint := eq $namespace $endpointNamespace }}
+{{- $isRelease := eq $namespace $releaseNamespace }}
+{{- /* ECR image builds and the celery autoscaler hard-code "default". */}}
+{{- $isDefault := eq $namespace "default" }}
+{{- if or $isEndpoint $isRelease $isDefault }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ $fullname }}
+  namespace: {{ $namespace }}
+  labels:
+    {{- $labels | nindent 4 }}
+rules:
+  {{- if $isEndpoint }}
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["list", "create", "patch", "delete"]
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["create", "patch", "delete"]
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["create", "delete"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["list"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "create", "update", "patch", "delete"]
+  - apiGroups: ["apps"]
+    resources: ["daemonsets"]
+    verbs: ["list", "create", "update"]
+  - apiGroups: ["autoscaling"]
+    resources: ["horizontalpodautoscalers"]
+    verbs: ["get", "list", "create", "patch", "delete"]
+  - apiGroups: ["policy"]
+    resources: ["poddisruptionbudgets"]
+    verbs: ["get", "create", "update", "delete"]
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["list", "create", "update", "delete"]
+  - apiGroups: ["batch"]
+    resources: ["cronjobs"]
+    verbs: ["create", "patch", "delete"]
+  - apiGroups: ["autoscaling.k8s.io"]
+    resources: ["verticalpodautoscalers"]
+    verbs: ["get", "list", "create", "update", "delete"]
+  - apiGroups: ["keda.sh"]
+    resources: ["scaledobjects"]
+    verbs: ["get", "list", "create", "update", "delete"]
+  - apiGroups: ["leaderworkerset.x-k8s.io"]
+    resources: ["leaderworkersets"]
+    verbs: ["get", "list", "create", "update", "delete"]
+  - apiGroups: ["networking.istio.io"]
+    resources: ["destinationrules", "virtualservices", "serviceentries"]
+    verbs: ["get", "create", "update", "delete"]
+  {{- end }}
+  {{- if $isRelease }}
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: {{ ternary (list "get" "create") (list "get") $proportionalAutoscaler | toJson }}
+  # Remote image builds run `kubectl patch secret` without -n, so it lands in the builder's namespace.
+  - apiGroups: [""]
+    resources: ["secrets"]
+    resourceNames: ["codeartifact-pip-conf"]
+    verbs: ["get", "patch"]
+  {{- if $proportionalAutoscaler }}
+  - apiGroups: ["apps"]
+    resources: ["deployments/scale"]
+    verbs: ["get", "update"]
+  {{- end }}
+  {{- end }}
+  {{- if $isDefault }}
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["get", "create", "patch"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "patch"]
+  {{- end }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ $fullname }}
+  namespace: {{ $namespace }}
+  labels:
+    {{- $labels | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ $fullname }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ $fullname }}
+    namespace: {{ $releaseNamespace }}
+---
+{{- end }}
+{{- end }}
+{{- if $proportionalAutoscaler }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ $fullname }}-proportional-autoscaler
+  labels:
+    {{- $labels | nindent 4 }}
+rules:
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ $fullname }}-proportional-autoscaler
+  labels:
+    {{- $labels | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ $fullname }}-proportional-autoscaler
+subjects:
+  - kind: ServiceAccount
+    name: {{ $fullname }}
+    namespace: {{ .Release.Namespace }}
+---
+{{- end }}
+{{- if .Values.restartKedaOperator }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ $fullname }}-restart-keda-operator
+  namespace: kube-system
+  labels:
+    {{- $labels | nindent 4 }}
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    resourceNames: ["keda-operator"]
+    verbs: ["get", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ $fullname }}-restart-keda-operator
+  namespace: kube-system
+  labels:
+    {{- $labels | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ $fullname }}-restart-keda-operator
+subjects:
+  - kind: ServiceAccount
+    name: {{ $fullname }}
+    namespace: {{ .Release.Namespace }}
+{{- end }}
+{{- end }}
