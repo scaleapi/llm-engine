@@ -11,6 +11,7 @@ from model_engine_server.common.dtos.llms.completion import (
     CompletionV2SyncResponse,
 )
 from model_engine_server.common.dtos.llms.vllm import VLLMEngineAdditionalArgs, VLLMModelConfig
+from model_engine_server.common.dtos.model_endpoints import MODEL_NAME_MAX_LENGTH
 from model_engine_server.common.pydantic_types import BaseModel, ConfigDict, Field
 from model_engine_server.domain.entities.common_types import (
     CpuSpecificationType,
@@ -49,6 +50,7 @@ class BatchCompletionsModelConfig(VLLMModelConfig):
     model: str = Field(
         description="ID of the model to use.",
         examples=["mixtral-8x7b-instruct"],
+        max_length=MODEL_NAME_MAX_LENGTH,
     )
 
     checkpoint_path: Optional[str] = Field(

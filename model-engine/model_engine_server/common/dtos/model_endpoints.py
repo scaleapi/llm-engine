@@ -27,6 +27,8 @@ from model_engine_server.domain.entities import (
 # The endpoint name is rendered raw into the endpoint pod templates as the `endpoint_name` label,
 # so it must be a valid k8s label value.
 ENDPOINT_NAME_PATTERN = r"^(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$"
+# Model names are parsed on the request path, so they are bounded before any parsing.
+MODEL_NAME_MAX_LENGTH = 256
 
 
 class BrokerType(str, Enum):

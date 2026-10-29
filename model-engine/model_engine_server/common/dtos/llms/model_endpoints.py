@@ -10,6 +10,7 @@ from model_engine_server.common.dtos.llms.sglang import SGLangEndpointAdditional
 from model_engine_server.common.dtos.llms.vllm import VLLMEndpointAdditionalArgs
 from model_engine_server.common.dtos.model_endpoints import (
     ENDPOINT_NAME_PATTERN,
+    MODEL_NAME_MAX_LENGTH,
     CpuSpecificationType,
     GetModelEndpointV1Response,
     GpuType,
@@ -80,7 +81,7 @@ class LLMModelEndpointCommonArgs(BaseModel):
 
 class CreateLLMModelEndpointArgs(LLMModelEndpointCommonArgs):
     name: str = Field(..., max_length=63, pattern=ENDPOINT_NAME_PATTERN)
-    model_name: str
+    model_name: str = Field(..., max_length=MODEL_NAME_MAX_LENGTH)
     """
     Number of shards to distribute the model onto GPUs.
     """
@@ -194,7 +195,7 @@ class ListLLMModelEndpointsV1Response(BaseModel):
 
 
 class UpdateLLMModelEndpointArgs(LLMModelEndpointCommonArgs):
-    model_name: Optional[str] = None
+    model_name: Optional[str] = Field(default=None, max_length=MODEL_NAME_MAX_LENGTH)
     source: Optional[LLMSource] = None
     inference_framework: Optional[LLMInferenceFramework] = None
     inference_framework_image_tag: Optional[str] = None

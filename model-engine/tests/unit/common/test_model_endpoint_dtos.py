@@ -1,4 +1,5 @@
 import pytest
+from model_engine_server.common.dtos.llms.batch_completion import BatchCompletionsModelConfig
 from model_engine_server.common.dtos.llms.model_endpoints import (
     CreateVLLMModelEndpointRequest,
     UpdateVLLMModelEndpointRequest,
@@ -7,11 +8,11 @@ from model_engine_server.common.dtos.model_endpoints import CreateModelEndpointV
 from pydantic import ValidationError
 
 
-def _name_has_error(model, name: str) -> bool:
+def _field_has_error(model, field: str, value: str) -> bool:
     try:
-        model.model_validate({"name": name})
+        model.model_validate({field: value})
     except ValidationError as e:
-        return any(error["loc"] == ("name",) for error in e.errors())
+        return any(error["loc"] == (field,) for error in e.errors())
     return False
 
 
@@ -32,7 +33,27 @@ def _name_has_error(model, name: str) -> bool:
     ],
 )
 def test_create_endpoint_name_must_be_k8s_label_value(model, name, rejected):
-    assert _name_has_error(model, name) is rejected
+    assert _field_has_error(model, "name", name) is rejected
+
+
+@pytest.mark.parametrize(
+    "model,field",
+    [
+        pytest.param(CreateVLLMModelEndpointRequest, "model_name", id="create"),
+        pytest.param(UpdateVLLMModelEndpointRequest, "model_name", id="update"),
+        pytest.param(BatchCompletionsModelConfig, "model", id="batch-completions"),
+    ],
+)
+@pytest.mark.parametrize(
+    "model_name,rejected",
+    [
+        pytest.param("meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8", False, id="hf-name"),
+        pytest.param("1" * 256, False, id="max-length"),
+        pytest.param("1" * 1_000_000, True, id="1mb"),
+    ],
+)
+def test_model_name_length_is_bounded(model, field, model_name, rejected):
+    assert _field_has_error(model, field, model_name) is rejected
 
 
 @pytest.mark.parametrize(
