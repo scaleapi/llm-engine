@@ -1,7 +1,7 @@
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import pytest
 import yaml
@@ -12,6 +12,12 @@ VALUES_PATH = CHART_PATH / "values_circleci.yaml"
 RELEASE_NAMESPACE = "launch"
 ENDPOINT_NAMESPACE = "launch-inference"
 SERVICE_ACCOUNT_NAME = "model-engine"
+# (namespace, name) of the accounts scoped RBAC distinguishes. Endpoint pods run as the chart's
+# account in the endpoint namespace when serviceTemplate.serviceAccountName is the fullname.
+CONTROL_PLANE = (RELEASE_NAMESPACE, SERVICE_ACCOUNT_NAME)
+MODEL_PODS = (ENDPOINT_NAMESPACE, SERVICE_ACCOUNT_NAME)
+ACCOUNTS = [CONTROL_PLANE, MODEL_PODS]
+ACCOUNT_IDS = ["control-plane", "model-pods"]
 SPLIT_NAMESPACE_ARGS = [
     "--namespace",
     RELEASE_NAMESPACE,
@@ -104,6 +110,7 @@ def _can_i(
     resource: str,
     namespace: Optional[str],
     name: Optional[str] = None,
+    service_account_name: str = SERVICE_ACCOUNT_NAME,
 ) -> bool:
     roles = {
         (doc["kind"], doc["metadata"].get("namespace"), doc["metadata"]["name"]): doc
@@ -112,7 +119,7 @@ def _can_i(
     }
     subject = {
         "kind": "ServiceAccount",
-        "name": SERVICE_ACCOUNT_NAME,
+        "name": service_account_name,
         "namespace": service_account_namespace,
     }
     for binding in docs:
@@ -211,17 +218,16 @@ def test_scoped_rbac_grants_no_cluster_admin_or_wildcards():
             assert "*" not in rule["apiGroups"] + rule["resources"] + rule["verbs"]
 
 
-@pytest.mark.parametrize("service_account_namespace", [RELEASE_NAMESPACE, ENDPOINT_NAMESPACE])
+@pytest.mark.parametrize("account", ACCOUNTS, ids=ACCOUNT_IDS)
 @pytest.mark.parametrize("verb", ["get", "list", "watch"])
-def test_cannot_read_secrets_outside_model_engine_namespaces(
-    service_account_namespace: str, verb: str
-):
+def test_cannot_read_secrets_outside_model_engine_namespaces(account: Tuple[str, str], verb: str):
     docs = _render_rbac(PREWARMING_ARGS + RESTART_KEDA_ARGS)
+    namespace, name = account
 
-    assert not _can_i(
-        docs, service_account_namespace, verb, "", "secrets", "other-team", "signing-key"
-    )
-    assert not _can_i(docs, service_account_namespace, verb, "", "secrets", None, "signing-key")
+    for secret_namespace in ["other-team", None]:
+        assert not _can_i(
+            docs, namespace, verb, "", "secrets", secret_namespace, "signing-key", name
+        )
 
 
 def test_secret_access_is_limited_to_the_codeartifact_secret():
@@ -247,15 +253,13 @@ def test_secret_access_is_limited_to_the_codeartifact_secret():
     ]
 
 
-# Batch-job orchestration pods run as the endpoint namespace's model-engine ServiceAccount.
-@pytest.mark.parametrize("service_account_namespace", [RELEASE_NAMESPACE, ENDPOINT_NAMESPACE])
-def test_endpoint_namespace_calls_are_allowed(service_account_namespace: str):
+def test_endpoint_namespace_calls_are_allowed():
     docs = _render_rbac([])
 
     denied = [
         call
         for call in ENDPOINT_NAMESPACE_CALLS
-        if not _can_i(docs, service_account_namespace, *call, ENDPOINT_NAMESPACE)
+        if not _can_i(docs, RELEASE_NAMESPACE, *call, ENDPOINT_NAMESPACE)
     ]
     assert denied == []
 
@@ -285,30 +289,37 @@ def test_release_namespace_config_maps_are_readable():
 
 # A pod that can be created in a namespace can mount any Secret there and run as any of its
 # ServiceAccounts, so the release namespace must not allow workload creation.
-@pytest.mark.parametrize("service_account_namespace", [RELEASE_NAMESPACE, ENDPOINT_NAMESPACE])
-def test_release_namespace_does_not_allow_workloads(service_account_namespace: str):
+@pytest.mark.parametrize("account", ACCOUNTS, ids=ACCOUNT_IDS)
+def test_release_namespace_does_not_allow_workloads(account: Tuple[str, str]):
     docs = _render_rbac(PREWARMING_ARGS)
+    namespace, name = account
 
     allowed = [
         call
         for call in WORKLOAD_CREATES + [("patch", "apps", "deployments")]
-        if _can_i(docs, service_account_namespace, *call, RELEASE_NAMESPACE)
+        if _can_i(docs, namespace, *call, RELEASE_NAMESPACE, None, name)
     ]
     assert allowed == []
 
 
-# Endpoint pods may run as the endpoint namespace's model-engine ServiceAccount.
-def test_endpoint_namespace_service_account_has_no_access_outside_it():
+def _granted(
+    docs: List[Dict[str, Any]], account: Tuple[str, str], namespaces: List[str]
+) -> List[Tuple[str, Tuple[str, str, str]]]:
+    calls = ENDPOINT_NAMESPACE_CALLS + DEFAULT_NAMESPACE_CALLS + [("get", "", "configmaps")]
+    return [
+        (namespace, call)
+        for namespace in namespaces
+        for call in calls
+        if _can_i(docs, account[0], *call, namespace, None, account[1])
+    ]
+
+
+# Endpoint pods and docker-image batch jobs run user code, and the endpoint namespace is listed
+# in SPLIT_NAMESPACE_ARGS, so the chart creates their account there.
+def test_model_pod_account_has_no_access():
     docs = _render_rbac(PREWARMING_ARGS + DEFAULT_LISTED_ARGS)
 
-    calls = ENDPOINT_NAMESPACE_CALLS + DEFAULT_NAMESPACE_CALLS + [("get", "", "configmaps")]
-    allowed = [
-        (namespace, call)
-        for namespace in [RELEASE_NAMESPACE, "default"]
-        for call in calls
-        if _can_i(docs, ENDPOINT_NAMESPACE, *call, namespace)
-    ]
-    assert allowed == []
+    assert _granted(docs, MODEL_PODS, [ENDPOINT_NAMESPACE, RELEASE_NAMESPACE, "default"]) == []
     assert not _can_i(
         docs, ENDPOINT_NAMESPACE, "get", "", "secrets", RELEASE_NAMESPACE, "codeartifact-pip-conf"
     )

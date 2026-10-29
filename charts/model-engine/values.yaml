@@ -195,6 +195,9 @@ rbac:
   # the release namespace; restartKedaOperator adds a Role in kube-system. Other listed
   # namespaces get no access. With the celery autoscaler enabled, images older than its
   # single-namespace scan (Feb 2026) need cluster-admin.
+  # Only the release namespace's account is bound, so endpoint pods get no Kubernetes access even
+  # when they run as the chart's account. Images that still run batch-job orchestration (disabled
+  # in Oct 2026) need cluster-admin for it.
   clusterAdmin: true
   # endpointNamespace is where the Roles for endpoint management go when clusterAdmin is false.
   # Defaults to config.values.launch.endpoint_namespace; set it when the service config comes

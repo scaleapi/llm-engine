@@ -109,13 +109,6 @@ subjects:
   - kind: ServiceAccount
     name: {{ $fullname }}
     namespace: {{ $releaseNamespace }}
-  {{- /* Batch-job orchestration pods manage endpoints from the endpoint namespace. Only the
-         endpoint namespace's Role binds them, since endpoint pods can share the account. */}}
-  {{- if and $isEndpoint (ne $namespace $releaseNamespace) (has $namespace $serviceAccountNamespaces) }}
-  - kind: ServiceAccount
-    name: {{ $fullname }}
-    namespace: {{ $namespace }}
-  {{- end }}
 ---
 {{- end }}
 {{- end }}
