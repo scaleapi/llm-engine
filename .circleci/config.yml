@@ -184,7 +184,7 @@ jobs:
           command: |
             pushd $HOME/project/charts
             cat model-engine/values_circleci.yaml | envsubst > model-engine/values_circleci_subst.yaml
-            helm install model-engine model-engine --values model-engine/values_circleci_subst.yaml --set tag=$CIRCLE_SHA1 --atomic --debug || {
+            helm install model-engine model-engine --values model-engine/values_circleci_subst.yaml --set tag=$CIRCLE_SHA1 --set rbac.clusterAdmin=false --atomic --debug || {
               echo "=== Helm install failed — capturing pod diagnostics ==="
               kubectl get pods -A
               for pod in $(kubectl get pods -o name 2>/dev/null); do
