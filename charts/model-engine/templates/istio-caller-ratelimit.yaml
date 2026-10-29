@@ -38,6 +38,15 @@ data:
       - key: route
         value: {{ printf "%s_%s" $fullName .name }}
         descriptors:
+          {{- /* A caller with its own limit matches its value entry before the default. */}}
+          {{- range .callerOverrides }}
+          - key: caller
+            value: {{ .caller | quote }}
+            rate_limit:
+              unit: second
+              requests_per_unit: {{ .requestsPerSecond }}
+            shadow_mode: {{ $cfg.shadowMode }}
+          {{- end }}
           - key: caller
             rate_limit:
               unit: second
