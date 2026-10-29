@@ -281,6 +281,26 @@ async def test_build_endpoint_rejects_request_not_matching_stored_record(
 
 
 @pytest.mark.asyncio
+async def test_build_endpoint_checks_only_the_deployed_artifact_image(
+    build_endpoint_request_sync_pytorch: BuildEndpointRequest,
+    endpoint_builder_service_empty_docker_built: LiveEndpointBuilderService,
+):
+    repo: Any = endpoint_builder_service_empty_docker_built.model_endpoint_record_repository
+    repo.add_model_endpoint_record(build_endpoint_request_sync_pytorch.model_endpoint_record)
+    image_exists = Mock(return_value=True)
+    endpoint_builder_service_empty_docker_built.docker_repository.__setattr__(
+        "image_exists", image_exists
+    )
+
+    await endpoint_builder_service_empty_docker_built.build_endpoint(
+        build_endpoint_request_sync_pytorch
+    )
+
+    # Only the user image is checked: a deleted base image tag must not block the deploy.
+    image_exists.assert_called_once()
+
+
+@pytest.mark.asyncio
 async def test_build_endpoint_skips_request_for_replaced_bundle(
     build_endpoint_request_sync_runnable_image: BuildEndpointRequest,
     endpoint_builder_service_empty_docker_built: LiveEndpointBuilderService,

@@ -215,20 +215,13 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                             build_endpoint_request, logger_adapter
                         )
                         logger_adapter.info(f"base_image_params: {base_image_params}")
-                        base_image = await self._build_image(
-                            base_image_params,
-                            build_endpoint_request,
-                            logger_adapter,
-                            "base",
+                        # Images can no longer be built, so only the image that is deployed has to
+                        # exist; the earlier stages only name it.
+                        base_image = self.docker_repository.get_image_url(
+                            base_image_params.image_tag, base_image_params.repo
                         )
                         user_image_params = self._get_user_image_params(
                             base_image, build_endpoint_request, logger_adapter
-                        )
-                        image = await self._build_image(
-                            user_image_params,
-                            build_endpoint_request,
-                            logger_adapter,
-                            "user",
                         )
 
                         image_repo = user_image_params.repo
@@ -243,7 +236,9 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                             and build_endpoint_request.high_priority
                         ):
                             inject_bundle_image_params = self._get_inject_bundle_image_params(
-                                image,
+                                self.docker_repository.get_image_url(
+                                    user_image_params.image_tag, user_image_params.repo
+                                ),
                                 user_image_params,
                                 build_endpoint_request,
                                 logger_adapter,
@@ -270,6 +265,13 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                                 logger_adapter.error(
                                     f"No bundle object found at {model_bundle_path}!"
                                 )
+                        else:
+                            image = await self._build_image(
+                                user_image_params,
+                                build_endpoint_request,
+                                logger_adapter,
+                                "user",
+                            )
 
                     except DockerBuildFailedException:
                         existing_image = await self._get_existing_artifact_image(
