@@ -188,7 +188,17 @@ class LiveEndpointBuilderService(EndpointBuilderService):
 
             try:
                 # Inside the try so a rejected request marks the endpoint UPDATE_FAILED.
-                model_bundle = await self._load_model_bundle_from_record(build_endpoint_request)
+                stored_model_bundle = await self._load_model_bundle_from_record(
+                    build_endpoint_request
+                )
+                if stored_model_bundle is None:
+                    # A later update changed the bundle and has its own build, so this one must
+                    # neither deploy nor change the endpoint's status.
+                    logger_adapter.warning(
+                        f"Skipping build of endpoint {endpoint_id}: its bundle has changed."
+                    )
+                    return BuildEndpointResponse(status=BuildEndpointStatus.OK)
+                model_bundle = stored_model_bundle
                 self._validate_build_endpoint_request(build_endpoint_request)
 
                 # First, build the image if the model bundle does not have a docker image
@@ -767,8 +777,9 @@ class LiveEndpointBuilderService(EndpointBuilderService):
 
     async def _load_model_bundle_from_record(
         self, build_endpoint_request: BuildEndpointRequest
-    ) -> ModelBundle:
-        """Raises ValueError if the request's endpoint doesn't match its stored record.
+    ) -> Optional[ModelBundle]:
+        """Returns the stored bundle, or None if the request is for a bundle the endpoint no
+        longer uses. Raises ValueError if the request's endpoint or owner doesn't match.
 
         Anyone who can publish to the builder queue controls the request, so the endpoint's owner
         and bundle are checked against the database and the stored bundle is the one deployed.
@@ -777,18 +788,15 @@ class LiveEndpointBuilderService(EndpointBuilderService):
         stored_record = await self.model_endpoint_record_repository.get_model_endpoint_record(
             request_record.id, use_cache=False
         )
-        if stored_record is None or (
-            stored_record.owner,
-            stored_record.created_by,
-            stored_record.current_model_bundle.id,
-        ) != (
+        if stored_record is None or (stored_record.owner, stored_record.created_by) != (
             request_record.owner,
             request_record.created_by,
-            request_record.current_model_bundle.id,
         ):
             raise ValueError(
                 f"Build request for endpoint {request_record.id} does not match its stored record."
             )
+        if stored_record.current_model_bundle.id != request_record.current_model_bundle.id:
+            return None
         request_record.current_model_bundle = stored_record.current_model_bundle
         return stored_record.current_model_bundle
 

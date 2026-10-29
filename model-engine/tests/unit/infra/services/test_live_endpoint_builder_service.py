@@ -257,14 +257,7 @@ async def test_build_endpoint_with_control_plane_aws_role_raises_value_error(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "forged_field",
-    [
-        pytest.param("owner", id="owner"),
-        pytest.param("created_by", id="created-by"),
-        pytest.param("bundle_id", id="bundle-id"),
-    ],
-)
+@pytest.mark.parametrize("forged_field", ["owner", "created_by"])
 async def test_build_endpoint_rejects_request_not_matching_stored_record(
     build_endpoint_request_sync_runnable_image: BuildEndpointRequest,
     endpoint_builder_service_empty_docker_built: LiveEndpointBuilderService,
@@ -273,12 +266,7 @@ async def test_build_endpoint_rejects_request_not_matching_stored_record(
     repo: Any = endpoint_builder_service_empty_docker_built.model_endpoint_record_repository
     request_record = build_endpoint_request_sync_runnable_image.model_endpoint_record
     repo.add_model_endpoint_record(request_record.copy(deep=True))
-    if forged_field == "bundle_id":
-        request_record.current_model_bundle = request_record.current_model_bundle.copy(
-            update={"id": "forged-bundle-id"}
-        )
-    else:
-        setattr(request_record, forged_field, "forged")
+    setattr(request_record, forged_field, "forged")
     create_or_update_resources = Mock()
     endpoint_builder_service_empty_docker_built.resource_gateway.__setattr__(
         "create_or_update_resources", create_or_update_resources
@@ -290,6 +278,34 @@ async def test_build_endpoint_rejects_request_not_matching_stored_record(
         )
 
     create_or_update_resources.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_build_endpoint_skips_request_for_replaced_bundle(
+    build_endpoint_request_sync_runnable_image: BuildEndpointRequest,
+    endpoint_builder_service_empty_docker_built: LiveEndpointBuilderService,
+):
+    repo: Any = endpoint_builder_service_empty_docker_built.model_endpoint_record_repository
+    request_record = build_endpoint_request_sync_runnable_image.model_endpoint_record
+    stored_record = request_record.copy(deep=True)
+    stored_record.status = ModelEndpointStatus.READY
+    repo.add_model_endpoint_record(stored_record)
+    request_record.current_model_bundle = request_record.current_model_bundle.copy(
+        update={"id": "replaced-bundle-id"}
+    )
+    create_or_update_resources = Mock()
+    endpoint_builder_service_empty_docker_built.resource_gateway.__setattr__(
+        "create_or_update_resources", create_or_update_resources
+    )
+
+    response = await endpoint_builder_service_empty_docker_built.build_endpoint(
+        build_endpoint_request_sync_runnable_image
+    )
+
+    assert response.status == BuildEndpointStatus.OK
+    create_or_update_resources.assert_not_called()
+    persisted = await repo.get_model_endpoint_record(model_endpoint_id=request_record.id)
+    assert persisted.status == ModelEndpointStatus.READY
 
 
 @pytest.mark.asyncio
