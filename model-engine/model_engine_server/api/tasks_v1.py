@@ -46,6 +46,15 @@ inference_task_router_v1 = APIRouter(prefix="/v1")
 logger = make_logger(logger_name())
 
 
+def _reject_cloudpickle(request: EndpointPredictV1Request) -> None:
+    # Endpoint pods would unpickle this field, so a caller could run code inside the pod.
+    if request.cloudpickle is not None:
+        raise HTTPException(
+            status_code=400,
+            detail="The cloudpickle field is no longer supported. Use args or url instead.",
+        )
+
+
 # Task-status polls do a blocking result-backend read (S3 on AWS). They must not share
 # the default anyio threadpool: poll volume scales with the number of outstanding tasks,
 # and when polls fill the shared pool every other sync route queues behind them.
@@ -70,6 +79,7 @@ async def create_async_inference_task(
         logger.info(f"POST /async-tasks to endpoint {model_endpoint_id} for {auth}")
     else:
         logger.info(f"POST /async-tasks {request} to endpoint {model_endpoint_id} for {auth}")
+    _reject_cloudpickle(request)
     try:
         use_case = CreateAsyncInferenceTaskV1UseCase(
             model_endpoint_service=external_interfaces.model_endpoint_service,
@@ -163,6 +173,7 @@ async def create_sync_inference_task(
         logger.info(f"POST /sync-tasks to endpoint {model_endpoint_id} for {auth}")
     else:
         logger.info(f"POST /sync-tasks with {request} to endpoint {model_endpoint_id} for {auth}")
+    _reject_cloudpickle(request)
     try:
         use_case = CreateSyncInferenceTaskV1UseCase(
             model_endpoint_service=external_interfaces.model_endpoint_service,
@@ -217,6 +228,7 @@ async def create_streaming_inference_task(
         logger.info(
             f"POST /streaming-tasks with {request} to endpoint {model_endpoint_id} for {auth}"
         )
+    _reject_cloudpickle(request)
     try:
         use_case = CreateStreamingInferenceTaskV1UseCase(
             model_endpoint_service=external_interfaces.model_endpoint_service,

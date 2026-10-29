@@ -233,7 +233,11 @@ def build_redis_url(host: str, port: Union[str, int], db_index: int = 0) -> str:
     # what lets a password containing @, / or # survive URL parsing.
     credential = f":{quote(auth_token, safe='')}@" if auth_token else ""
     if redis_tls_enabled():
-        return f"rediss://{credential}{host}:{port}/{db_index}?ssl_cert_reqs=none"
+        query = "ssl_cert_reqs=required&ssl_check_hostname=true"
+        ca_certs = os.getenv("REDIS_SSL_CA_CERTS")
+        if ca_certs:
+            query += f"&ssl_ca_certs={quote(ca_certs, safe='')}"
+        return f"rediss://{credential}{host}:{port}/{db_index}?{query}"
     return f"redis://{credential}{host}:{port}/{db_index}"
 
 
@@ -244,7 +248,14 @@ def get_redis_instance(db_index: int = 0) -> Union[Redis, StrictRedis]:
 
     if not auth_token and not use_tls:
         return Redis(host=host, port=port, db=db_index)
-    ssl_kwargs: Dict[str, Any] = {"ssl": True, "ssl_cert_reqs": "none"} if use_tls else {}
+    ssl_kwargs: Dict[str, Any] = {}
+    if use_tls:
+        ssl_kwargs = {
+            "ssl": True,
+            "ssl_cert_reqs": "required",
+            "ssl_check_hostname": True,
+            "ssl_ca_certs": os.getenv("REDIS_SSL_CA_CERTS"),
+        }
     return StrictRedis(
         host=host,
         port=port,

@@ -1172,39 +1172,6 @@ class CreateLLMModelBundleV1UseCase:
         )
         return subcommands
 
-    def load_model_files_sub_commands_trt_llm(
-        self,
-        checkpoint_path,
-    ):
-        """
-        This function generate subcommands to load model files for TensorRT-LLM.
-        Each model checkpoint is constituted of two folders: `model_weights` which stores the model engine files,
-        and `model_tokenizer` which stores the model tokenizer files.
-        See llm-engine/model-engine/model_engine_server/inference/tensorrt-llm/triton_model_repo/tensorrt_llm/config.pbtxt
-        and llm-engine/model-engine/model_engine_server/inference/tensorrt-llm/triton_model_repo/postprocessing/config.pbtxt
-        """
-        if checkpoint_path.startswith("s3://"):
-            s3_endpoint_flag = _get_s3_endpoint_flag()
-            subcommands = [
-                f"./s5cmd {s3_endpoint_flag} --numworkers 512 cp --concurrency 50 {os.path.join(checkpoint_path, '*')} ./"
-            ]
-        elif checkpoint_path.startswith("gs://"):
-            # Same check_hashes rationale as load_model_weights_sub_commands_gcs.
-            subcommands = [
-                "curl -sSL https://dl.google.com/dl/cloudsdk/channels/rapid/google-cloud-sdk.tar.gz"
-                " | tar -xz -C /opt"
-                " && /opt/google-cloud-sdk/bin/gcloud config set disable_usage_reporting true 2>/dev/null"
-                " && /opt/google-cloud-sdk/bin/gcloud config set storage/check_hashes if_fast_else_skip 2>/dev/null",
-                f"/opt/google-cloud-sdk/bin/gcloud storage cp -r {os.path.join(checkpoint_path, '*')} ./",
-            ]
-        else:
-            subcommands = [
-                "export AZCOPY_AUTO_LOGIN_TYPE=WORKLOAD",
-                "curl -L https://aka.ms/downloadazcopy-v10-linux | tar --strip-components=1 -C /usr/local/bin --no-same-owner --exclude=*.txt -xzvf - && chmod 755 /usr/local/bin/azcopy",
-                f"azcopy copy --recursive {os.path.join(checkpoint_path, '*')} ./",
-            ]
-        return subcommands
-
     async def create_deepspeed_bundle(
         self,
         user: User,
@@ -1775,59 +1742,9 @@ class CreateLLMModelBundleV1UseCase:
         num_shards: int,
         checkpoint_path: Optional[str],
     ):
-        command = []
-
-        subcommands = []
-
-        if not checkpoint_path:
-            raise ObjectHasInvalidValueException(
-                "Checkpoint must be provided for TensorRT-LLM models."
-            )
-
-        validate_checkpoint_path_uri(checkpoint_path)
-
-        subcommands += self.load_model_files_sub_commands_trt_llm(
-            checkpoint_path,
+        raise ObjectHasInvalidValueException(
+            "The TensorRT-LLM inference framework is deprecated and no longer supported."
         )
-
-        subcommands.append(
-            f"python3 launch_triton_server.py --world_size={num_shards} --model_repo=./model_repo/"
-        )
-
-        command = [
-            "/bin/bash",
-            "-c",
-            ";".join(subcommands),
-        ]
-
-        return (
-            await self.create_model_bundle_use_case.execute(
-                user,
-                CreateModelBundleV2Request(
-                    name=endpoint_unique_name,
-                    schema_location="TBA",
-                    flavor=StreamingEnhancedRunnableImageFlavor(
-                        flavor=ModelBundleFlavorType.STREAMING_ENHANCED_RUNNABLE_IMAGE,
-                        repository=hmi_config.tensorrt_llm_repository,
-                        tag=framework_image_tag,
-                        command=command,
-                        streaming_command=command,
-                        protocol="http",
-                        readiness_initial_delay_seconds=10,
-                        healthcheck_route="/v2/health/ready",
-                        # See https://github.com/triton-inference-server/server/blob/main/docs/protocol/extension_generate.md
-                        predict_route="/v2/models/ensemble/generate",
-                        streaming_predict_route="/v2/models/ensemble/generate_stream",
-                        env={},
-                    ),
-                    metadata={},
-                ),
-                do_auth_check=False,
-                # Skip auth check because llm create endpoint is called as the user itself,
-                # but the user isn't directly making the action. It should come from the fine tune
-                # job.
-            )
-        ).model_bundle_id
 
 
 class CreateLLMModelEndpointV1UseCase:

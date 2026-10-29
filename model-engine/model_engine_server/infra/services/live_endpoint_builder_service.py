@@ -7,9 +7,8 @@ from contextlib import AsyncExitStack
 from logging import LoggerAdapter
 from typing import Dict, List, Optional, Sequence, Set
 
-from datadog import statsd
 from model_engine_server.common.config import hmi_config
-from model_engine_server.common.dtos.docker_repository import BuildImageRequest, BuildImageResponse
+from model_engine_server.common.dtos.docker_repository import BuildImageRequest
 from model_engine_server.common.dtos.endpoint_builder import (
     BuildEndpointRequest,
     BuildEndpointResponse,
@@ -21,7 +20,7 @@ from model_engine_server.common.io import open_wrapper
 from model_engine_server.common.serialization_utils import bool_to_str
 from model_engine_server.core.config import infra_config
 from model_engine_server.core.loggers import logger_name, make_logger
-from model_engine_server.core.notification_gateway import NotificationApp, NotificationGateway
+from model_engine_server.core.notification_gateway import NotificationGateway
 from model_engine_server.core.utils.env import environment
 from model_engine_server.domain.entities import (
     ArtifactLike,
@@ -175,8 +174,6 @@ class LiveEndpointBuilderService(EndpointBuilderService):
             f"Building service for endpoint_name: {model_endpoint_record.name}",
         )
 
-        self._validate_build_endpoint_request(build_endpoint_request)
-
         async with AsyncExitStack() as stack:
             lock_ctx = self.model_endpoint_record_repository.get_lock_context(model_endpoint_record)
             lock = await stack.enter_async_context(lock_ctx)
@@ -190,6 +187,20 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                 )
 
             try:
+                # Inside the try so a rejected request marks the endpoint UPDATE_FAILED.
+                stored_model_bundle = await self._load_model_bundle_from_record(
+                    build_endpoint_request
+                )
+                if stored_model_bundle is None:
+                    # A later update changed the bundle and has its own build, so this one must
+                    # neither deploy nor change the endpoint's status.
+                    logger_adapter.warning(
+                        f"Skipping build of endpoint {endpoint_id}: its bundle has changed."
+                    )
+                    return BuildEndpointResponse(status=BuildEndpointStatus.OK)
+                model_bundle = stored_model_bundle
+                self._validate_build_endpoint_request(build_endpoint_request)
+
                 # First, build the image if the model bundle does not have a docker image
                 if not model_bundle.is_runnable():
                     logger_adapter.info(
@@ -204,20 +215,13 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                             build_endpoint_request, logger_adapter
                         )
                         logger_adapter.info(f"base_image_params: {base_image_params}")
-                        base_image = await self._build_image(
-                            base_image_params,
-                            build_endpoint_request,
-                            logger_adapter,
-                            "base",
+                        # Images can no longer be built, so only the image that is deployed has to
+                        # exist; the earlier stages only name it.
+                        base_image = self.docker_repository.get_image_url(
+                            base_image_params.image_tag, base_image_params.repo
                         )
                         user_image_params = self._get_user_image_params(
                             base_image, build_endpoint_request, logger_adapter
-                        )
-                        image = await self._build_image(
-                            user_image_params,
-                            build_endpoint_request,
-                            logger_adapter,
-                            "user",
                         )
 
                         image_repo = user_image_params.repo
@@ -232,7 +236,9 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                             and build_endpoint_request.high_priority
                         ):
                             inject_bundle_image_params = self._get_inject_bundle_image_params(
-                                image,
+                                self.docker_repository.get_image_url(
+                                    user_image_params.image_tag, user_image_params.repo
+                                ),
                                 user_image_params,
                                 build_endpoint_request,
                                 logger_adapter,
@@ -259,11 +265,24 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                                 logger_adapter.error(
                                     f"No bundle object found at {model_bundle_path}!"
                                 )
+                        else:
+                            image = await self._build_image(
+                                user_image_params,
+                                build_endpoint_request,
+                                logger_adapter,
+                                "user",
+                            )
 
                     except DockerBuildFailedException:
-                        log_error("Failed to build base and user docker images")
-                        self.monitoring_metrics_gateway.emit_docker_failed_build_metric()
-                        raise
+                        existing_image = await self._get_existing_artifact_image(
+                            build_endpoint_request, logger_adapter
+                        )
+                        if existing_image is None:
+                            log_error("Failed to build base and user docker images")
+                            self.monitoring_metrics_gateway.emit_docker_failed_build_metric()
+                            raise
+                        image = existing_image
+                        image_repo, image_tag = existing_image.rsplit(":", 1)
 
                     self.convert_artifact_like_bundle_to_runnable_image(
                         build_endpoint_request, image_repo, image_tag
@@ -674,19 +693,14 @@ class LiveEndpointBuilderService(EndpointBuilderService):
         image_type: str,
     ) -> str:
         """
-        Builds the service image and updates the endpoint status if the image building fails.
+        Returns the URL of the service image if it already exists.
 
         Returns:
-            Image url: if image build is successful or if it already exists.
+            Image url: if the image already exists.
         Raises:
-            DockerBuildFailedException: If image build is required and building it fails.
+            DockerBuildFailedException: If the image does not exist. Building it is deprecated.
         """
-        model_endpoint_record = build_endpoint_request.model_endpoint_record
-        model_endpoint_name = model_endpoint_record.name
-        user_id = model_endpoint_record.created_by
         endpoint_id = build_endpoint_request.model_endpoint_record.id
-
-        log_error = make_exception_log(logger_adapter)
 
         # image_exists hardcodes the ML ECR account, which needs to change for external self-hosted
         if not self.docker_repository.image_exists(
@@ -695,99 +709,15 @@ class LiveEndpointBuilderService(EndpointBuilderService):
             aws_profile=ECR_AWS_PROFILE,
         ):
             self.monitoring_metrics_gateway.emit_image_build_cache_miss_metric(image_type)
-            tags = [
-                f"kube_deployment:{build_endpoint_request.deployment_name}",
-                f"user_id:{user_id}",
-            ]
-            with statsd.timed(f"kaniko.{image_type}_build_time", tags=tags):
-                try:
-                    build_result: BuildImageResponse = self.docker_repository.build_image(
-                        image_params,
-                    )
-                    build_result_status = build_result.status
-                    build_result_logs: str = build_result.logs
-                    logger_adapter.info(f"Image Build job: {build_result.job_name}")
-                except Exception:  # noqa
-                    build_result_status = False
-                    s3_logs_location: Optional[str] = None
-                    log_error(
-                        "Unknown error encountered on image build. "
-                        f"No logs to write for {model_endpoint_name}, since docker build threw exception"
-                    )
-                else:
-                    # Write builder logs into a remote file
-                    s3_logs_location = self._get_service_builder_logs_location(
-                        user_id=user_id,
-                        endpoint_name=model_endpoint_name,
-                    )
-                    try:
-                        with self.filesystem_gateway.open(
-                            s3_logs_location,
-                            "w",
-                            aws_profile=infra_config().profile_ml_worker,
-                        ) as file_out:
-                            file_out.write(build_result_logs)
-                    except Exception:  # noqa
-                        log_error(
-                            f"Unable to publish service builder logs for {model_endpoint_name}"
-                        )
-
-                # Check that the build didn't succeed and the image doesn't exist.
-                # There's a race condition where if another simultaneous build is started,
-                # then one of the builds will not succeed, but the docker image ends up built.
-                if not build_result_status and not self.docker_repository.image_exists(
-                    repository_name=image_params.repo,
-                    image_tag=image_params.image_tag,
-                    aws_profile=ECR_AWS_PROFILE,
-                ):
-                    log_error(
-                        f"Image build failed for endpoint {model_endpoint_name}, user {user_id}"
-                    )
-
-                    # Note: status (and status_reason) is set by the outer except handler
-                    # from the DockerBuildFailedException raised below, so we don't write
-                    # the record here — doing so would be overwritten. The exception message
-                    # is kept user-safe (no internal ids) since it becomes the status_reason.
-
-                    if s3_logs_location is not None:
-                        help_url = self.filesystem_gateway.generate_signed_url(
-                            s3_logs_location,
-                            expiration=43200,  # 12 hours
-                            aws_profile=infra_config().profile_ml_worker,
-                        )
-                    else:
-                        help_url = (
-                            "https://app.datadoghq.com/logs?query=service%3Alaunch-"
-                            f"endpoint-builder%20env%3A{ENV}&cols=host%2Cservice&"
-                            "index=%2A&messageDisplay=inline&stream_sort=time%2C"
-                            "desc&viz=stream&live=true"
-                        )
-
-                    user_id = build_endpoint_request.model_endpoint_record.created_by
-
-                    endpoint_name = build_endpoint_request.model_endpoint_record.name
-                    bundle_id = build_endpoint_request.model_endpoint_record.current_model_bundle.id
-                    message = (
-                        f"Your endpoint '{endpoint_name}' failed to build! "
-                        f"Endpoint ID: {endpoint_id}. Bundle ID: {bundle_id}."
-                    )
-
-                    self.notification_gateway.send_notification(
-                        title="Launch Endpoint Build Failed",
-                        description=message,
-                        help_url=help_url,
-                        notification_apps=[
-                            NotificationApp.SLACK,
-                            NotificationApp.EMAIL,
-                        ],
-                        users=[user_id],
-                    )
-
-                    logger_adapter.error(f"Image build failed ({endpoint_id=})")
-                    raise DockerBuildFailedException(
-                        "Image build failed. Check that the bundle's image and "
-                        "dependencies are valid and accessible."
-                    )
+            # Building images for artifact bundles is deprecated: endpoints can only use images
+            # that already exist.
+            logger_adapter.error(
+                f"Image not found, artifact image builds are deprecated ({endpoint_id=})"
+            )
+            raise DockerBuildFailedException(
+                "Building images for cloudpickle and zip bundles is no longer supported. "
+                "Use a runnable image bundle instead."
+            )
 
         else:
             self.monitoring_metrics_gateway.emit_image_build_cache_hit_metric(image_type)
@@ -797,15 +727,88 @@ class LiveEndpointBuilderService(EndpointBuilderService):
 
         return self.docker_repository.get_image_url(image_params.image_tag, image_params.repo)
 
+    async def _get_existing_artifact_image(
+        self,
+        build_endpoint_request: BuildEndpointRequest,
+        logger_adapter: LoggerAdapter,
+    ) -> Optional[str]:
+        """Returns the image the endpoint already runs if it was built for the same bundle.
+
+        Artifact images can no longer be built, and their tags include the builder's GIT_TAG, so
+        an update of an existing artifact endpoint never finds a matching image. The running image
+        is reused only if it serves the same BUNDLE_URL and its repository and tag match what this
+        builder would compute, apart from the GIT_TAG it was built at.
+        """
+        model_endpoint_record = build_endpoint_request.model_endpoint_record
+        model_bundle = model_endpoint_record.current_model_bundle
+        assert isinstance(model_bundle.flavor, ArtifactLike)
+        try:
+            infra_state = await self.resource_gateway.get_resources(
+                endpoint_id=model_endpoint_record.id,
+                deployment_name=build_endpoint_request.deployment_name,
+                endpoint_type=model_endpoint_record.endpoint_type,
+            )
+        except EndpointResourceInfraException:
+            return None
+        if infra_state.bundle_url != model_bundle.flavor.location:
+            return None
+        if "@" in infra_state.image or ":" not in infra_state.image.rsplit("/", 1)[-1]:
+            return None
+        running_repo, running_tag = infra_state.image.rsplit(":", 1)
+        expected = self._get_user_image_params(
+            infra_state.image, build_endpoint_request, logger_adapter
+        )
+        expected_repo = self.docker_repository.get_image_url(expected.image_tag, expected.repo)
+        if running_repo != expected_repo.rsplit(":", 1)[0]:
+            return None
+        # Same base image and requirements: only the GIT_TAG between them may differ.
+        if f"-{GIT_TAG}-" not in expected.image_tag:
+            return None
+        prefix, suffix = expected.image_tag.split(f"-{GIT_TAG}-", 1)
+        running_git_tag = running_tag[len(prefix) + 1 : -len(suffix) - 1]
+        if not (
+            running_tag.startswith(f"{prefix}-")
+            and running_tag.endswith(f"-{suffix}")
+            and running_git_tag.isalnum()
+        ):
+            return None
+        logger_adapter.info(
+            f"Reusing the running image {infra_state.image} for {model_endpoint_record.id=}"
+        )
+        return infra_state.image
+
+    async def _load_model_bundle_from_record(
+        self, build_endpoint_request: BuildEndpointRequest
+    ) -> Optional[ModelBundle]:
+        """Returns the stored bundle, or None if the request is for a bundle the endpoint no
+        longer uses. Raises ValueError if the request's endpoint or owner doesn't match.
+
+        Anyone who can publish to the builder queue controls the request, so the endpoint's owner
+        and bundle are checked against the database and the stored bundle is the one deployed.
+        """
+        request_record = build_endpoint_request.model_endpoint_record
+        stored_record = await self.model_endpoint_record_repository.get_model_endpoint_record(
+            request_record.id, use_cache=False
+        )
+        if stored_record is None or (stored_record.owner, stored_record.created_by) != (
+            request_record.owner,
+            request_record.created_by,
+        ):
+            raise ValueError(
+                f"Build request for endpoint {request_record.id} does not match its stored record."
+            )
+        if stored_record.current_model_bundle.id != request_record.current_model_bundle.id:
+            return None
+        request_record.current_model_bundle = stored_record.current_model_bundle
+        return stored_record.current_model_bundle
+
     @staticmethod
     def _validate_build_endpoint_request(
         build_endpoint_request: BuildEndpointRequest,
     ) -> None:
         """Raises ValueError if the request's AWS role isn't allowed."""
-        allowed_aws_roles = {
-            infra_config().profile_ml_worker,
-            infra_config().profile_ml_inference_worker,
-        }
+        # Endpoints run with the inference role only; the control-plane role is never allowed.
+        allowed_aws_roles = {infra_config().profile_ml_inference_worker}
 
         if build_endpoint_request.aws_role not in allowed_aws_roles:
             raise ValueError(
@@ -824,6 +827,14 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                 raise ValueError(
                     f"Runnable image endpoints cannot set the following env vars: {restriced_env_vars}"
                 )
+        # Bundles built before the TensorRT-LLM deprecation download the checkpoint over the
+        # image's own launch script and then run it.
+        if isinstance(model_bundle.flavor, RunnableImageLike) and any(
+            "launch_triton_server.py" in part for part in model_bundle.flavor.command
+        ):
+            raise ValueError(
+                "The TensorRT-LLM inference framework is deprecated and no longer supported."
+            )
         if (
             not isinstance(model_bundle.flavor, RunnableImageLike)
             and build_endpoint_request.nodes_per_worker > 1
@@ -859,12 +870,3 @@ class LiveEndpointBuilderService(EndpointBuilderService):
         pip-installable requirements.
         """
         return "-".join([base_image_tag, git_tag, requirements_hash])
-
-    @staticmethod
-    def _get_service_builder_logs_location(user_id: str, endpoint_name: str) -> str:
-        """Creates an S3 url for the user's endpoint docker build logs.
-
-        This function uses creates a key from the endpoint's name and owning user's ID.
-        It uses an S3 bucket that is accessible by the Gateway & Service Builder.
-        """
-        return f"s3://{infra_config().s3_bucket}/service_builder_logs/{user_id}_{endpoint_name}"

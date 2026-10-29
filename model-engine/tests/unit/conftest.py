@@ -532,7 +532,7 @@ class FakeModelEndpointRecordRepository(ModelEndpointRecordRepository):
         return model_endpoint_record
 
     async def get_model_endpoint_record(
-        self, model_endpoint_id: str
+        self, model_endpoint_id: str, use_cache: bool = True
     ) -> Optional[ModelEndpointRecord]:
         return self.db.get(model_endpoint_id)
 
@@ -2117,12 +2117,6 @@ def fake_docker_repository_image_always_exists() -> FakeDockerRepository:
 @pytest.fixture
 def fake_docker_repository_image_never_exists() -> FakeDockerRepository:
     repo = FakeDockerRepository(image_always_exists=False, raises_error=False)
-    return repo
-
-
-@pytest.fixture
-def fake_docker_repository_image_never_exists_and_builds_dont_work() -> FakeDockerRepository:
-    repo = FakeDockerRepository(image_always_exists=False, raises_error=True)
     return repo
 
 

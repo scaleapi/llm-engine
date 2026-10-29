@@ -157,6 +157,8 @@ class ModelEndpointInfraState(BaseModel):
     high_priority: Optional[bool] = None
     num_queued_items: Optional[int] = None
     image: str
+    # BUNDLE_URL of the running Deployment's main container, set by get_resources.
+    bundle_url: Optional[str] = None
 
 
 class ModelEndpoint(BaseModel):

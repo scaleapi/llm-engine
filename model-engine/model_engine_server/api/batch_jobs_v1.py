@@ -23,6 +23,9 @@ from model_engine_server.common.dtos.batch_jobs import (
 )
 from model_engine_server.core.auth.authentication_repository import User
 from model_engine_server.core.loggers import logger_name, make_logger
+from model_engine_server.domain.authorization.live_authorization_module import (
+    LiveAuthorizationModule,
+)
 from model_engine_server.domain.exceptions import (
     DockerImageNotFoundException,
     EndpointLabelsException,
@@ -148,6 +151,11 @@ async def create_docker_image_batch_job(
         )
         return await use_case.execute(user=auth, request=request)
     except (ObjectNotFoundException, ObjectNotAuthorizedException) as exc:
+        if not LiveAuthorizationModule.check_access_create_docker_image_batch_job(auth):
+            raise HTTPException(
+                status_code=403,
+                detail="User is not authorized to create docker image batch jobs.",
+            ) from exc
         raise HTTPException(
             status_code=404, detail="The specified batch job bundle could not be found"
         ) from exc

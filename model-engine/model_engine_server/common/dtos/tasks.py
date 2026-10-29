@@ -52,7 +52,9 @@ class EndpointPredictV1Request(BaseModel):
     callback_url: Optional[str] = None
     callback_auth: Optional[CallbackAuth] = None
     return_pickled: bool = False
-    destination_path: Optional[str] = None
+    # A path on the endpoint's own host, e.g. "/predict". It is appended to the endpoint URL, so it
+    # must not contain characters that change the host or port.
+    destination_path: Optional[str] = Field(default=None, pattern=r"^(/[A-Za-z0-9._~-]+)*/?$")
 
 
 class SyncEndpointPredictV1Request(EndpointPredictV1Request):

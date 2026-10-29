@@ -49,6 +49,11 @@ async def create_docker_image_batch_job_bundle(
             docker_image_batch_job_bundle_repo=external_interfaces.docker_image_batch_job_bundle_repository
         )
         return await use_case.execute(user=auth, request=request)
+    except ObjectNotAuthorizedException as exc:
+        raise HTTPException(
+            status_code=403,
+            detail="User is not authorized to create docker image batch job bundles.",
+        ) from exc
     except EndpointResourceInvalidRequestException as exc:
         raise HTTPException(
             status_code=400,

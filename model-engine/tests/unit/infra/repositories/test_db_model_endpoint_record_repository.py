@@ -280,6 +280,29 @@ async def test_get_model_endpoint_record_returns_none(
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("use_cache,expected_db_reads", [(True, 0), (False, 1)])
+async def test_get_model_endpoint_record_use_cache(
+    dbsession: Callable[[], AsyncSession],
+    entity_model_endpoint_record: ModelEndpointRecord,
+    fake_monitoring_metrics_gateway: FakeMonitoringMetricsGateway,
+    use_cache: bool,
+    expected_db_reads: int,
+):
+    OrmModelEndpoint.select_by_id = AsyncMock(return_value=None)
+    db_model_endpoint_record_repository.cache["cached_endpoint_id"] = entity_model_endpoint_record
+
+    repo = DbModelEndpointRecordRepository(
+        monitoring_metrics_gateway=fake_monitoring_metrics_gateway,
+        session=dbsession,
+        read_only=False,
+    )
+    await repo.get_model_endpoint_record("cached_endpoint_id", use_cache=use_cache)
+
+    assert OrmModelEndpoint.select_by_id.await_count == expected_db_reads
+    db_model_endpoint_record_repository.cache.pop("cached_endpoint_id", None)
+
+
+@pytest.mark.asyncio
 async def test_delete_model_endpoint_record_success(
     dbsession: Callable[[], AsyncSession],
     orm_model_endpoint: Endpoint,

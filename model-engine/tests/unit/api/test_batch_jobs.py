@@ -2,6 +2,9 @@ from typing import Any, Dict, Optional, Tuple
 
 import pytest
 from fastapi.testclient import TestClient
+from model_engine_server.api.app import app
+from model_engine_server.api.dependencies import verify_authentication
+from model_engine_server.core.auth.authentication_repository import User
 from model_engine_server.domain.entities import DockerImageBatchJob, GpuType, Trigger
 from model_engine_server.domain.entities.docker_image_batch_job_bundle_entity import (
     DockerImageBatchJobBundle,
@@ -71,6 +74,28 @@ def test_create_docker_image_batch_job_success(
         json=create_docker_image_batch_job_request,
     )
     assert response.status_code == 200
+
+
+def test_create_docker_image_batch_job_not_privileged(
+    test_api_key: str,
+    get_test_client_wrapper,
+    create_docker_image_batch_job_request: Dict[str, Any],
+    docker_image_batch_job_bundle_1_v1: Tuple[DockerImageBatchJobBundle, Any],
+):
+    client = get_test_client_wrapper(
+        fake_docker_image_batch_job_bundle_repository_contents={
+            docker_image_batch_job_bundle_1_v1[0].id: docker_image_batch_job_bundle_1_v1[0]
+        }
+    )
+    app.dependency_overrides[verify_authentication] = lambda: User(
+        user_id=test_api_key, team_id=test_api_key, is_privileged_user=False
+    )
+    response = client.post(
+        "/v1/docker-image-batch-jobs",
+        auth=(test_api_key, ""),
+        json=create_docker_image_batch_job_request,
+    )
+    assert response.status_code == 403
 
 
 @pytest.mark.parametrize("gpu_type", [e for e in GpuType])

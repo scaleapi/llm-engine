@@ -17,10 +17,11 @@ ENCODED_RESERVED_CHARS = "p%40ss%2Fw%23rd"
 
 @pytest.fixture
 def redis_env(monkeypatch):
-    def _set(auth_token=None, enable_tls=None):
+    def _set(auth_token=None, enable_tls=None, ca_certs=None):
         for name, value in (
             ("REDIS_AUTH_TOKEN", auth_token),
             ("REDIS_ENABLE_TLS", enable_tls),
+            ("REDIS_SSL_CA_CERTS", ca_certs),
         ):
             if value is None:
                 monkeypatch.delenv(name, raising=False)
@@ -50,12 +51,25 @@ def test_credential_without_tls_yields_plaintext_url(redis_env):
 
 def test_tls_without_credential_yields_rediss_url(redis_env):
     redis_env(enable_tls="true")
-    assert build_redis_url("host", 6379, 0) == "rediss://host:6379/0?ssl_cert_reqs=none"
+    assert (
+        build_redis_url("host", 6379, 0)
+        == "rediss://host:6379/0?ssl_cert_reqs=required&ssl_check_hostname=true"
+    )
 
 
 def test_credential_defaults_to_tls_url(redis_env):
     redis_env(auth_token="tok")
-    assert build_redis_url("host", 6379, 1) == "rediss://:tok@host:6379/1?ssl_cert_reqs=none"
+    assert (
+        build_redis_url("host", 6379, 1)
+        == "rediss://:tok@host:6379/1?ssl_cert_reqs=required&ssl_check_hostname=true"
+    )
+
+
+def test_tls_url_includes_ca_certs_when_set(redis_env):
+    redis_env(enable_tls="true", ca_certs="/etc/ssl/redis ca.pem")
+    assert build_redis_url("host", 6379, 0) == (
+        "rediss://host:6379/0?ssl_cert_reqs=required&ssl_check_hostname=true&ssl_ca_certs=%2Fetc%2Fssl%2Fredis%20ca.pem"
+    )
 
 
 def test_no_credential_no_tls_yields_plain_url(redis_env):
@@ -137,6 +151,14 @@ def test_instance_tls_without_credential(redis_env, fixed_redis_host):
     client = get_redis_instance()
     assert client.connection_pool.connection_kwargs.get("password") is None
     assert _uses_tls(client)
+
+
+def test_instance_tls_verifies_certificate(redis_env, fixed_redis_host):
+    redis_env(enable_tls="true", ca_certs="/etc/ssl/redis-ca.pem")
+    kwargs = get_redis_instance().connection_pool.connection_kwargs
+    assert kwargs["ssl_cert_reqs"] == "required"
+    assert kwargs["ssl_check_hostname"] is True
+    assert kwargs["ssl_ca_certs"] == "/etc/ssl/redis-ca.pem"
 
 
 def test_instance_credential_implies_tls_when_unset(redis_env, fixed_redis_host):
