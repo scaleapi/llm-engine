@@ -6,9 +6,11 @@ import pytest
 from kubernetes_asyncio.client.rest import ApiException
 from model_engine_server.infra.gateways.resources.image_cache_gateway import (
     TRUSTED_BIN_INIT_CONTAINER_NAME,
+    TRUSTED_BUSYBOX_DIGEST,
     TRUSTED_BUSYBOX_IMAGE,
     CachedImages,
     ImageCacheGateway,
+    _trusted_busybox_image,
 )
 
 MODULE_PATH = "model_engine_server.infra.gateways.resources.image_cache_gateway"
@@ -91,6 +93,28 @@ async def test_create_or_update_image_cache_runs_only_trusted_busybox(mock_apps_
     assert cached["resources"]["limits"] == {"cpu": "10m", "memory": "16Mi"}
 
 
+@pytest.mark.parametrize(
+    "template_image,expected_repository",
+    [
+        pytest.param(
+            "public.ecr.aws/docker/library/busybox:latest",
+            "public.ecr.aws/docker/library/busybox",
+            id="default",
+        ),
+        pytest.param(
+            "mirror.local:5000/library/busybox:1.36",
+            "mirror.local:5000/library/busybox",
+            id="mirror",
+        ),
+        pytest.param("busybox", "busybox", id="bare-name"),
+        pytest.param(None, "public.ecr.aws/docker/library/busybox", id="no-template-busybox"),
+    ],
+)
+def test_trusted_busybox_image_keeps_the_pinned_digest(template_image, expected_repository):
+    containers = [{"name": "busybox", "image": template_image}] if template_image else []
+    assert _trusted_busybox_image(containers) == f"{expected_repository}@{TRUSTED_BUSYBOX_DIGEST}"
+
+
 def _existing_daemonset(name: str, images: Set[str], init_containers):
     return SimpleNamespace(
         metadata=SimpleNamespace(name=name),
@@ -132,6 +156,7 @@ async def test_create_image_cache_replaces_daemonsets_without_trusted_busybox(
         items=[_existing_daemonset(name, set(images), init_containers)]
     )
 
-    await ImageCacheGateway._create_image_cache({}, name, images)
+    body = {"spec": {"template": {"spec": {"initContainers": [{"image": TRUSTED_BUSYBOX_IMAGE}]}}}}
+    await ImageCacheGateway._create_image_cache(body, name, images)
 
     assert mock_apps_client.replace_namespaced_daemon_set.called is expect_replace
