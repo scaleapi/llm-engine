@@ -118,6 +118,14 @@ callerRateLimits:
         memory: 300Mi
   # Starting values match the app's per-user limits (user_rate_limits), so enforcing
   # here changes who is refused only for the caller that floods.
+  #
+  # callerOverrides [optional] on a route gives listed callers their own limit, e.g. a
+  # service account that sends many users' traffic. `caller` is the caller key: FNV-1a
+  # of "u:<username>" with seeds 0x811c9dc5 and 0x050c5d1f, each as 8 hex digits,
+  # concatenated (see the Lua filter in templates/istio-caller-ratelimit.yaml).
+  #   callerOverrides:
+  #     - caller: "0123456789abcdef"
+  #       requestsPerSecond: 100
   routes:
     - name: post_async_tasks
       method: POST
