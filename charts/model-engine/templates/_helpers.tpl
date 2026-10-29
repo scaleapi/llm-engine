@@ -614,3 +614,10 @@ imagePullSecrets:
   readOnly: true
 {{- end }}
 {{- end }}
+
+{{- /* "true" when rbac.clusterAdmin is the boolean false. Anything else, including a missing,
+       null or quoted value, keeps the cluster-admin binding. */}}
+{{- define "modelEngine.scopedRbac" }}
+{{- $clusterAdmin := dig "clusterAdmin" true (.Values.rbac | default dict) }}
+{{- if and (kindIs "bool" $clusterAdmin) (not $clusterAdmin) }}true{{- end }}
+{{- end }}
