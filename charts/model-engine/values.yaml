@@ -185,6 +185,25 @@ modelCache:
 # Service account token control
 automountServiceAccountToken: true
 
+# rbac [optional] controls what the model-engine ServiceAccount may do in the cluster.
+rbac:
+  # clusterAdmin binds the cluster-admin ClusterRole. Set it to false for Roles limited to the
+  # calls model-engine makes: endpoint management in the endpoint namespace, ConfigMap reads and
+  # the codeartifact-pip-conf Secret in the release namespace, and, if "default" is in
+  # serviceAccount.namespaces, the ECR image builds and celery autoscaler scan that run there.
+  # Prewarming adds a ClusterRole to list nodes, plus ConfigMap create and deployments/scale in
+  # the release namespace; restartKedaOperator adds a Role in kube-system. Other listed
+  # namespaces get no access. With the celery autoscaler enabled, images older than its
+  # single-namespace scan (Feb 2026) need cluster-admin.
+  # Only the release namespace's account is bound, so endpoint pods get no Kubernetes access even
+  # when they run as the chart's account. Images that still run batch-job orchestration (disabled
+  # in Oct 2026) need cluster-admin for it.
+  clusterAdmin: true
+  # endpointNamespace is where the Roles for endpoint management go when clusterAdmin is false.
+  # Defaults to config.values.launch.endpoint_namespace; set it when the service config comes
+  # from config.file instead.
+  endpointNamespace: ""
+
 # imagePullSecrets [optional] lists registry secrets for pulling images from a private registry,
 # e.g. [{name: my-registry-cred}]. They go on the control-plane pods, the model-engine
 # ServiceAccounts, and the endpoint, batch-job and image-cache pods. A pod that lists pull secrets
