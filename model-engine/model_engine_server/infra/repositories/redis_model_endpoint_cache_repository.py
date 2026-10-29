@@ -48,7 +48,12 @@ class RedisModelEndpointCacheRepository(ModelEndpointCacheRepository):
         ttl_seconds: float,
     ):
         key = self._find_redis_key(endpoint_id or endpoint_info.deployment_name)
-        endpoint_info_str = json.dumps(endpoint_info.dict())
+        endpoint_info_dict = endpoint_info.dict()
+        # Callback credentials are not needed by cache readers, so keep them out of shared Redis.
+        endpoint_config = endpoint_info_dict["user_config_state"].get("endpoint_config")
+        if endpoint_config is not None:
+            endpoint_config["default_callback_auth"] = None
+        endpoint_info_str = json.dumps(endpoint_info_dict)
         await self._redis.set(key, endpoint_info_str, ex=ttl_seconds)
 
     async def read_endpoint_info(

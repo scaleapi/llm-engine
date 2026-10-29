@@ -339,3 +339,38 @@ async def test_predict_upstream_raises_400(
                 predict_request=sync_endpoint_predict_request_1[0],
                 endpoint_name="test_name",
             )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "timeout_seconds,num_retries,expected_timeout_seconds,expected_num_retries",
+    [
+        pytest.param(None, None, 10, 8, id="defaults"),
+        pytest.param(30, 5, 30, 5, id="within-bounds"),
+        pytest.param(1e9, 10**9, 300, 80, id="clamped"),
+    ],
+)
+async def test_predict_clamps_caller_timeout_and_retries(
+    fake_monitoring_metrics_gateway: MonitoringMetricsGateway,
+    timeout_seconds,
+    num_retries,
+    expected_timeout_seconds,
+    expected_num_retries,
+):
+    gateway = LiveSyncModelEndpointInferenceGateway(
+        monitoring_metrics_gateway=fake_monitoring_metrics_gateway,
+        tracing_gateway=LiveTracingGateway(),
+        use_asyncio=True,
+    )
+    gateway.make_request_with_retries = AsyncMock(return_value={"test_key": "test_value"})
+
+    await gateway.predict(
+        topic="test_topic",
+        predict_request=SyncEndpointPredictV1Request(
+            args={"x": 1}, timeout_seconds=timeout_seconds, num_retries=num_retries
+        ),
+    )
+
+    kwargs = gateway.make_request_with_retries.call_args.kwargs
+    assert kwargs["timeout_seconds"] == expected_timeout_seconds
+    assert kwargs["num_retries"] == expected_num_retries

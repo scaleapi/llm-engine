@@ -835,3 +835,26 @@ def test_get_sync_passthrough_forwarder_loader():
 
         loader_with_path = get_sync_passthrough_forwarder_loader("/custom/route")
         assert loader_with_path.passthrough_route == "/custom/route"
+
+
+@pytest.mark.anyio
+async def test_predict_failure_does_not_log_request_body():
+    class FailingForwarder:
+        post_inference_hooks_handler = None
+
+        async def forward(self, json_payload):
+            raise RuntimeError("upstream failed")
+
+    request = EndpointPredictV1Request(args={"prompt": "secret-input"})
+    with (
+        mock.patch("model_engine_server.inference.forwarding.http_forwarder.logger") as logger,
+        pytest.raises(RuntimeError),
+    ):
+        await predict(
+            request,
+            BackgroundTasks(),
+            FailingForwarder(),
+            MultiprocessingConcurrencyLimiter(1, True),
+        )
+
+    logger.error.assert_called_once_with("Failed to decode payload")

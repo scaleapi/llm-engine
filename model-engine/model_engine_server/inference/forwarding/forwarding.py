@@ -185,7 +185,9 @@ class Forwarder(ModelEngineSerializationMixin):
 
     async def forward(self, json_payload: Any, trace_config: Optional[str] = None) -> Any:
         json_payload, using_serialize_results_as_string = self.unwrap_json_payload(json_payload)
-        json_payload_repr = json_payload.keys() if hasattr(json_payload, "keys") else json_payload
+        json_payload_repr = (
+            json_payload.keys() if hasattr(json_payload, "keys") else type(json_payload).__name__
+        )
 
         logger.info(f"Accepted request, forwarding {json_payload_repr=}")
 
@@ -241,7 +243,9 @@ class Forwarder(ModelEngineSerializationMixin):
 
     def __call__(self, json_payload: Any, trace_config: Optional[str] = None) -> Any:
         json_payload, using_serialize_results_as_string = self.unwrap_json_payload(json_payload)
-        json_payload_repr = json_payload.keys() if hasattr(json_payload, "keys") else json_payload
+        json_payload_repr = (
+            json_payload.keys() if hasattr(json_payload, "keys") else type(json_payload).__name__
+        )
 
         logger.info(f"Accepted request, forwarding {json_payload_repr=}")
 
@@ -456,7 +460,9 @@ class StreamingForwarder(ModelEngineSerializationMixin):
 
     async def forward(self, json_payload: Any) -> AsyncGenerator[Any, None]:  # pragma: no cover
         json_payload, using_serialize_results_as_string = self.unwrap_json_payload(json_payload)
-        json_payload_repr = json_payload.keys() if hasattr(json_payload, "keys") else json_payload
+        json_payload_repr = (
+            json_payload.keys() if hasattr(json_payload, "keys") else type(json_payload).__name__
+        )
 
         logger.info(f"Accepted request, forwarding {json_payload_repr=}")
 
@@ -489,7 +495,9 @@ class StreamingForwarder(ModelEngineSerializationMixin):
 
     def __call__(self, json_payload: Any) -> Iterable[Any]:
         json_payload, using_serialize_results_as_string = self.unwrap_json_payload(json_payload)
-        json_payload_repr = json_payload.keys() if hasattr(json_payload, "keys") else json_payload
+        json_payload_repr = (
+            json_payload.keys() if hasattr(json_payload, "keys") else type(json_payload).__name__
+        )
 
         logger.info(f"Accepted request, forwarding {json_payload_repr=}")
 

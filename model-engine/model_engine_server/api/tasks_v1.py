@@ -10,6 +10,7 @@ from model_engine_server.api.dependencies import (
     verify_authentication,
 )
 from model_engine_server.api.rate_limits import user_rate_limit
+from model_engine_server.common.config import hmi_config
 from model_engine_server.common.dtos.tasks import (
     CreateAsyncTaskV1Response,
     EndpointPredictV1Request,
@@ -74,7 +75,10 @@ async def create_async_inference_task(
     """
     Runs an async inference prediction.
     """
-    logger.info(f"POST /async-tasks {request} to endpoint {model_endpoint_id} for {auth}")
+    if hmi_config.sensitive_log_mode:
+        logger.info(f"POST /async-tasks to endpoint {model_endpoint_id} for {auth}")
+    else:
+        logger.info(f"POST /async-tasks {request} to endpoint {model_endpoint_id} for {auth}")
     _reject_cloudpickle(request)
     try:
         use_case = CreateAsyncInferenceTaskV1UseCase(
@@ -165,7 +169,10 @@ async def create_sync_inference_task(
     """
     Runs a sync inference prediction.
     """
-    logger.info(f"POST /sync-tasks with {request} to endpoint {model_endpoint_id} for {auth}")
+    if hmi_config.sensitive_log_mode:
+        logger.info(f"POST /sync-tasks to endpoint {model_endpoint_id} for {auth}")
+    else:
+        logger.info(f"POST /sync-tasks with {request} to endpoint {model_endpoint_id} for {auth}")
     _reject_cloudpickle(request)
     try:
         use_case = CreateSyncInferenceTaskV1UseCase(
@@ -215,7 +222,12 @@ async def create_streaming_inference_task(
     """
     Runs a streaming inference prediction.
     """
-    logger.info(f"POST /streaming-tasks with {request} to endpoint {model_endpoint_id} for {auth}")
+    if hmi_config.sensitive_log_mode:
+        logger.info(f"POST /streaming-tasks to endpoint {model_endpoint_id} for {auth}")
+    else:
+        logger.info(
+            f"POST /streaming-tasks with {request} to endpoint {model_endpoint_id} for {auth}"
+        )
     _reject_cloudpickle(request)
     try:
         use_case = CreateStreamingInferenceTaskV1UseCase(
