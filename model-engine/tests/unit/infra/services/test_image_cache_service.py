@@ -78,3 +78,29 @@ async def test_caching_finetune_llm_images(
             forwarder_image,
         ]:
             assert f"{llm_image.repo}:{llm_image.tag}" in gateway.cached_images[key]
+
+
+@pytest.mark.asyncio
+async def test_caching_istio_image_from_config(
+    fake_image_cache_service: ImageCacheService,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    ecr_istio_image = "759270588401.dkr.ecr.us-west-2.amazonaws.com/docker-hub/istio/proxyv2:1.15.0"
+    monkeypatch.setattr(hmi_config, "istio_proxy_image", ecr_istio_image)
+
+    await fake_image_cache_service.execute({})
+    gateway: Any = fake_image_cache_service.image_cache_gateway
+
+    istio_images = {
+        key: [image for image in images if "istio" in image]
+        for key, images in gateway.cached_images.items()
+    }
+    assert istio_images == {
+        "cpu": [],
+        "a10": [ecr_istio_image],
+        "a100": [ecr_istio_image],
+        "t4": [],
+        "h100": [ecr_istio_image],
+        "h100_3g40gb": [ecr_istio_image],
+        "h100_1g20gb": [ecr_istio_image],
+    }

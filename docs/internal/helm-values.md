@@ -477,6 +477,7 @@ LLM Engine uses Istio for traffic routing when `config.values.launch.istio_enabl
 | `service.type` | string | `ClusterIP` | No | Kubernetes Service type for the gateway. Use `ClusterIP` with Istio; change to `LoadBalancer` only if managing ingress outside Istio |
 | `service.port` | integer | `80` | No | Port exposed by the gateway Kubernetes Service |
 | `config.values.launch.istio_enabled` | bool | `true` | No | Whether Istio service mesh is active. When `false`, VirtualService/DestinationRule resources are not used and direct service routing applies |
+| `config.values.launch.istio_proxy_image` | string | `gcr.io/istio-release/proxyv2:1.15.0` | No | Istio sidecar image (`repo:tag`) that the cacher pre-pulls onto GPU nodes through the `launch-image-cache-*` DaemonSets |
 
 ```yaml
 virtualservice:

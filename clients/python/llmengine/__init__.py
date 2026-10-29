@@ -15,6 +15,7 @@
 __version__ = "0.0.0beta45"
 
 import os
+import threading
 from typing import Sequence
 
 import requests
@@ -117,10 +118,15 @@ __all__: Sequence[str] = (
 )
 
 
+VERSION_CHECK_TIMEOUT = (2, 2)
+
+
 def check_version():
     try:
         current_version = __version__
-        response = requests.get("https://pypi.org/pypi/scale-llm-engine/json")
+        response = requests.get(
+            "https://pypi.org/pypi/scale-llm-engine/json", timeout=VERSION_CHECK_TIMEOUT
+        )
         latest_version = response.json()["info"]["version"]
 
         if current_version != latest_version:
@@ -140,5 +146,6 @@ def check_version():
         print("Something went wrong with checking for the most recent llm-engine package version.")
 
 
+# Run in a daemon thread so a slow or unresponsive network can never block `import llmengine`.
 if not os.environ.get("LLM_ENGINE_DISABLE_VERSION_CHECK"):
-    check_version()
+    threading.Thread(target=check_version, name="llmengine-version-check", daemon=True).start()

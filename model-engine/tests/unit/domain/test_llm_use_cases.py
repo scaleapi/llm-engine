@@ -31,6 +31,7 @@ from model_engine_server.common.dtos.tasks import SyncEndpointPredictV1Response,
 from model_engine_server.core.auth.authentication_repository import User
 from model_engine_server.domain.entities import (
     LLMInferenceFramework,
+    LLMSource,
     ModelEndpoint,
     ModelEndpointType,
     Quantization,
@@ -517,9 +518,15 @@ async def test_create_model_endpoint_w_vllm_args(
         llm_artifact_gateway=fake_llm_artifact_gateway,
     )
     user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
+    request = CreateLLMModelEndpointV1Request_gen(
+        **create_llm_model_endpoint_request_llama_3_70b_chat_vllm_args.model_dump(
+            exclude_unset=True
+        ),
+        speculative_config={"method": "mtp", "num_speculative_tokens": 3},
+    )
     response = await use_case.execute(
         user=user,
-        request=create_llm_model_endpoint_request_llama_3_70b_chat_vllm_args,
+        request=request,
     )
     assert response.endpoint_creation_task_id
     assert isinstance(response, CreateLLMModelEndpointV1Response)
@@ -535,6 +542,9 @@ async def test_create_model_endpoint_w_vllm_args(
     expected_vllm_args = ["max-model-len", "max-num-seqs", "chat-template"]
     for arg in expected_vllm_args:
         assert arg in bundle_command
+    assert (
+        """--speculative-config '{"method":"mtp","num_speculative_tokens":3}'""" in bundle_command
+    )
     assert endpoint.record.endpoint_type == ModelEndpointType.STREAMING
     assert endpoint.record.metadata == {
         "_llm": {
@@ -550,6 +560,7 @@ async def test_create_model_endpoint_w_vllm_args(
             "vllm_additional_args": {
                 "max_model_len": create_llm_model_endpoint_request_llama_3_70b_chat_vllm_args.max_model_len,
                 "max_num_seqs": create_llm_model_endpoint_request_llama_3_70b_chat_vllm_args.max_num_seqs,
+                "speculative_config": {"method": "mtp", "num_speculative_tokens": 3},
             },
         }
     }
@@ -822,6 +833,46 @@ async def test_create_sglang_bundle_quotes_user_values(
         "--load-format": [load_format],
         "--lora-paths": lora_paths,
     }
+
+
+@pytest.mark.asyncio
+async def test_create_llm_model_bundle_rejects_sglang(
+    monkeypatch,
+    test_api_key: str,
+    fake_model_bundle_repository,
+    fake_docker_repository_image_always_exists,
+    fake_model_primitive_gateway,
+    fake_llm_artifact_gateway,
+):
+    monkeypatch.setattr(llm_use_cases.hmi_config, "sglang_repository", "sglang")
+    llm_bundle_use_case = CreateLLMModelBundleV1UseCase(
+        create_model_bundle_use_case=CreateModelBundleV2UseCase(
+            model_bundle_repository=fake_model_bundle_repository,
+            docker_repository=fake_docker_repository_image_always_exists,
+            model_primitive_gateway=fake_model_primitive_gateway,
+        ),
+        model_bundle_repository=fake_model_bundle_repository,
+        llm_artifact_gateway=fake_llm_artifact_gateway,
+        docker_repository=fake_docker_repository_image_always_exists,
+    )
+
+    with pytest.raises(ObjectHasInvalidValueException, match="SGLang endpoints are deprecated"):
+        await llm_bundle_use_case.execute(
+            user=User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True),
+            endpoint_name="test-sglang-endpoint",
+            model_name="test-model",
+            source=LLMSource.HUGGING_FACE,
+            framework=LLMInferenceFramework.SGLANG,
+            framework_image_tag="0.4.0",
+            endpoint_type=ModelEndpointType.STREAMING,
+            num_shards=1,
+            quantize=None,
+            checkpoint_path="s3://fake-bucket/fake-checkpoint",
+            chat_template_override=None,
+            nodes_per_worker=1,
+            additional_args={"huggingface_repo": "org/repo"},
+        )
+    assert fake_model_bundle_repository.db == {}
 
 
 def test_create_vllm_bundle_command_with_model_cache(
@@ -1817,6 +1868,64 @@ async def test_update_model_endpoint_use_case_failure(
             user=user,
             model_endpoint_name=create_llm_model_endpoint_request_streaming.name,
             request=update_llm_model_endpoint_request_bad_metadata,
+        )
+
+
+@pytest.mark.asyncio
+async def test_update_model_endpoint_use_case_rejects_sglang(
+    test_api_key: str,
+    fake_model_bundle_repository,
+    fake_model_endpoint_service,
+    fake_docker_repository_image_always_exists,
+    fake_model_primitive_gateway,
+    fake_llm_artifact_gateway,
+    fake_llm_model_endpoint_service,
+    create_llm_model_endpoint_request_streaming: CreateLLMModelEndpointV1Request,
+    update_llm_model_endpoint_request_only_workers: UpdateLLMModelEndpointV1Request,
+):
+    fake_model_endpoint_service.model_bundle_repository = fake_model_bundle_repository
+    bundle_use_case = CreateModelBundleV2UseCase(
+        model_bundle_repository=fake_model_bundle_repository,
+        docker_repository=fake_docker_repository_image_always_exists,
+        model_primitive_gateway=fake_model_primitive_gateway,
+    )
+    llm_bundle_use_case = CreateLLMModelBundleV1UseCase(
+        create_model_bundle_use_case=bundle_use_case,
+        model_bundle_repository=fake_model_bundle_repository,
+        llm_artifact_gateway=fake_llm_artifact_gateway,
+        docker_repository=fake_docker_repository_image_always_exists,
+    )
+    create_use_case = CreateLLMModelEndpointV1UseCase(
+        create_llm_model_bundle_use_case=llm_bundle_use_case,
+        model_endpoint_service=fake_model_endpoint_service,
+        docker_repository=fake_docker_repository_image_always_exists,
+        llm_artifact_gateway=fake_llm_artifact_gateway,
+    )
+    update_use_case = UpdateLLMModelEndpointV1UseCase(
+        create_llm_model_bundle_use_case=llm_bundle_use_case,
+        model_endpoint_service=fake_model_endpoint_service,
+        llm_model_endpoint_service=fake_llm_model_endpoint_service,
+        docker_repository=fake_docker_repository_image_always_exists,
+    )
+
+    user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
+
+    await create_use_case.execute(user=user, request=create_llm_model_endpoint_request_streaming)
+    endpoint = (
+        await fake_model_endpoint_service.list_model_endpoints(
+            owner=None,
+            name=create_llm_model_endpoint_request_streaming.name,
+            order_by=None,
+        )
+    )[0]
+    endpoint.record.metadata["_llm"]["inference_framework"] = LLMInferenceFramework.SGLANG
+    fake_llm_model_endpoint_service.add_model_endpoint(endpoint)
+
+    with pytest.raises(ObjectHasInvalidValueException, match="SGLang endpoints are deprecated"):
+        await update_use_case.execute(
+            user=user,
+            model_endpoint_name=create_llm_model_endpoint_request_streaming.name,
+            request=update_llm_model_endpoint_request_only_workers,
         )
 
 
