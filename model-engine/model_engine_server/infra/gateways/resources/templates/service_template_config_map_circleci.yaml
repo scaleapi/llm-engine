@@ -3480,7 +3480,6 @@ data:
                     fieldRef:
                       fieldPath: status.hostIP
                 - name: SERVICE_IDENTIFIER
-                - name: SERVICE_BUILDER_QUEUE
                 - name: GATEWAY_URL
                   value: http://model-engine.default:80
                 - name: AWS_PROFILE
@@ -3493,11 +3492,6 @@ data:
                   value: default
                 - name: S3_WRITE_AWS_PROFILE
                   value: default
-                - name: ML_INFRA_DATABASE_URL
-                  valueFrom:
-                    secretKeyRef:
-                      key: database_url
-                      name: model-engine-postgres-credentials
                 - name: DEPLOY_SERVICE_CONFIG_PATH
                   value: /workspace/model-engine/service_configs/service_config.yaml
                 - name: ML_INFRA_SERVICES_CONFIG_PATH
@@ -3666,7 +3660,6 @@ data:
                     fieldRef:
                       fieldPath: status.hostIP
                 - name: SERVICE_IDENTIFIER
-                - name: SERVICE_BUILDER_QUEUE
                 - name: GATEWAY_URL
                   value: http://model-engine.default:80
                 - name: AWS_PROFILE
@@ -3679,11 +3672,6 @@ data:
                   value: default
                 - name: S3_WRITE_AWS_PROFILE
                   value: default
-                - name: ML_INFRA_DATABASE_URL
-                  valueFrom:
-                    secretKeyRef:
-                      key: database_url
-                      name: model-engine-postgres-credentials
                 - name: DEPLOY_SERVICE_CONFIG_PATH
                   value: /workspace/model-engine/service_configs/service_config.yaml
                 - name: ML_INFRA_SERVICES_CONFIG_PATH

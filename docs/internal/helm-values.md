@@ -511,7 +511,8 @@ These values control TLS and authentication for the Redis connection used by KED
 |---|---|---|---|---|
 | `redis.enableTLS` | bool | `false` | No | Enable TLS for the Redis connection. Required for Azure Cache for Redis (port 6380) and any Redis with TLS enforced |
 | `redis.enableAuth` | bool | `false` | No | Enable password/token authentication for Redis. Required when the Redis cluster has AUTH configured |
-| `redis.auth` | string | `null` | No | Redis AUTH password or token. Only used when `enableAuth: true`. Store this in a Kubernetes Secret rather than directly in values |
+| `redis.auth` | string | `null` | No | No longer supported: rendering fails if it is set. Put the Redis AUTH token in a Kubernetes Secret and set `redis.authSecretName` |
+| `redis.authSecretName` | string | `""` | No | Name of a Kubernetes Secret holding the Redis AUTH token, read from key `redis.authSecretKey` (default `auth_token`) |
 | `redis.kedaSecretName` | string | `""` | No | Name of a Kubernetes Secret containing Redis credentials for KEDA's ScaledObject. KEDA reads this directly; leave empty to use unauthenticated Redis |
 | `redis.unsafeSsl` | bool | `false` | No | Skip TLS certificate verification. Use only in development environments with self-signed certificates |
 
@@ -519,7 +520,7 @@ These values control TLS and authentication for the Redis connection used by KED
 redis:
   enableTLS: true
   enableAuth: true
-  auth: ""  # set via --set redis.auth=$REDIS_TOKEN or from a secret
+  authSecretName: "model-engine-redis"
   kedaSecretName: "keda-redis-secret"
   unsafeSsl: false
 ```

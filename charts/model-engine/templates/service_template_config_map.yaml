@@ -17,6 +17,13 @@
 {{- $security_context := .Values.serviceTemplate.securityContext }}
 {{- $mount_infra_config := .Values.serviceTemplate.mountInfraConfig }}
 {{- $service_template_service_account_name := .Values.serviceTemplate.serviceAccountName }}
+{{- if not $service_template_service_account_name }}
+{{- fail "serviceTemplate.serviceAccountName must be set: endpoint and batch job pods must not run as the control-plane service account" }}
+{{- end }}
+{{- /* Scoped RBAC binds only the release-namespace account, so the same name is safe in a separate endpoint namespace. */}}
+{{- if and (eq $service_template_service_account_name $launch_name) (has .Values.config.values.launch.endpoint_namespace (index (include "modelEngine.serviceAccountNamespaces" . | fromYaml) "namespaces")) (or (not (include "modelEngine.scopedRbac" .)) (eq .Values.config.values.launch.endpoint_namespace .Release.Namespace)) }}
+{{- fail "serviceTemplate.serviceAccountName must not be the control-plane service account, which holds the control plane's permissions in the endpoint namespace" }}
+{{- end }}
 {{- $service_template_aws_config_map_name := .Values.serviceTemplate.awsConfigMapName }}
 {{- $celery_broker_type := .Values.celeryBrokerType }}
 {{- $node_selector := .Values.nodeSelector }}
@@ -101,11 +108,7 @@ data:
           {{- else }}
           terminationGracePeriodSeconds: 600
           {{- end }}
-          {{- if $service_template_service_account_name }}
           serviceAccount: {{ $service_template_service_account_name }}
-          {{- else }}
-          serviceAccount: {{ $launch_name }}
-          {{- end }}
           {{- with $node_selector }}
           nodeSelector:
             {{- toYaml . | nindent 12 }}
@@ -573,11 +576,7 @@ data:
             {{- else }}
             terminationGracePeriodSeconds: 600
             {{- end }}
-            {{- if $service_template_service_account_name }}
             serviceAccount: {{ $service_template_service_account_name }}
-            {{- else }}
-            serviceAccount: {{ $launch_name }}
-            {{- end }}
             {{- with $node_selector }}
             nodeSelector:
               {{- toYaml . | nindent 14 }}
@@ -855,11 +854,7 @@ data:
             {{- else }}
             terminationGracePeriodSeconds: 600
             {{- end }}
-            {{- if $service_template_service_account_name }}
             serviceAccount: {{ $service_template_service_account_name }}
-            {{- else }}
-            serviceAccount: {{ $launch_name }}
-            {{- end }}
             {{- with $node_selector }}
             nodeSelector:
               {{- toYaml . | nindent 14 }}
@@ -1236,11 +1231,7 @@ data:
               effect: "NoSchedule"
             {{- end }}
           {{- end }}
-          {{- if $service_template_service_account_name }}
           serviceAccountName: {{ $service_template_service_account_name }}
-          {{- else }}
-          serviceAccountName: {{ $launch_name }}
-          {{- end }}
           volumes:
             {{- if $require_aws_config }}
             - name: config-volume
@@ -1269,9 +1260,12 @@ data:
                 - name: AWS_CONFIG_FILE
                   value: "/opt/.aws/config"
                 {{- $env_vars := $service_env | fromYaml }}
+                {{- /* The user container runs a caller-chosen image: never hand it the
+                       control plane's database, broker or Redis credentials. */}}
+                {{- $control_plane_env := list "DD_SERVICE" "ML_INFRA_DATABASE_URL" "DB_SECRET_NAME" "CELERY_BROKER_URL" "CELERY_RESULT_BACKEND" "REDIS_HOST" "REDIS_PORT" "REDIS_AUTH_TOKEN" "SERVICE_BUILDER_QUEUE" }}
                 {{- range $env_var := index $env_vars "env" }}
                 {{- $env_var_name := index $env_var "name" }}
-                {{- if ne $env_var_name "DD_SERVICE" }}
+                {{- if not (has $env_var_name $control_plane_env) }}
                 {{- tuple $env_var | toYaml | nindent 16 }}
                 {{- end }}
                 {{- end }}
