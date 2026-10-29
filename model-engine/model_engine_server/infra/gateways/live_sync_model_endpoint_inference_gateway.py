@@ -43,6 +43,9 @@ SYNC_ENDPOINT_MAX_RETRY_WAIT = 5
 SYNC_ENDPOINT_EXP_BACKOFF_BASE = (
     1.2  # Must be a float > 1.0, lower number means more retries but less time waiting.
 )
+# Upper bounds on the caller-supplied timeout_seconds and num_retries.
+SYNC_ENDPOINT_CALLER_MAX_TIMEOUT_SECONDS = 300
+SYNC_ENDPOINT_CALLER_MAX_RETRIES = 80
 
 
 def _get_sync_endpoint_url(
@@ -246,12 +249,12 @@ class LiveSyncModelEndpointInferenceGateway(SyncModelEndpointInferenceGateway):
             timeout_seconds = (
                 SYNC_ENDPOINT_MAX_TIMEOUT_SECONDS
                 if predict_request.timeout_seconds is None
-                else predict_request.timeout_seconds
+                else min(predict_request.timeout_seconds, SYNC_ENDPOINT_CALLER_MAX_TIMEOUT_SECONDS)
             )
             num_retries = (
                 SYNC_ENDPOINT_RETRIES
                 if predict_request.num_retries is None
-                else predict_request.num_retries
+                else min(predict_request.num_retries, SYNC_ENDPOINT_CALLER_MAX_RETRIES)
             )
 
             response = await self.make_request_with_retries(

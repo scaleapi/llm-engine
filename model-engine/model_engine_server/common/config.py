@@ -66,6 +66,15 @@ def _apply_redis_auth_token(url: str) -> str:
     return f"{scheme}://:{quote(auth_token, safe='')}@{remainder}"
 
 
+def redact_redis_url(url: str) -> str:
+    """The Redis URL without its userinfo or query string, both of which can carry credentials."""
+    scheme, sep, remainder = url.partition("://")
+    if not sep:
+        scheme, remainder = "", url
+    location = remainder.split("?", 1)[0].rpartition("@")[2]
+    return f"{scheme}{sep}{location}"
+
+
 @dataclass
 class HostedModelInferenceServiceConfig:
     gateway_namespace: str

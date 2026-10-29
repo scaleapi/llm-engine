@@ -2,6 +2,7 @@ import pytest
 from model_engine_server.common.config import (
     HostedModelInferenceServiceConfig,
     _apply_redis_auth_token,
+    redact_redis_url,
 )
 from model_engine_server.core.celery.app import (
     build_redis_url,
@@ -150,3 +151,19 @@ def test_instance_plain_when_neither_set(redis_env, fixed_redis_host):
     client = get_redis_instance()
     assert client.connection_pool.connection_kwargs.get("password") is None
     assert not _uses_tls(client)
+
+
+@pytest.mark.parametrize(
+    "url,expected",
+    [
+        pytest.param("rediss://:tok@host:6379/0", "rediss://host:6379/0", id="password"),
+        pytest.param("rediss://user:a.b/c@host:6380/0", "rediss://host:6380/0", id="user-token"),
+        pytest.param("rediss://:p@ss@host:6379/0", "rediss://host:6379/0", id="raw-at"),
+        pytest.param("redis://host:6379/0?password=secret", "redis://host:6379/0", id="query"),
+        pytest.param("redis://host:/0", "redis://host:/0", id="empty-port"),
+        pytest.param("redis://host:6379/15", "redis://host:6379/15", id="no-credential"),
+        pytest.param(":tok@host:6379", "host:6379", id="no-scheme"),
+    ],
+)
+def test_redact_redis_url(url, expected):
+    assert redact_redis_url(url) == expected

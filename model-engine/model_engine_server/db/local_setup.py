@@ -4,7 +4,7 @@ import os
 import psycopg2
 from model_engine_server.db.base import Base
 from model_engine_server.db.models import *
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, make_url
 from sqlalchemy.engine import Engine
 from tenacity import Retrying, stop_after_attempt, wait_exponential
 
@@ -49,4 +49,6 @@ if __name__ == "__main__":
             with attempt:
                 init_database_and_engine(url)
 
-        print(f"Successfully initialized database at {url}")
+        print(
+            f"Successfully initialized database at {make_url(url).render_as_string(hide_password=True)}"
+        )

@@ -125,7 +125,7 @@ class LoggingHook(PostInferenceHook):
         response["task_id"] = task_id
         data_record = {
             "EMITTED_AT": datetime.now(pytz.timezone("UTC")).strftime("%Y-%m-%dT%H:%M:%S"),
-            "REQUEST_BODY": request_payload.json(),
+            "REQUEST_BODY": request_payload.json(exclude={"callback_auth"}),
             "RESPONSE_BODY": response,
             "ENDPOINT_ID": self._endpoint_id,
             "ENDPOINT_NAME": self._endpoint_name,
@@ -134,19 +134,7 @@ class LoggingHook(PostInferenceHook):
             "LABELS": self._labels,
         }
         try:  # pragma: no cover
-            json_string = json.dumps(data_record)  # pragma: no cover
-            # Check for unexpected double quotes or escape characters
-            import re  # pragma: no cover
-
-            pattern = r'\\[ntrbfv\'"]|["\']'  # pragma: no cover
-            matches = re.findall(pattern, repr(json_string))  # pragma: no cover
-            if matches:  # pragma: no cover
-                logger.info(  # pragma: no cover
-                    "The JSON string contains double quotes or escape characters.",
-                    extra={"json_string": json_string, "matches": matches},
-                )
-            else:
-                logger.info("The JSON string is valid.")  # pragma: no cover
+            json.dumps(data_record)  # pragma: no cover
         except (TypeError, ValueError) as e:  # pragma: no cover
             logger.warning(
                 f"Error: The data_record object is not a valid JSON object. {e}"

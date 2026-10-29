@@ -9,6 +9,8 @@ from model_engine_server.common.dtos.core import HttpUrlStr
 from model_engine_server.common.dtos.llms.sglang import SGLangEndpointAdditionalArgs
 from model_engine_server.common.dtos.llms.vllm import VLLMEndpointAdditionalArgs
 from model_engine_server.common.dtos.model_endpoints import (
+    ENDPOINT_NAME_PATTERN,
+    MODEL_NAME_MAX_LENGTH,
     CpuSpecificationType,
     GetModelEndpointV1Response,
     GpuType,
@@ -78,8 +80,8 @@ class LLMModelEndpointCommonArgs(BaseModel):
 
 
 class CreateLLMModelEndpointArgs(LLMModelEndpointCommonArgs):
-    name: str
-    model_name: str
+    name: str = Field(..., max_length=63, pattern=ENDPOINT_NAME_PATTERN)
+    model_name: str = Field(..., max_length=MODEL_NAME_MAX_LENGTH)
     """
     Number of shards to distribute the model onto GPUs.
     """
@@ -193,7 +195,7 @@ class ListLLMModelEndpointsV1Response(BaseModel):
 
 
 class UpdateLLMModelEndpointArgs(LLMModelEndpointCommonArgs):
-    model_name: Optional[str] = None
+    model_name: Optional[str] = Field(default=None, max_length=MODEL_NAME_MAX_LENGTH)
     source: Optional[LLMSource] = None
     inference_framework: Optional[LLMInferenceFramework] = None
     inference_framework_image_tag: Optional[str] = None
@@ -202,7 +204,7 @@ class UpdateLLMModelEndpointArgs(LLMModelEndpointCommonArgs):
     Number of shards to distribute the model onto GPUs.
     """
     metadata: Optional[Dict[str, Any]] = None
-    force_bundle_recreation: Optional[bool] = False
+    force_bundle_recreation: Optional[bool] = None
     """
     Whether to force recreate the underlying bundle.
 
@@ -213,6 +215,8 @@ class UpdateLLMModelEndpointArgs(LLMModelEndpointCommonArgs):
     max_workers: Optional[int] = None
     per_worker: Optional[int] = None
     labels: Optional[Dict[str, str]] = None
+    public_inference: Optional[bool] = None  # None leaves the current value unchanged.
+    enable_startup_metrics: Optional[bool] = None
 
 
 class UpdateVLLMModelEndpointRequest(
