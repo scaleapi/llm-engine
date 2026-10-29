@@ -257,6 +257,63 @@ async def test_build_endpoint_with_control_plane_aws_role_raises_value_error(
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "forged_field",
+    [
+        pytest.param("owner", id="owner"),
+        pytest.param("created_by", id="created-by"),
+        pytest.param("bundle_id", id="bundle-id"),
+    ],
+)
+async def test_build_endpoint_rejects_request_not_matching_stored_record(
+    build_endpoint_request_sync_runnable_image: BuildEndpointRequest,
+    endpoint_builder_service_empty_docker_built: LiveEndpointBuilderService,
+    forged_field,
+):
+    repo: Any = endpoint_builder_service_empty_docker_built.model_endpoint_record_repository
+    request_record = build_endpoint_request_sync_runnable_image.model_endpoint_record
+    repo.add_model_endpoint_record(request_record.copy(deep=True))
+    if forged_field == "bundle_id":
+        request_record.current_model_bundle = request_record.current_model_bundle.copy(
+            update={"id": "forged-bundle-id"}
+        )
+    else:
+        setattr(request_record, forged_field, "forged")
+    create_or_update_resources = Mock()
+    endpoint_builder_service_empty_docker_built.resource_gateway.__setattr__(
+        "create_or_update_resources", create_or_update_resources
+    )
+
+    with pytest.raises(ValueError):
+        await endpoint_builder_service_empty_docker_built.build_endpoint(
+            build_endpoint_request_sync_runnable_image
+        )
+
+    create_or_update_resources.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_build_endpoint_deploys_stored_bundle(
+    build_endpoint_request_sync_runnable_image: BuildEndpointRequest,
+    endpoint_builder_service_empty_docker_built: LiveEndpointBuilderService,
+):
+    repo: Any = endpoint_builder_service_empty_docker_built.model_endpoint_record_repository
+    request_record = build_endpoint_request_sync_runnable_image.model_endpoint_record
+    stored_record = request_record.copy(deep=True)
+    repo.add_model_endpoint_record(stored_record)
+    stored_bundle = stored_record.current_model_bundle
+    request_record.current_model_bundle = stored_bundle.copy(
+        update={"flavor": stored_bundle.flavor.copy(update={"tag": "forged-tag"})}
+    )
+
+    await endpoint_builder_service_empty_docker_built.build_endpoint(
+        build_endpoint_request_sync_runnable_image
+    )
+
+    assert request_record.current_model_bundle == stored_bundle
+
+
+@pytest.mark.asyncio
 async def test_build_endpoint_missing_image_yields_docker_build_failed_exception(
     build_endpoint_request_sync_pytorch: BuildEndpointRequest,
     endpoint_builder_service_empty_docker_not_built: LiveEndpointBuilderService,
