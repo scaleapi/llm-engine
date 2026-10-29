@@ -203,7 +203,7 @@ class UpdateLLMModelEndpointArgs(LLMModelEndpointCommonArgs):
     Number of shards to distribute the model onto GPUs.
     """
     metadata: Optional[Dict[str, Any]] = None
-    force_bundle_recreation: Optional[bool] = False
+    force_bundle_recreation: Optional[bool] = None
     """
     Whether to force recreate the underlying bundle.
 
@@ -215,6 +215,7 @@ class UpdateLLMModelEndpointArgs(LLMModelEndpointCommonArgs):
     per_worker: Optional[int] = None
     labels: Optional[Dict[str, str]] = None
     public_inference: Optional[bool] = None  # None leaves the current value unchanged.
+    enable_startup_metrics: Optional[bool] = None
 
 
 class UpdateVLLMModelEndpointRequest(

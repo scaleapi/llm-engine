@@ -1,5 +1,8 @@
 import pytest
-from model_engine_server.common.dtos.llms.model_endpoints import CreateVLLMModelEndpointRequest
+from model_engine_server.common.dtos.llms.model_endpoints import (
+    CreateVLLMModelEndpointRequest,
+    UpdateVLLMModelEndpointRequest,
+)
 from model_engine_server.common.dtos.model_endpoints import CreateModelEndpointV1Request
 from pydantic import ValidationError
 
@@ -30,3 +33,10 @@ def _name_has_error(model, name: str) -> bool:
 )
 def test_create_endpoint_name_must_be_k8s_label_value(model, name, rejected):
     assert _name_has_error(model, name) is rejected
+
+
+@pytest.mark.parametrize(
+    "field", ["public_inference", "enable_startup_metrics", "force_bundle_recreation"]
+)
+def test_update_llm_endpoint_omitted_fields_are_unset(field):
+    assert getattr(UpdateVLLMModelEndpointRequest(), field) is None
