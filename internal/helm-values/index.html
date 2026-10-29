@@ -2901,7 +2901,14 @@
 <td>string</td>
 <td><code>null</code></td>
 <td>No</td>
-<td>Redis AUTH password or token. Only used when <code>enableAuth: true</code>. Store this in a Kubernetes Secret rather than directly in values</td>
+<td>No longer supported: rendering fails if it is set. Put the Redis AUTH token in a Kubernetes Secret and set <code>redis.authSecretName</code></td>
+</tr>
+<tr>
+<td><code>redis.authSecretName</code></td>
+<td>string</td>
+<td><code>""</code></td>
+<td>No</td>
+<td>Name of a Kubernetes Secret holding the Redis AUTH token, read from key <code>redis.authSecretKey</code> (default <code>auth_token</code>)</td>
 </tr>
 <tr>
 <td><code>redis.kedaSecretName</code></td>
@@ -2922,7 +2929,7 @@
 <div class="highlight" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span style="color: #008000; font-weight: bold">redis</span>:
 <a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">enableTLS</span>:<span style="color: #BBB"> </span>true
 <a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">enableAuth</span>:<span style="color: #BBB"> </span>true
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">auth</span>:<span style="color: #BBB"> </span><span style="color: #BA2121">""</span><span style="color: #BBB">  </span><span style="color: #3D7B7B; font-style: italic"># set via --set redis.auth=$REDIS_TOKEN or from a secret</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">authSecretName</span>:<span style="color: #BBB"> </span><span style="color: #BA2121">"model-engine-redis"</span>
 <a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">kedaSecretName</span>:<span style="color: #BBB"> </span><span style="color: #BA2121">"keda-redis-secret"</span>
 <a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">unsafeSsl</span>:<span style="color: #BBB"> </span>false
 </code></pre></div>
