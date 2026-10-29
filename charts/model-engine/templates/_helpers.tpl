@@ -306,8 +306,7 @@ env:
         name: {{ .Values.redis.authSecretName }}
         key: {{ .Values.redis.authSecretKey | default "auth_token" }}
   {{- else if .Values.redis.auth }}
-  - name: REDIS_AUTH_TOKEN
-    value: {{ .Values.redis.auth }}
+  {{- fail "redis.auth is no longer supported: store the token in a Secret and set redis.authSecretName" }}
   {{- end }}
   {{- /* Governs the Celery broker only -- the cache endpoint declares its own
          scheme in cache_redis_url. Emitted only when set: a credential can also
