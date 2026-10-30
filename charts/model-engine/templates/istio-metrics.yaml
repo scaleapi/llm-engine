@@ -12,7 +12,8 @@ spec:
         mode: CLIENT_AND_SERVER
       tagOverrides:
         request_operation:
-          value: istio_requestOperation
+          # Istio >= 1.24 needs the fully qualified form: filter_state['wasm.istio_requestOperation'].
+          value: {{ .Values.istioAttributegen.tagExpression | quote }}
     providers:
     - name: prometheus
 ---
@@ -22,7 +23,9 @@ metadata:
   name: {{ include "modelEngine.fullname" . }}-attributegen
   namespace: istio-system
 spec:
-  imagePullPolicy: Always
+  # Metrics only: without FAIL_OPEN, Istio >= 1.20 denies all traffic to the pod if the module fetch fails.
+  failStrategy: FAIL_OPEN
+  imagePullPolicy: IfNotPresent
   phase: AUTHN
   pluginConfig:
     attributes:
@@ -32,5 +35,8 @@ spec:
   selector:
     matchLabels: 
       {{- include "modelEngine.selectorLabels.gateway" . | nindent 6 }}
-  url: https://storage.googleapis.com/istio-build/proxy/attributegen-359dcd3a19f109c50e97517fe6b1e2676e870c4d.wasm
+  url: {{ .Values.istioAttributegen.url | quote }}
+  {{- with .Values.istioAttributegen.sha256 }}
+  sha256: {{ . | quote }}
+  {{- end }}
 {{- end }}
