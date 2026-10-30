@@ -144,6 +144,8 @@ redis:
   # cache endpoint is separate and names its own scheme in cache_redis_url.
   enableTLS:
   enableAuth: false
+  # AWS Secrets Manager secret for the chart's KEDA TriggerAuthentication. Leave
+  # empty to manage keda-trigger-auth-redis-secret outside the chart.
   kedaSecretName: ""
   unsafeSsl: false
 db:
