@@ -1,6 +1,7 @@
 import importlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -222,6 +223,13 @@ def predict_on_cloudpickle(predict_fn: Callable, input_location: str) -> Dict[st
     Returns:
 
     """
+    # Only load payloads written by service_requests._write_request, never a caller-chosen URI.
+    s3_bucket = os.environ.get("RESULTS_S3_BUCKET")
+    if not s3_bucket or not re.fullmatch(
+        rf"s3://{re.escape(s3_bucket)}/tmp/hosted-model-inference-intermediate-inputs/[0-9a-f-]{{36}}",
+        input_location,
+    ):
+        raise ValueError("cloudpickle input location is not an intermediate request payload.")
     # TODO we currently always write our output to s3, as opposed to serializing it.
     #  We can expose these switches if necessary, although this complicates the user api.
     with open_wrapper(input_location, "rb") as f:
