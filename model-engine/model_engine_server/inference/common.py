@@ -1,7 +1,6 @@
 import importlib
 import json
 import os
-import re
 import shutil
 import subprocess
 import tempfile
@@ -212,51 +211,24 @@ def predict_on_args(
         return serialize_json_result(output)
 
 
-def predict_on_cloudpickle(predict_fn: Callable, input_location: str) -> Dict[str, str]:
-    """
-    Run predict_fn on a cloudpickled payload. Should be used only by intermediate stages in a pipeline,
-        not called directly by the Gateway. Will always return a cloudpickle (for now).
-    Args:
-        predict_fn:
-        input_location: s3url of cloudpickled arguments
-
-    Returns:
-
-    """
-    # Only load payloads written by service_requests._write_request, never a caller-chosen URI.
-    s3_bucket = os.environ.get("RESULTS_S3_BUCKET")
-    if not s3_bucket or not re.fullmatch(
-        rf"s3://{re.escape(s3_bucket)}/tmp/hosted-model-inference-intermediate-inputs/[0-9a-f-]{{36}}",
-        input_location,
-    ):
-        raise ValueError("cloudpickle input location is not an intermediate request payload.")
-    # TODO we currently always write our output to s3, as opposed to serializing it.
-    #  We can expose these switches if necessary, although this complicates the user api.
-    with open_wrapper(input_location, "rb") as f:
-        inputs = cloudpickle.load(f)
-        output = predict_fn(*inputs["args"], **inputs["kwargs"])
-        return _write_to_s3(output)
-
-
 def run_predict(predict_fn: Callable, request_params: EndpointPredictV1Request) -> Dict[str, str]:
     """
 
     Args:
         predict_fn:
-        request_params: A dictionary containing either "url" or "args" or "cloudpickle",
-            corresponding to a file at a url, or a list of arguments, or a cloudpickled dictionary
-            {"args": [arg1, arg2], "kwargs": {"kwarg1": val1, "kwarg2": val2}}
+        request_params: A dictionary containing either "url" or "args",
+            corresponding to a file at a url, or a list of arguments
         return_pickled:
 
     Returns:
 
     """
+    if request_params.cloudpickle is not None:
+        raise ValueError("The cloudpickle field is no longer supported. Use args or url instead.")
     if request_params.url is not None:
         return predict_on_url(predict_fn, request_params.url, request_params.return_pickled)
     elif request_params.args is not None:
         return predict_on_args(predict_fn, request_params.args, request_params.return_pickled)
-    elif request_params.cloudpickle is not None:
-        return predict_on_cloudpickle(predict_fn, request_params.cloudpickle)
     else:
         raise ValueError("Input needs either url or args.")
 
