@@ -157,7 +157,7 @@ class HostedModelInferenceServiceConfig:
                 logger.warning(
                     "Both cache_redis_aws_url and cache_redis_aws_secret_name are set. Using cache_redis_aws_url"
                 )
-            return self.cache_redis_aws_url
+            return _apply_redis_auth_token(self.cache_redis_aws_url)
         elif self.cache_redis_aws_secret_name:
             assert cloud_provider == "aws", "cache_redis_aws_secret_name is only for AWS"
             creds = get_key_file(self.cache_redis_aws_secret_name)
