@@ -1,3 +1,5 @@
+import hashlib
+import json
 import os
 from typing import Any, Dict, List, TypedDict, cast
 
@@ -42,11 +44,19 @@ CONTAINER_RESOURCES = {
     "requests": {"cpu": "1m", "memory": "8Mi"},
     "limits": {"cpu": "10m", "memory": "256Mi"},
 }
+# Stamped on each daemonset so a change to where cache pods may run (nodeSelector, affinity,
+# tolerations) replaces the daemonset even when the cached images are unchanged.
+SCHEDULING_HASH_ANNOTATION = "launch.scale.com/image-cache-scheduling-hash"
 TRUSTED_BIN_VOLUME_MOUNT = {
     "name": TRUSTED_BIN_VOLUME_NAME,
     "mountPath": TRUSTED_BIN_DIR,
     "readOnly": True,
 }
+
+
+def _scheduling_hash(pod_spec: Dict[str, Any]) -> str:
+    scheduling = {key: pod_spec.get(key) for key in ("nodeSelector", "affinity", "tolerations")}
+    return hashlib.sha256(json.dumps(scheduling, sort_keys=True).encode()).hexdigest()[:16]
 
 
 def _trusted_busybox_image(template_containers: List[Dict[str, Any]]) -> str:
@@ -145,6 +155,10 @@ class ImageCacheGateway:
                 }
             ]
 
+            image_cache["metadata"].setdefault("annotations", {})[SCHEDULING_HASH_ANNOTATION] = (
+                _scheduling_hash(pod_spec)
+            )
+
             # Add the default image value defined in the yaml to the set of images
             images.append("public.ecr.aws/docker/library/busybox:latest")
 
@@ -205,10 +219,19 @@ class ImageCacheGateway:
                             container["image"]: container.get("resources", {}).get("limits")
                             for container in image_cache["spec"]["template"]["spec"]["containers"]
                         }
+                        current_scheduling_hash = (daemonset.metadata.annotations or {}).get(
+                            SCHEDULING_HASH_ANNOTATION
+                        )
+                        new_scheduling_hash = (
+                            image_cache["metadata"]
+                            .get("annotations", {})
+                            .get(SCHEDULING_HASH_ANNOTATION)
+                        )
                         if (
                             current_images == new_images
                             and has_trusted_bin
                             and current_limits == new_limits
+                            and current_scheduling_hash == new_scheduling_hash
                         ):
                             logger.info(f"Image cache {name} has not changed, not updating")
                             return

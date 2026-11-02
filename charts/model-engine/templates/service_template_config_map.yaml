@@ -1341,6 +1341,7 @@ data:
   {{- range $device := .Values.imageCache.devices }}
   {{- $device_node_selector := index $device "nodeSelector" }}
   {{- $device_tolerations := index $device "tolerations" }}
+  {{- $device_affinity := index $device "affinity" }}
   image-cache-{{- index $device "name" }}.yaml: |-
     apiVersion: apps/v1
     kind: DaemonSet
@@ -1384,6 +1385,10 @@ data:
           tolerations:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+          {{- end }}
+          {{- with $device_affinity }}
+          affinity:
+            {{- toYaml . | nindent 12 }}
           {{- end }}
           containers:
             - image: {{ $.Values.utilityImages.busybox.repository }}:{{ $.Values.utilityImages.busybox.tag }}

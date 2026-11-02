@@ -1,15 +1,17 @@
 from types import SimpleNamespace
-from typing import Dict, Set
+from typing import Dict, Optional, Set
 from unittest.mock import AsyncMock, patch
 
 import pytest
 from kubernetes_asyncio.client.rest import ApiException
 from model_engine_server.infra.gateways.resources.image_cache_gateway import (
+    SCHEDULING_HASH_ANNOTATION,
     TRUSTED_BIN_INIT_CONTAINER_NAME,
     TRUSTED_BUSYBOX_DIGEST,
     TRUSTED_BUSYBOX_IMAGE,
     CachedImages,
     ImageCacheGateway,
+    _scheduling_hash,
     _trusted_busybox_image,
 )
 
@@ -91,6 +93,7 @@ async def test_create_or_update_image_cache_runs_only_trusted_busybox(mock_apps_
     assert cached["securityContext"]["capabilities"] == {"drop": ["ALL"]}
     assert cached["securityContext"]["allowPrivilegeEscalation"] is False
     assert cached["resources"]["limits"] == {"cpu": "10m", "memory": "256Mi"}
+    assert cpu_body["metadata"]["annotations"][SCHEDULING_HASH_ANNOTATION]
 
 
 @pytest.mark.parametrize(
@@ -115,9 +118,12 @@ def test_trusted_busybox_image_keeps_the_pinned_digest(template_image, expected_
     assert _trusted_busybox_image(containers) == f"{expected_repository}@{TRUSTED_BUSYBOX_DIGEST}"
 
 
-def _existing_daemonset(name: str, images: Set[str], init_containers, limits):
+def _existing_daemonset(
+    name: str, images: Set[str], init_containers, limits, scheduling_hash: Optional[str]
+):
+    annotations = {SCHEDULING_HASH_ANNOTATION: scheduling_hash} if scheduling_hash else None
     return SimpleNamespace(
-        metadata=SimpleNamespace(name=name),
+        metadata=SimpleNamespace(name=name, annotations=annotations),
         spec=SimpleNamespace(
             template=SimpleNamespace(
                 spec=SimpleNamespace(
@@ -136,39 +142,55 @@ TRUSTED_INIT_CONTAINERS = [
     SimpleNamespace(name=TRUSTED_BIN_INIT_CONTAINER_NAME, image=TRUSTED_BUSYBOX_IMAGE)
 ]
 NEW_LIMITS = {"cpu": "10m", "memory": "256Mi"}
+NEW_SCHEDULING_HASH = "new-hash"
 
 
 @pytest.mark.parametrize(
-    "init_containers,limits,expect_replace",
+    "init_containers,limits,scheduling_hash,expect_replace",
     [
-        pytest.param(None, NEW_LIMITS, True, id="legacy-daemonset-without-init-container"),
+        pytest.param(
+            None,
+            NEW_LIMITS,
+            NEW_SCHEDULING_HASH,
+            True,
+            id="legacy-daemonset-without-init-container",
+        ),
         pytest.param(
             [SimpleNamespace(name=TRUSTED_BIN_INIT_CONTAINER_NAME, image="busybox:old")],
             NEW_LIMITS,
+            NEW_SCHEDULING_HASH,
             True,
             id="init-container-with-other-image",
         ),
         pytest.param(
             TRUSTED_INIT_CONTAINERS,
             {"cpu": "10m", "memory": "16Mi"},
+            NEW_SCHEDULING_HASH,
             True,
             id="older-resource-limits",
         ),
-        pytest.param(TRUSTED_INIT_CONTAINERS, NEW_LIMITS, False, id="unchanged"),
+        pytest.param(
+            TRUSTED_INIT_CONTAINERS, NEW_LIMITS, "old-hash", True, id="changed-scheduling"
+        ),
+        pytest.param(TRUSTED_INIT_CONTAINERS, NEW_LIMITS, None, True, id="no-scheduling-hash"),
+        pytest.param(
+            TRUSTED_INIT_CONTAINERS, NEW_LIMITS, NEW_SCHEDULING_HASH, False, id="unchanged"
+        ),
     ],
 )
 @pytest.mark.asyncio
 async def test_create_image_cache_replaces_daemonsets_without_trusted_busybox(
-    mock_apps_client, init_containers, limits, expect_replace
+    mock_apps_client, init_containers, limits, scheduling_hash, expect_replace
 ):
     name = "launch-image-cache-cpu"
     images = ["cpu_image", "public.ecr.aws/docker/library/busybox:latest"]
     mock_apps_client.create_namespaced_daemon_set.side_effect = ApiException(status=409)
     mock_apps_client.list_namespaced_daemon_set.return_value = SimpleNamespace(
-        items=[_existing_daemonset(name, set(images), init_containers, limits)]
+        items=[_existing_daemonset(name, set(images), init_containers, limits, scheduling_hash)]
     )
 
     body = {
+        "metadata": {"annotations": {SCHEDULING_HASH_ANNOTATION: NEW_SCHEDULING_HASH}},
         "spec": {
             "template": {
                 "spec": {
@@ -178,8 +200,45 @@ async def test_create_image_cache_replaces_daemonsets_without_trusted_busybox(
                     ],
                 }
             }
-        }
+        },
     }
     await ImageCacheGateway._create_image_cache(body, name, images)
 
     assert mock_apps_client.replace_namespaced_daemon_set.called is expect_replace
+
+
+T4_SELECTOR = {"k8s.amazonaws.com/accelerator": "nvidia-tesla-t4"}
+LARGE_T4_AFFINITY = {
+    "nodeAffinity": {
+        "requiredDuringSchedulingIgnoredDuringExecution": {
+            "nodeSelectorTerms": [
+                {
+                    "matchExpressions": [
+                        {
+                            "key": "node.kubernetes.io/instance-type",
+                            "operator": "In",
+                            "values": ["g4dn.8xlarge", "g4dn.12xlarge"],
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+}
+
+
+@pytest.mark.parametrize(
+    "other_pod_spec",
+    [
+        pytest.param({"nodeSelector": T4_SELECTOR, "affinity": LARGE_T4_AFFINITY}, id="affinity"),
+        pytest.param({"nodeSelector": {"cpu-only": "true"}}, id="node-selector"),
+        pytest.param(
+            {"nodeSelector": T4_SELECTOR, "tolerations": [{"key": "nvidia.com/gpu"}]},
+            id="tolerations",
+        ),
+    ],
+)
+def test_scheduling_hash_changes_with_scheduling_fields(other_pod_spec):
+    pod_spec = {"nodeSelector": T4_SELECTOR, "containers": [{"image": "a"}]}
+    assert _scheduling_hash(pod_spec) == _scheduling_hash({**pod_spec, "containers": []})
+    assert _scheduling_hash(pod_spec) != _scheduling_hash(other_pod_spec)
