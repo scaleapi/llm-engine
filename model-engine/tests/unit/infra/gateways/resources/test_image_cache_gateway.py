@@ -90,7 +90,7 @@ async def test_create_or_update_image_cache_runs_only_trusted_busybox(mock_apps_
     assert cached["command"][0] == "/trusted/busybox"
     assert cached["securityContext"]["capabilities"] == {"drop": ["ALL"]}
     assert cached["securityContext"]["allowPrivilegeEscalation"] is False
-    assert cached["resources"]["limits"] == {"cpu": "10m", "memory": "16Mi"}
+    assert cached["resources"]["limits"] == {"cpu": "10m", "memory": "256Mi"}
 
 
 @pytest.mark.parametrize(
@@ -115,13 +115,16 @@ def test_trusted_busybox_image_keeps_the_pinned_digest(template_image, expected_
     assert _trusted_busybox_image(containers) == f"{expected_repository}@{TRUSTED_BUSYBOX_DIGEST}"
 
 
-def _existing_daemonset(name: str, images: Set[str], init_containers):
+def _existing_daemonset(name: str, images: Set[str], init_containers, limits):
     return SimpleNamespace(
         metadata=SimpleNamespace(name=name),
         spec=SimpleNamespace(
             template=SimpleNamespace(
                 spec=SimpleNamespace(
-                    containers=[SimpleNamespace(image=image) for image in images],
+                    containers=[
+                        SimpleNamespace(image=image, resources=SimpleNamespace(limits=limits))
+                        for image in images
+                    ],
                     init_containers=init_containers,
                 )
             )
@@ -129,34 +132,54 @@ def _existing_daemonset(name: str, images: Set[str], init_containers):
     )
 
 
+TRUSTED_INIT_CONTAINERS = [
+    SimpleNamespace(name=TRUSTED_BIN_INIT_CONTAINER_NAME, image=TRUSTED_BUSYBOX_IMAGE)
+]
+NEW_LIMITS = {"cpu": "10m", "memory": "256Mi"}
+
+
 @pytest.mark.parametrize(
-    "init_containers,expect_replace",
+    "init_containers,limits,expect_replace",
     [
-        pytest.param(None, True, id="legacy-daemonset-without-init-container"),
+        pytest.param(None, NEW_LIMITS, True, id="legacy-daemonset-without-init-container"),
         pytest.param(
             [SimpleNamespace(name=TRUSTED_BIN_INIT_CONTAINER_NAME, image="busybox:old")],
+            NEW_LIMITS,
             True,
             id="init-container-with-other-image",
         ),
         pytest.param(
-            [SimpleNamespace(name=TRUSTED_BIN_INIT_CONTAINER_NAME, image=TRUSTED_BUSYBOX_IMAGE)],
-            False,
-            id="unchanged",
+            TRUSTED_INIT_CONTAINERS,
+            {"cpu": "10m", "memory": "16Mi"},
+            True,
+            id="older-resource-limits",
         ),
+        pytest.param(TRUSTED_INIT_CONTAINERS, NEW_LIMITS, False, id="unchanged"),
     ],
 )
 @pytest.mark.asyncio
 async def test_create_image_cache_replaces_daemonsets_without_trusted_busybox(
-    mock_apps_client, init_containers, expect_replace
+    mock_apps_client, init_containers, limits, expect_replace
 ):
     name = "launch-image-cache-cpu"
     images = ["cpu_image", "public.ecr.aws/docker/library/busybox:latest"]
     mock_apps_client.create_namespaced_daemon_set.side_effect = ApiException(status=409)
     mock_apps_client.list_namespaced_daemon_set.return_value = SimpleNamespace(
-        items=[_existing_daemonset(name, set(images), init_containers)]
+        items=[_existing_daemonset(name, set(images), init_containers, limits)]
     )
 
-    body = {"spec": {"template": {"spec": {"initContainers": [{"image": TRUSTED_BUSYBOX_IMAGE}]}}}}
+    body = {
+        "spec": {
+            "template": {
+                "spec": {
+                    "initContainers": [{"image": TRUSTED_BUSYBOX_IMAGE}],
+                    "containers": [
+                        {"image": image, "resources": {"limits": NEW_LIMITS}} for image in images
+                    ],
+                }
+            }
+        }
+    }
     await ImageCacheGateway._create_image_cache(body, name, images)
 
     assert mock_apps_client.replace_namespaced_daemon_set.called is expect_replace

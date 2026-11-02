@@ -37,9 +37,10 @@ CONTAINER_SECURITY_CONTEXT = {
     "readOnlyRootFilesystem": True,
     "capabilities": {"drop": ["ALL"]},
 }
+# A 16Mi limit got every CUDA-image container's init OOM-killed on GPU nodes.
 CONTAINER_RESOURCES = {
     "requests": {"cpu": "1m", "memory": "8Mi"},
-    "limits": {"cpu": "10m", "memory": "16Mi"},
+    "limits": {"cpu": "10m", "memory": "256Mi"},
 }
 TRUSTED_BIN_VOLUME_MOUNT = {
     "name": TRUSTED_BIN_VOLUME_NAME,
@@ -193,7 +194,22 @@ class ImageCacheGateway:
                             and container.image == trusted_busybox_image
                             for container in init_containers
                         )
-                        if current_images == new_images and has_trusted_bin:
+                        # Daemonsets created with older resource limits are replaced too.
+                        current_limits = {
+                            container.image: (
+                                container.resources.limits if container.resources else None
+                            )
+                            for container in containers
+                        }
+                        new_limits = {
+                            container["image"]: container.get("resources", {}).get("limits")
+                            for container in image_cache["spec"]["template"]["spec"]["containers"]
+                        }
+                        if (
+                            current_images == new_images
+                            and has_trusted_bin
+                            and current_limits == new_limits
+                        ):
                             logger.info(f"Image cache {name} has not changed, not updating")
                             return
 
