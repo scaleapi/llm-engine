@@ -23,8 +23,9 @@ metadata:
   name: {{ include "modelEngine.fullname" . }}-attributegen
   namespace: istio-system
 spec:
-  # Metrics only: without FAIL_OPEN, Istio >= 1.20 denies all traffic to the pod if the module fetch fails.
-  failStrategy: FAIL_OPEN
+  {{- with .Values.istioAttributegen.failStrategy }}
+  failStrategy: {{ . }}
+  {{- end }}
   imagePullPolicy: IfNotPresent
   phase: AUTHN
   pluginConfig:
