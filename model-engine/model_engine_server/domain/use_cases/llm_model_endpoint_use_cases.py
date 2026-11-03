@@ -4151,6 +4151,7 @@ class CreateBatchCompletionsUseCase:
         assert hardware.gpus is not None
 
         engine_request = CreateBatchCompletionsEngineRequest.from_api_v1(request)
+        validate_labels(engine_request.labels)
         engine_request.model_cfg.num_shards = hardware.gpus
         if engine_request.tool_config and engine_request.tool_config.name != "code_evaluator":
             raise ObjectHasInvalidValueException(
@@ -4250,6 +4251,7 @@ class CreateBatchCompletionsV2UseCase:
             )
 
         engine_request = CreateBatchCompletionsEngineRequest.from_api_v2(request)
+        validate_labels(engine_request.labels)
         engine_request.model_cfg.num_shards = hardware.gpus
 
         validate_resource_requests(
