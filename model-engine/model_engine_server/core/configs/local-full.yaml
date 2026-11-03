@@ -1,0 +1,16 @@
+cloud_provider: onprem
+env: local
+k8s_cluster_name: kind-llm-engine
+dns_host_domain: localhost
+default_region: us-east-1
+ml_account_id: local
+docker_repo_prefix: "localhost"
+s3_bucket: local-bucket
+redis_host: localhost
+redis_port: 6379
+celery_broker_type_redis: true
+db_engine_pool_size: 5
+db_engine_max_overflow: 5
+db_engine_echo: false
+db_engine_echo_pool: false
+db_engine_disconnect_strategy: pessimistic
