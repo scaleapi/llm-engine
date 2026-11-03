@@ -170,3 +170,31 @@ curl -X POST localhost:5000/v1/chat/completions \
     -H "Content-Type: application/json" \
     -d '{"args": {"model":"meta-llama/Meta-Llama-3.1-8B-Instruct", "messages":[{"role": "system", "content": "Hello"}], "max_tokens":100}}'
 ```
+
+## Publishing the Docker Image
+
+The Model Engine image is published to the public ECR registry at [`public.ecr.aws/b2z8n5q1/model-engine`](https://gallery.ecr.aws/b2z8n5q1/model-engine).
+
+### Build
+
+From the **repo root** (`llm-engine/`, not `llm-engine/model-engine/`):
+
+```bash
+TAG=$(git rev-parse --short HEAD)
+docker build --platform linux/amd64 . -f model-engine/Dockerfile -t model-engine:$TAG
+```
+
+### Authenticate
+
+Public ECR auth must use `us-east-1`. The `ml-admin` AWS profile has push access (account `692474966980`):
+
+```bash
+aws ecr-public get-login-password --region us-east-1 --profile ml-admin | docker login --username AWS --password-stdin public.ecr.aws/b2z8n5q1
+```
+
+### Tag and Push
+
+```bash
+docker tag model-engine:$TAG public.ecr.aws/b2z8n5q1/model-engine:$TAG
+docker push public.ecr.aws/b2z8n5q1/model-engine:$TAG
+```
