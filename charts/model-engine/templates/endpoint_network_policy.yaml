@@ -1,0 +1,30 @@
+{{- /*
+Endpoint pods run the user container on port 5005 (USER_CONTAINER_PORT in k8s_resource_types.py).
+Only the forwarder sidecar in the same pod may reach it, over localhost, which a NetworkPolicy
+does not filter. Without this policy any pod in the cluster can call the user container and skip
+the forwarder checks. The policy allows ingress on every TCP port except 5005.
+*/}}
+{{- $np := default dict .Values.endpointNetworkPolicy }}
+{{- if ne (toString (get $np "enabled")) "false" }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "modelEngine.fullname" . }}-endpoint-deny-user-container-port
+  namespace: {{ .Values.config.values.launch.endpoint_namespace | default .Release.Namespace }}
+  labels:
+    {{- include "modelEngine.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      use_scale_launch_endpoint_network_policy: "true"
+  policyTypes:
+    - Ingress
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: 1
+          endPort: 5004
+        - protocol: TCP
+          port: 5006
+          endPort: 65535
+{{- end }}

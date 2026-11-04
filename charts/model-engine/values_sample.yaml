@@ -182,6 +182,10 @@ aws:
     create: true
   profileName: default
 
+# endpointNetworkPolicy blocks pod-to-pod ingress to the endpoint user container port (5005). Set enabled: false only if your CNI cannot enforce NetworkPolicy.
+endpointNetworkPolicy:
+  enabled: true
+
 # serviceTemplate specifies additional flags for model endpoints
 serviceTemplate:
   securityContext:

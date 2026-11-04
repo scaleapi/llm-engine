@@ -274,15 +274,11 @@ class LiveEndpointBuilderService(EndpointBuilderService):
                             )
 
                     except DockerBuildFailedException:
-                        existing_image = await self._get_existing_artifact_image(
-                            build_endpoint_request, logger_adapter
-                        )
-                        if existing_image is None:
-                            log_error("Failed to build base and user docker images")
-                            self.monitoring_metrics_gateway.emit_docker_failed_build_metric()
-                            raise
-                        image = existing_image
-                        image_repo, image_tag = existing_image.rsplit(":", 1)
+                        # Never reuse the running image: an artifact image built before the
+                        # cloudpickle removal still holds the vulnerable model container code.
+                        log_error("Failed to build base and user docker images")
+                        self.monitoring_metrics_gateway.emit_docker_failed_build_metric()
+                        raise
 
                     self.convert_artifact_like_bundle_to_runnable_image(
                         build_endpoint_request, image_repo, image_tag
@@ -726,56 +722,6 @@ class LiveEndpointBuilderService(EndpointBuilderService):
             )
 
         return self.docker_repository.get_image_url(image_params.image_tag, image_params.repo)
-
-    async def _get_existing_artifact_image(
-        self,
-        build_endpoint_request: BuildEndpointRequest,
-        logger_adapter: LoggerAdapter,
-    ) -> Optional[str]:
-        """Returns the image the endpoint already runs if it was built for the same bundle.
-
-        Artifact images can no longer be built, and their tags include the builder's GIT_TAG, so
-        an update of an existing artifact endpoint never finds a matching image. The running image
-        is reused only if it serves the same BUNDLE_URL and its repository and tag match what this
-        builder would compute, apart from the GIT_TAG it was built at.
-        """
-        model_endpoint_record = build_endpoint_request.model_endpoint_record
-        model_bundle = model_endpoint_record.current_model_bundle
-        assert isinstance(model_bundle.flavor, ArtifactLike)
-        try:
-            infra_state = await self.resource_gateway.get_resources(
-                endpoint_id=model_endpoint_record.id,
-                deployment_name=build_endpoint_request.deployment_name,
-                endpoint_type=model_endpoint_record.endpoint_type,
-            )
-        except EndpointResourceInfraException:
-            return None
-        if infra_state.bundle_url != model_bundle.flavor.location:
-            return None
-        if "@" in infra_state.image or ":" not in infra_state.image.rsplit("/", 1)[-1]:
-            return None
-        running_repo, running_tag = infra_state.image.rsplit(":", 1)
-        expected = self._get_user_image_params(
-            infra_state.image, build_endpoint_request, logger_adapter
-        )
-        expected_repo = self.docker_repository.get_image_url(expected.image_tag, expected.repo)
-        if running_repo != expected_repo.rsplit(":", 1)[0]:
-            return None
-        # Same base image and requirements: only the GIT_TAG between them may differ.
-        if f"-{GIT_TAG}-" not in expected.image_tag:
-            return None
-        prefix, suffix = expected.image_tag.split(f"-{GIT_TAG}-", 1)
-        running_git_tag = running_tag[len(prefix) + 1 : -len(suffix) - 1]
-        if not (
-            running_tag.startswith(f"{prefix}-")
-            and running_tag.endswith(f"-{suffix}")
-            and running_git_tag.isalnum()
-        ):
-            return None
-        logger_adapter.info(
-            f"Reusing the running image {infra_state.image} for {model_endpoint_record.id=}"
-        )
-        return infra_state.image
 
     async def _load_model_bundle_from_record(
         self, build_endpoint_request: BuildEndpointRequest
