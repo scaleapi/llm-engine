@@ -288,6 +288,11 @@ def load_k8s_yaml(key: str, substitution_kwargs: ResourceArguments) -> Dict[str,
     for structured_key in ("COMMAND", "WORKER_COMMAND", "MAIN_ENV", "WORKER_ENV"):
         if isinstance(filtered_kwargs.get(structured_key), list):
             filtered_kwargs[structured_key] = json.dumps(filtered_kwargs[structured_key])
+    # TEAM and PRODUCT render as bare scalars (`team: ${TEAM}`). A JSON string is a valid
+    # YAML double-quoted scalar, so a value with newlines or ': ' cannot add or override keys.
+    for scalar_key in ("TEAM", "PRODUCT"):
+        if scalar_key in filtered_kwargs:
+            filtered_kwargs[scalar_key] = json.dumps(str(filtered_kwargs[scalar_key]))
     yaml_str = Template(template_str).safe_substitute(**filtered_kwargs)
     try:
         yaml_obj = yaml.safe_load(yaml_str)
