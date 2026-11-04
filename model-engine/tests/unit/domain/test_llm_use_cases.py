@@ -4135,6 +4135,14 @@ def test_check_docker_image_exists_for_image_tag_validates_tag(
 
 
 @pytest.mark.asyncio
+@mock.patch(
+    "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases._get_recommended_hardware_config_map",
+    mocked__get_recommended_hardware_config_map(),
+)
+@mock.patch(
+    "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases._get_latest_batch_tag",
+    mocked__get_latest_batch_tag(),
+)
 async def test_create_batch_completions_v1_rejects_invalid_labels(
     fake_docker_image_batch_job_gateway,
     fake_docker_repository_image_always_exists,
