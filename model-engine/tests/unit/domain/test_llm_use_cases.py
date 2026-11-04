@@ -4132,3 +4132,61 @@ def test_check_docker_image_exists_for_image_tag_validates_tag(
     else:
         with pytest.raises(ObjectHasInvalidValueException):
             use_case.check_docker_image_exists_for_image_tag(image_tag, "repo")
+
+
+@pytest.mark.asyncio
+@mock.patch(
+    "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases._get_recommended_hardware_config_map",
+    mocked__get_recommended_hardware_config_map(),
+)
+@mock.patch(
+    "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases._get_latest_batch_tag",
+    mocked__get_latest_batch_tag(),
+)
+async def test_create_batch_completions_v1_rejects_invalid_labels(
+    fake_docker_image_batch_job_gateway,
+    fake_docker_repository_image_always_exists,
+    fake_docker_image_batch_job_bundle_repository,
+    fake_llm_artifact_gateway,
+    test_api_key: str,
+    create_batch_completions_v1_request: CreateBatchCompletionsV1Request,
+):
+    from model_engine_server.domain.exceptions import EndpointLabelsException
+
+    use_case = CreateBatchCompletionsUseCase(
+        docker_image_batch_job_gateway=fake_docker_image_batch_job_gateway,
+        docker_repository=fake_docker_repository_image_always_exists,
+        docker_image_batch_job_bundle_repo=fake_docker_image_batch_job_bundle_repository,
+        llm_artifact_gateway=fake_llm_artifact_gateway,
+    )
+    user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
+    request = create_batch_completions_v1_request.model_copy(deep=True)
+    request.model_cfg.labels = {"team": "a\nevil: x", "product": "p"}
+    with pytest.raises(EndpointLabelsException):
+        await use_case.execute(user, request)
+
+
+@pytest.mark.asyncio
+@mock.patch(
+    "model_engine_server.domain.use_cases.llm_model_endpoint_use_cases._get_latest_batch_v2_tag",
+    mocked__get_latest_batch_v2_tag(),
+)
+async def test_create_batch_completions_v2_rejects_invalid_labels(
+    fake_llm_batch_completions_service,
+    fake_llm_artifact_gateway,
+    test_api_key: str,
+    create_batch_completions_v2_request_with_hardware: CreateBatchCompletionsV2Request,
+):
+    from model_engine_server.domain.exceptions import EndpointLabelsException
+
+    fake_llm_batch_completions_service.create_batch_job = mock.AsyncMock()
+    use_case = CreateBatchCompletionsV2UseCase(
+        llm_batch_completions_service=fake_llm_batch_completions_service,
+        llm_artifact_gateway=fake_llm_artifact_gateway,
+    )
+    user = User(user_id=test_api_key, team_id=test_api_key, is_privileged_user=True)
+    request = create_batch_completions_v2_request_with_hardware.model_copy(deep=True)
+    request.labels = {"team": "a\nevil: x", "product": "p"}
+    with pytest.raises(EndpointLabelsException):
+        await use_case.execute(request, user)
+    fake_llm_batch_completions_service.create_batch_job.assert_not_called()
