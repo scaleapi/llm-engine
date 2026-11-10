@@ -8,7 +8,8 @@
 #
 # Requires: helm, aws-cli, and AWS credentials for a principal in account
 # 692474966980 with ecr-public publish permission on
-# model-engine-helm-charts/model-engine (the CircleCI `circleci` OIDC role).
+# model-engine-helm-charts/model-engine (the circleci-llm-engine-chart-publish
+# OIDC role).
 set -euo pipefail
 
 CHART_DIR="charts/model-engine"
@@ -24,12 +25,19 @@ if [[ -z "${VERSION}" ]]; then
 fi
 echo "model-engine chart version: ${VERSION}"
 
-if aws ecr-public describe-images \
+# Never overwrite a published version. Only ImageNotFoundException means the
+# tag is free; any other describe error fails the job instead of pushing.
+if DESCRIBE_OUTPUT="$(aws ecr-public describe-images \
       --region "${ECR_PUBLIC_REGION}" \
       --repository-name "${ECR_REPOSITORY_NAME}" \
-      --image-ids imageTag="${VERSION}" >/dev/null 2>&1; then
-  echo "Chart ${VERSION} is already published to ${PUBLIC_ECR_REGISTRY}/${ECR_REPOSITORY_NAME} — nothing to do."
+      --image-ids imageTag="${VERSION}" 2>&1)"; then
+  echo "Chart ${VERSION} is already published to ${PUBLIC_ECR_REGISTRY}/${ECR_REPOSITORY_NAME}; refusing to push."
   exit 0
+fi
+if [[ "${DESCRIBE_OUTPUT}" != *ImageNotFoundException* ]]; then
+  echo "ERROR: could not check whether chart ${VERSION} is already published:" >&2
+  echo "${DESCRIBE_OUTPUT}" >&2
+  exit 1
 fi
 
 echo "Publishing model-engine chart ${VERSION}..."

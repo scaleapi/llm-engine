@@ -34,7 +34,7 @@ jobs:
     steps:
       - checkout
       - aws-cli/setup:
-          role-arn: ${CIRCLECI_ROLE_ARN}
+          role-arn: arn:aws:iam::692474966980:role/circleci-llm-engine-chart-publish
           aws-region: AWS_REGION
       - run:
           name: Install helm

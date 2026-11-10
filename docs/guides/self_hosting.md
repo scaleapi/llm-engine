@@ -79,6 +79,14 @@ The LLM Engine server will an IAM role to perform various AWS operations. This r
 Now that all dependencies have been installed and configured, we can run the provided Helm chart. The values in the Helm chart will need to correspond with the resources described in the Dependencies section. 
 
 Ensure that Helm V3 is installed [instructions](https://helm.sh/docs/intro/install/) and can connect to the EKS cluster. Users should be able to install the chart with `helm install llm-engine llm-engine -f llm-engine/values_sample.yaml -n <DESIRED_NAMESPACE>`.
+
+The chart is also published to `oci://public.ecr.aws/b2z8n5q1/model-engine-helm-charts/model-engine`. To install a published version, pin it by digest rather than by version tag, so the install always gets the exact chart you reviewed. `helm pull` prints the digest of a version:
+
+```
+helm pull oci://public.ecr.aws/b2z8n5q1/model-engine-helm-charts/model-engine --version <CHART_VERSION>
+# Digest: sha256:<digest>
+helm install llm-engine oci://public.ecr.aws/b2z8n5q1/model-engine-helm-charts/model-engine@sha256:<digest> -f values_sample.yaml -n <DESIRED_NAMESPACE>
+```
 Below are the configurations to specify in the `values_sample.yaml` file. 
 
 | Parameter | Description | Required |
