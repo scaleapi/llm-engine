@@ -1,10 +1,16 @@
 {{- if empty .Values.azure }}
+# Scoped to the pods the attributegen WasmPlugin below runs on, the only ones with a
+# request_operation value. Istio applies only the oldest selector-less Telemetry in
+# istio-system, so a mesh-wide one here can silently override the mesh owner's.
 apiVersion: telemetry.istio.io/v1alpha1
 kind: Telemetry
 metadata:
   name: {{ include "modelEngine.fullname" . }}-custom-tags
-  namespace: istio-system
+  namespace: {{ .Release.Namespace }}
 spec:
+  selector:
+    matchLabels:
+      {{- include "modelEngine.selectorLabels.gateway" . | nindent 6 }}
   metrics:
   - overrides:
     - match:
