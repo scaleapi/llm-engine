@@ -48,6 +48,22 @@ gateway:
     attempts: 3
     retryOn: connect-failure,unavailable,502,504
     perTryTimeout: null
+  # shutdown sets how a deleted gateway pod (rollout, scale-in, node drain) stops
+  # taking traffic before it stops serving. The app and its istio-proxy sidecar both
+  # get SIGTERM at deletion, while the endpoint removal is still reaching the ingress
+  # gateway and the callers' sidecars. Without a hold, Gunicorn closes its port at
+  # once and the sidecar exits ~5s later, and requests still routed to the pod get 503s.
+  shutdown:
+    # preStopSleepSeconds is how long the app keeps serving after deletion before
+    # Gunicorn gets SIGTERM. Set it to the time istiod takes to push an endpoint
+    # removal to every proxy on the cluster. With Istio, keep it under the sidecar's
+    # drainDuration (default 45s), after which the sidecar refuses new connections.
+    # 0 removes the hook.
+    preStopSleepSeconds: 15
+    # terminationGracePeriodSeconds is when the kubelet SIGKILLs the pod. It must be at
+    # least preStopSleepSeconds + 60 (Gunicorn's graceful timeout); add headroom. It
+    # is also the ceiling on the sidecar's drain.
+    terminationGracePeriodSeconds: 90
 
 # rateLimits [optional] per-pod Envoy local_ratelimit token buckets on the gateway
 # sidecars (inbound). Overflow returns 429 at the proxy without reaching a gateway

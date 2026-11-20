@@ -1,3 +1,9 @@
+{{- $shutdown := .Values.gateway.shutdown }}
+{{- /* Gunicorn's --graceful-timeout (start_fastapi_server.py) */}}
+{{- $gunicornGracefulTimeoutSeconds := 60 }}
+{{- if lt (int $shutdown.terminationGracePeriodSeconds) (add (int $shutdown.preStopSleepSeconds) $gunicornGracefulTimeoutSeconds | int) }}
+{{- fail (printf "gateway.shutdown.terminationGracePeriodSeconds must be at least preStopSleepSeconds + %d (Gunicorn's graceful timeout), or in-flight requests are killed" $gunicornGracefulTimeoutSeconds) }}
+{{- end }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -37,6 +43,19 @@ spec:
              envoy stats by default); the shed-based HPA metric reads it. */}}
         sidecar.istio.io/statsInclusionPrefixes: "model_engine_ratelimit"
         {{- end }}
+        {{- /* The sidecar gets SIGTERM when the pod is deleted, not after the app's
+             preStop hold, and by default exits 5s later, while the hold and Gunicorn's
+             drain run for longer. EXIT_ON_ZERO_ACTIVE_CONNECTIONS makes it wait
+             MINIMUM_DRAIN_DURATION, then exit as soon as no connection is open (the
+             app's own outbound connections count), so terminationGracePeriodSeconds
+             is its only ceiling; terminationDrainDuration is not read in this mode.
+             MINIMUM_DRAIN_DURATION outlasts the hold, so a moment with no open
+             connection while callers reconnect cannot end it early. Without Istio
+             the annotation is inert. */}}
+        proxy.istio.io/config: |
+          proxyMetadata:
+            EXIT_ON_ZERO_ACTIVE_CONNECTIONS: "true"
+            MINIMUM_DRAIN_DURATION: "{{ add (int $shutdown.preStopSleepSeconds) 5 }}s"
       labels:
         {{- include "modelEngine.selectorLabels.gateway" . | nindent 8 }}
         {{- include "modelEngine.labels" . | nindent 8 }}
@@ -50,7 +69,7 @@ spec:
       securityContext:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      terminationGracePeriodSeconds: 60
+      terminationGracePeriodSeconds: {{ int $shutdown.terminationGracePeriodSeconds }}
       priorityClassName: model-engine-high-priority
       containers:
         - name: {{ include "modelEngine.fullname" . }}
@@ -71,7 +90,18 @@ spec:
             periodSeconds: 2
             timeoutSeconds: {{ .Values.gateway.readinessProbeTimeoutSeconds }}
             failureThreshold: 30
-          command: 
+          {{- if gt (int $shutdown.preStopSleepSeconds) 0 }}
+          {{- /* Keep serving while the endpoint removal reaches the ingress gateway and
+               the callers' sidecars; Gunicorn gets SIGTERM only after the hold. python,
+               not sleep or sh: the runtime image is Chainguard python, which has neither,
+               and a failing preStop exec only logs FailedPreStopHook before SIGTERM. Not
+               the native sleep action, which needs Kubernetes 1.30. */}}
+          lifecycle:
+            preStop:
+              exec:
+                command: ["python", "-c", "import time; time.sleep({{ int $shutdown.preStopSleepSeconds }})"]
+          {{- end }}
+          command:
             - dumb-init
             - --
             {{- if .Values.datadog.enabled }}
