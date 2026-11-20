@@ -1,7 +1,12 @@
-{{- $shutdown := .Values.gateway.shutdown }}
+{{- /* Defaults repeated from values.yaml: `helm upgrade --reuse-values` from a chart
+     older than 0.2.19 keeps that chart's defaults, which have no gateway.shutdown.
+     dig keeps an explicit 0, which `default` would replace. */}}
+{{- $shutdown := .Values.gateway.shutdown | default dict }}
+{{- $preStopSleepSeconds := int (dig "preStopSleepSeconds" 15 $shutdown) }}
+{{- $terminationGracePeriodSeconds := int (dig "terminationGracePeriodSeconds" 90 $shutdown) }}
 {{- /* Gunicorn's --graceful-timeout (start_fastapi_server.py) */}}
 {{- $gunicornGracefulTimeoutSeconds := 60 }}
-{{- if lt (int $shutdown.terminationGracePeriodSeconds) (add (int $shutdown.preStopSleepSeconds) $gunicornGracefulTimeoutSeconds | int) }}
+{{- if lt $terminationGracePeriodSeconds (add $preStopSleepSeconds $gunicornGracefulTimeoutSeconds | int) }}
 {{- fail (printf "gateway.shutdown.terminationGracePeriodSeconds must be at least preStopSleepSeconds + %d (Gunicorn's graceful timeout), or in-flight requests are killed" $gunicornGracefulTimeoutSeconds) }}
 {{- end }}
 apiVersion: apps/v1
@@ -55,7 +60,7 @@ spec:
         proxy.istio.io/config: |
           proxyMetadata:
             EXIT_ON_ZERO_ACTIVE_CONNECTIONS: "true"
-            MINIMUM_DRAIN_DURATION: "{{ add (int $shutdown.preStopSleepSeconds) 5 }}s"
+            MINIMUM_DRAIN_DURATION: "{{ add $preStopSleepSeconds 5 }}s"
       labels:
         {{- include "modelEngine.selectorLabels.gateway" . | nindent 8 }}
         {{- include "modelEngine.labels" . | nindent 8 }}
@@ -69,7 +74,7 @@ spec:
       securityContext:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      terminationGracePeriodSeconds: {{ int $shutdown.terminationGracePeriodSeconds }}
+      terminationGracePeriodSeconds: {{ $terminationGracePeriodSeconds }}
       priorityClassName: model-engine-high-priority
       containers:
         - name: {{ include "modelEngine.fullname" . }}
@@ -90,7 +95,7 @@ spec:
             periodSeconds: 2
             timeoutSeconds: {{ .Values.gateway.readinessProbeTimeoutSeconds }}
             failureThreshold: 30
-          {{- if gt (int $shutdown.preStopSleepSeconds) 0 }}
+          {{- if gt $preStopSleepSeconds 0 }}
           {{- /* Keep serving while the endpoint removal reaches the ingress gateway and
                the callers' sidecars; Gunicorn gets SIGTERM only after the hold. python,
                not sleep or sh: the runtime image is Chainguard python, which has neither,
@@ -99,7 +104,7 @@ spec:
           lifecycle:
             preStop:
               exec:
-                command: ["python", "-c", "import time; time.sleep({{ int $shutdown.preStopSleepSeconds }})"]
+                command: ["python", "-c", "import time; time.sleep({{ $preStopSleepSeconds }})"]
           {{- end }}
           command:
             - dumb-init

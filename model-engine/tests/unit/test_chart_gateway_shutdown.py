@@ -81,6 +81,17 @@ def test_zero_pre_stop_sleep_removes_the_hook() -> None:
     assert "lifecycle" not in _gateway_container(deployment)
 
 
+def test_missing_shutdown_values_use_the_defaults() -> None:
+    # `helm upgrade --reuse-values` from a chart older than 0.2.19 keeps that chart's
+    # defaults, which have no gateway.shutdown; the upgrade must still render.
+    deployment = _render("--set", "gateway.shutdown=null")
+
+    command = _gateway_container(deployment)["lifecycle"]["preStop"]["exec"]["command"]
+    assert command[-1] == "import time; time.sleep(15)"
+    assert deployment["spec"]["template"]["spec"]["terminationGracePeriodSeconds"] == 90
+    assert _proxy_metadata(deployment)["MINIMUM_DRAIN_DURATION"] == "20s"
+
+
 def test_grace_period_must_cover_the_hold_and_gunicorn_drain() -> None:
     with pytest.raises(subprocess.CalledProcessError) as error:
         _render(*_shutdown_args(40, 90))
