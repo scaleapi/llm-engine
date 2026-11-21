@@ -56,6 +56,7 @@ def translate_model_endpoint_orm_to_model_endpoint_record(
         public_inference=model_endpoint_orm.public_inference,
         task_expires_seconds=model_endpoint_orm.task_expires_seconds,
         queue_message_timeout_seconds=model_endpoint_orm.queue_message_timeout_seconds,
+        temporal_task_queue=model_endpoint_orm.temporal_task_queue,
     )
 
 
@@ -126,6 +127,7 @@ class DbModelEndpointRecordRepository(ModelEndpointRecordRepository, DbRepositor
         public_inference: Optional[bool] = False,
         task_expires_seconds: Optional[int] = None,
         queue_message_timeout_seconds: Optional[int] = None,
+        temporal_task_queue: Optional[str] = None,
     ) -> ModelEndpointRecord:
         model_endpoint_record = OrmModelEndpoint(
             name=name,
@@ -141,6 +143,7 @@ class DbModelEndpointRecordRepository(ModelEndpointRecordRepository, DbRepositor
             public_inference=public_inference,
             task_expires_seconds=task_expires_seconds,
             queue_message_timeout_seconds=queue_message_timeout_seconds,
+            temporal_task_queue=temporal_task_queue,
         )
         async with self.session() as session:
             await OrmModelEndpoint.create(session, model_endpoint_record)
@@ -318,6 +321,7 @@ class DbModelEndpointRecordRepository(ModelEndpointRecordRepository, DbRepositor
         public_inference: Optional[bool] = None,
         task_expires_seconds: Optional[int] = None,
         queue_message_timeout_seconds: Optional[int] = None,
+        temporal_task_queue: Optional[str] = None,
     ) -> Optional[ModelEndpointRecord]:
         async with self.session() as session:
             model_endpoint_orm = await OrmModelEndpoint.select_by_id(
@@ -340,6 +344,7 @@ class DbModelEndpointRecordRepository(ModelEndpointRecordRepository, DbRepositor
                 public_inference=public_inference,
                 task_expires_seconds=task_expires_seconds,
                 queue_message_timeout_seconds=queue_message_timeout_seconds,
+                temporal_task_queue=temporal_task_queue,
             )
             # `status_reason=None` leaves the value unchanged (like every other field);
             # callers reset it to NULL via the explicit clear_status_reason flag.
