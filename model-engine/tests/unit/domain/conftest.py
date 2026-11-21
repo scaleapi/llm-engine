@@ -628,7 +628,7 @@ def create_batch_completions_v1_request() -> CreateBatchCompletionsV1Request:
         model_config=CreateBatchCompletionsV1ModelConfig(
             model="mpt-7b",
             checkpoint_path="s3://test_checkpoint_path",
-            labels={},
+            labels={"team": "infra", "product": "llm-engine"},
             num_shards=1,
         ),
         data_parallelism=1,
@@ -653,6 +653,7 @@ def create_batch_completions_v2_request() -> CreateBatchCompletionsV2Request:
             num_shards=1,
         ),
         data_parallelism=1,
+        labels={"team": "infra", "product": "llm-engine"},
     )
 
 
@@ -674,6 +675,7 @@ def create_batch_completions_v2_request_with_hardware() -> CreateBatchCompletion
             num_shards=1,
         ),
         data_parallelism=1,
+        labels={"team": "infra", "product": "llm-engine"},
         cpus=1,
         gpus=1,
         memory="8G",

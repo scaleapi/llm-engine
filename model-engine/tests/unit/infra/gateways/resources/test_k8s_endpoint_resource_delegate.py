@@ -1586,3 +1586,31 @@ def test_load_k8s_yaml_command_with_mixed_quotes_renders_valid_yaml(tmp_path):
         rendered = load_k8s_yaml("command-only.yaml", cast(ResourceArguments, {"COMMAND": command}))
 
     assert rendered["command"] == command
+
+
+def test_load_k8s_yaml_team_and_product_cannot_inject_yaml_structure(tmp_path):
+    config_map_path = tmp_path / "config_map.yaml"
+    config_map_path.write_text(
+        json.dumps(
+            {
+                "data": {
+                    "labels.yaml": (
+                        "metadata:\n"
+                        "  labels:\n"
+                        "    team: ${TEAM}\n"
+                        "    product: ${PRODUCT}\n"
+                    )
+                }
+            }
+        )
+    )
+    team = "a\n    evil: x\n  template:\n    metadata: {}"
+    with (
+        patch(f"{MODULE_PATH}.LAUNCH_SERVICE_TEMPLATE_FOLDER", None),
+        patch(f"{MODULE_PATH}.LAUNCH_SERVICE_TEMPLATE_CONFIG_MAP_PATH", str(config_map_path)),
+    ):
+        rendered = load_k8s_yaml(
+            "labels.yaml", cast(ResourceArguments, {"TEAM": team, "PRODUCT": "p"})
+        )
+
+    assert rendered == {"metadata": {"labels": {"team": team, "product": "p"}}}
