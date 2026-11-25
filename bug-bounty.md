@@ -1,0 +1,1 @@
+This repository is covered by Scale's bug bounty program, and valid vulnerability submissions may be eligible for a reward. Please see scale.com/security.txt for the latest details on program scope and submission guidelines.
